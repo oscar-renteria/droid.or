@@ -1,0 +1,6 @@
+@import 'tailwindcss';
+
+/* Dark mode is driven explicitly by the resolved theme (see
+   composables/useResolvedTheme.ts), not solely by the OS media query, so an
+   explicit light/dark choice can override the system setting. */
+@custom-variant dark (&:where(.dark, .dark *));

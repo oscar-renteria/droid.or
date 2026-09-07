@@ -1,0 +1,25 @@
+node_modules/
+out/
+dist/
+dist-electron/
+build/
+release/
+*.local
+
+# platform-tools fetched at build time, never committed
+resources/platform-tools/
+
+# app data used only for local manual testing
+.droid-or-dev-data/
+
+*.log
+npm-debug.log*
+
+.DS_Store
+Thumbs.db
+
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+coverage/

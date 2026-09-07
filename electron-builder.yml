@@ -1,0 +1,14 @@
+appId: dev.droidor.app
+productName: droid.or
+directories:
+  output: release
+  buildResources: build
+files:
+  - out/**/*
+  - package.json
+# Platform-specific targets, code signing, and bundling the ADB platform-tools
+# binaries are configured in a later milestone once packaging is actually
+# exercised — this file only proves electron-builder is wired up correctly.
+linux:
+  target: AppImage
+  category: Utility
