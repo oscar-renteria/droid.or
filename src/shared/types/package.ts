@@ -1,1 +1,1 @@
-export type { AppPackageInfo } from '../validation/package.schema'
+export type { AppMetadataResult, AppPackageInfo } from '../validation/package.schema'

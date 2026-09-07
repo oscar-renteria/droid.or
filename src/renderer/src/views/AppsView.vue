@@ -66,7 +66,11 @@ const filteredPackages = computed(() => {
   const now = Date.now()
 
   return packagesStore.packages.filter((pkg) => {
-    if (query && !pkg.packageName.toLowerCase().includes(query)) {
+    if (
+      query &&
+      !pkg.packageName.toLowerCase().includes(query) &&
+      !(pkg.displayName?.toLowerCase().includes(query) ?? false)
+    ) {
       return false
     }
     switch (filterKey.value) {
@@ -90,6 +94,10 @@ const filteredPackages = computed(() => {
 
 function openDetail(pkg: AppPackageInfo): void {
   selectedPackage.value = pkg
+  const deviceId = selectedDevice.value?.id
+  if (deviceId) {
+    packagesStore.fetchMetadata(deviceId, pkg)
+  }
 }
 
 const drawerVisible = computed({
@@ -101,12 +109,56 @@ const drawerVisible = computed({
   }
 })
 
+const selectedPackageMetadata = computed(() => {
+  if (!selectedPackage.value) {
+    return null
+  }
+  const cached = packagesStore.metadataCache.get(selectedPackage.value.packageName)
+  return cached && cached !== 'loading' ? cached : null
+})
+
+/** Triggers a lazy metadata fetch for a row and renders whatever's known so
+ *  far — package name and curated name are instant, the real APK-parsed
+ *  label/icon fills in once resolved. Called from the column's render()
+ *  rather than a separate watcher: Naive UI's virtual scroll only calls
+ *  render() for rows it's actually painting, which naturally bounds these
+ *  fetches to visible rows instead of queuing all of them at once. */
+function renderAppCell(row: AppPackageInfo) {
+  const deviceId = selectedDevice.value?.id
+  if (deviceId) {
+    packagesStore.fetchMetadata(deviceId, row)
+  }
+  const cached = packagesStore.metadataCache.get(row.packageName)
+  const metadata = cached && cached !== 'loading' ? cached : null
+  const label = metadata?.label ?? row.displayName ?? row.packageName
+
+  return h('div', { class: 'flex min-w-0 items-center gap-2' }, [
+    metadata?.iconDataUrl
+      ? h('img', { src: metadata.iconDataUrl, class: 'h-6 w-6 shrink-0 rounded', alt: '' })
+      : h(
+          'div',
+          {
+            class:
+              'flex h-6 w-6 shrink-0 items-center justify-center rounded bg-gray-200 text-[10px] font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+          },
+          label.charAt(0).toUpperCase()
+        ),
+    h('div', { class: 'min-w-0' }, [
+      h('div', { class: 'truncate font-medium text-gray-900 dark:text-gray-100' }, label),
+      label !== row.packageName
+        ? h('div', { class: 'truncate text-xs text-gray-500 dark:text-gray-400' }, row.packageName)
+        : null
+    ])
+  ])
+}
+
 const columns: DataTableColumns<AppPackageInfo> = [
   {
-    title: 'Package',
+    title: 'App',
     key: 'packageName',
-    sorter: 'default',
-    ellipsis: true
+    sorter: (a, b) =>
+      (a.displayName ?? a.packageName).localeCompare(b.displayName ?? b.packageName),
+    render: renderAppCell
   },
   {
     title: 'Version',
@@ -190,7 +242,7 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
     <div class="flex shrink-0 items-center gap-2">
       <NInput
         v-model:value="searchText"
-        placeholder="Search by package name..."
+        placeholder="Search by app or package name..."
         clearable
         class="max-w-xs"
       />
@@ -224,8 +276,22 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
     />
 
     <NDrawer v-model:show="drawerVisible" :width="420" placement="right">
-      <NDrawerContent v-if="selectedPackage" :title="selectedPackage.packageName" closable>
+      <NDrawerContent
+        v-if="selectedPackage"
+        :title="
+          selectedPackageMetadata?.label ??
+          selectedPackage.displayName ??
+          selectedPackage.packageName
+        "
+        closable
+      >
+        <div v-if="selectedPackageMetadata?.iconDataUrl" class="mb-4 flex justify-center">
+          <img :src="selectedPackageMetadata.iconDataUrl" alt="" class="h-16 w-16 rounded-lg" />
+        </div>
         <NDescriptions :column="1" label-placement="top" bordered size="small">
+          <NDescriptionsItem label="App name">{{
+            selectedPackageMetadata?.label ?? selectedPackage.displayName ?? 'Not available'
+          }}</NDescriptionsItem>
           <NDescriptionsItem label="Package name">{{
             selectedPackage.packageName
           }}</NDescriptionsItem>

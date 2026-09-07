@@ -38,6 +38,7 @@ describe('fetchInstalledPackages', () => {
 
     const gmail = result.find((p) => p.packageName === 'com.google.android.gm')
     expect(gmail).toMatchObject({
+      displayName: 'Gmail',
       isSystemApp: true,
       isDisabled: false,
       versionName: '1.0',
@@ -47,6 +48,9 @@ describe('fetchInstalledPackages', () => {
 
     const thirdParty = result.find((p) => p.packageName === 'com.example.app')
     expect(thirdParty).toMatchObject({
+      // Not in the curated known-package table, so the app must fall back
+      // to the raw package name rather than inventing one.
+      displayName: null,
       isSystemApp: false,
       isDisabled: false,
       versionName: '0.5',

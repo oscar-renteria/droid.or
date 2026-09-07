@@ -1,7 +1,7 @@
 import type { AppInfo } from './app-info'
 import type { AdbAvailability, KnownDevice } from './device'
 import type { DeviceDashboardInfo } from './device-dashboard'
-import type { AppPackageInfo } from './package'
+import type { AppMetadataResult, AppPackageInfo } from './package'
 
 /**
  * Contract for the API the preload script exposes on window.droidor.
@@ -22,4 +22,14 @@ export interface DroidorApi {
   getDeviceDashboardInfo: (id: string) => Promise<DeviceDashboardInfo>
   /** Rejects if the device isn't currently connected and authorized. */
   getPackages: (deviceId: string) => Promise<AppPackageInfo[]>
+  /** Resolves an app's real label/icon by pulling and parsing its APK.
+   *  Slow relative to the other calls (a real device transfer) and result
+   *  is cached in main by (package, version) — never call this for every
+   *  package at once from the renderer; the store queues these itself. */
+  getAppMetadata: (request: {
+    deviceId: string
+    packageName: string
+    apkPath: string
+    versionCode: number | null
+  }) => Promise<AppMetadataResult>
 }

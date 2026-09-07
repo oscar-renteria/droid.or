@@ -13,6 +13,12 @@ export class FakeAdbClient implements AdbClient {
   readonly deviceProperties = new Map<string, Map<string, string>>()
   /** Keyed by `${serial}\n${args.join(' ')}`. */
   readonly shellResponses = new Map<string, string>()
+  /** Keyed by `${serial}\n${remotePath}`. Undefined means "succeed without
+   *  writing a local file" — fine for tests that inject a fake extractor
+   *  instead of touching the filesystem. Set to an Error to simulate a
+   *  failed pull. */
+  readonly pullResponses = new Map<string, Error | undefined>()
+  readonly pullCalls: Array<{ serial: string; remotePath: string; localPath: string }> = []
   watchCallCount = 0
 
   private onUpdate: ((devices: RawAdbDevice[]) => void) | null = null
@@ -41,6 +47,16 @@ export class FakeAdbClient implements AdbClient {
       return Promise.reject(new Error(`FakeAdbClient: no shell response configured for "${key}"`))
     }
     return Promise.resolve(response)
+  }
+
+  pullFile(serial: string, remotePath: string, localPath: string): Promise<void> {
+    this.pullCalls.push({ serial, remotePath, localPath })
+    const key = `${serial}\n${remotePath}`
+    const configuredError = this.pullResponses.get(key)
+    if (configuredError) {
+      return Promise.reject(configuredError)
+    }
+    return Promise.resolve()
   }
 
   watchDevices(

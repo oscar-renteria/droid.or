@@ -5,6 +5,7 @@ import {
   parsePackageListWithPathAndInstaller,
   parsePackageNameList
 } from '../adb/parsers/package-list-parser'
+import { KNOWN_PACKAGE_NAMES } from './known-package-names'
 
 /**
  * Fetches the full installed-package list in a fixed number of calls
@@ -32,6 +33,7 @@ export async function fetchInstalledPackages(
     const dump = dumpByPackage.get(entry.packageName)
     return {
       packageName: entry.packageName,
+      displayName: KNOWN_PACKAGE_NAMES.get(entry.packageName) ?? null,
       apkPath: entry.apkPath,
       installerPackage: entry.installerPackage,
       isSystemApp: !thirdPartyNames.has(entry.packageName),

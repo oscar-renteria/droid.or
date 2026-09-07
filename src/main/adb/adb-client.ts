@@ -7,6 +7,7 @@ import { createTrackDevicesFrameSplitter } from './track-devices-frame-reader'
 
 const EXEC_TIMEOUT_MS = 10_000
 const SHELL_COMMAND_TIMEOUT_MS = 30_000
+const PULL_TIMEOUT_MS = 120_000
 
 /**
  * Everything the rest of the app needs from ADB, kept narrow on purpose so a
@@ -24,6 +25,10 @@ export interface AdbClient {
    *  this stays within "predefined ADB operations only", not a general
    *  shell escape hatch. */
   shellCommand(serial: string, args: string[]): Promise<string>
+  /** Copies one file from the device to a local path (e.g. an APK, to
+   *  extract its label/icon locally — nothing about this reads from or
+   *  writes to arbitrary device paths chosen by the renderer). */
+  pullFile(serial: string, remotePath: string, localPath: string): Promise<void>
   /** Starts a persistent `adb track-devices` watch. Returns a function that
    *  stops it; safe to call more than once. */
   watchDevices(
@@ -93,6 +98,23 @@ export class RealAdbClient implements AdbClient {
             return
           }
           resolve(stdout)
+        }
+      )
+    })
+  }
+
+  pullFile(serial: string, remotePath: string, localPath: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      execFile(
+        this.adbCommand,
+        ['-s', serial, 'pull', remotePath, localPath],
+        { timeout: PULL_TIMEOUT_MS, maxBuffer: 4 * 1024 * 1024 },
+        (error) => {
+          if (error) {
+            reject(error)
+            return
+          }
+          resolve()
         }
       )
     })

@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@vicons/ionicons5": "0.13.0",
+    "app-info-parser": "1.1.6",
     "better-sqlite3": "13.0.3",
     "naive-ui": "2.45.3",
     "pinia": "4.0.3",

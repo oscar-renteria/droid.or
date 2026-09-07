@@ -23,6 +23,21 @@ const MIGRATIONS: Migration[] = [
         )
       `)
     }
+  },
+  {
+    version: 2,
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE app_metadata_cache (
+          package_name TEXT NOT NULL,
+          version_code INTEGER NOT NULL,
+          label TEXT,
+          icon_data_url TEXT,
+          cached_at TEXT NOT NULL,
+          PRIMARY KEY (package_name, version_code)
+        )
+      `)
+    }
   }
 ]
 

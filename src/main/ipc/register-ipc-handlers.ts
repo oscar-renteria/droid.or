@@ -18,7 +18,7 @@ export function registerIpcHandlers(context: AppContext): void {
   registerAdbHandlers(context.adbClient)
   registerDeviceHandlers(context.deviceRegistry)
   registerDashboardHandlers(context.adbClient, context.deviceRegistry)
-  registerPackagesHandlers(context.adbClient, context.deviceRegistry)
+  registerPackagesHandlers(context.adbClient, context.deviceRegistry, context.appMetadataService)
 
   context.deviceRegistry.onDevicesChanged((devices) => {
     for (const window of BrowserWindow.getAllWindows()) {
