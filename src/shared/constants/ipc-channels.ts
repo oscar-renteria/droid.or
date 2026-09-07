@@ -16,7 +16,8 @@ export enum IpcChannel {
   SetPackageIgnored = 'packages:set-ignored',
   AnalyzeDevice = 'analyzer:analyze-device',
   PerformOperation = 'packages:perform-operation',
-  GetOperationHistory = 'history:get-for-device'
+  GetOperationHistory = 'history:get-for-device',
+  GetDeviceChanges = 'recovery:get-device-changes'
 }
 
 /**

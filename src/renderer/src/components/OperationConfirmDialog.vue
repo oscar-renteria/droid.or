@@ -63,6 +63,12 @@ const copy = computed(() => {
         description:
           "This erases the app's data and cache — signed-in accounts, saved files, settings — as if freshly installed. This cannot be undone."
       }
+    case 'restore-install':
+      return {
+        title: 'Restore this app?',
+        description:
+          'This reinstalls the app for your user using the copy already present on the device — no new data is downloaded.'
+      }
     default:
       return { title: 'Confirm action', description: '' }
   }

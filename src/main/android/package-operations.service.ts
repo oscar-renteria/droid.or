@@ -26,6 +26,12 @@ function buildCommandArgs(operation: OperationType, packageName: string): string
       return ['pm', 'uninstall', '--user', '0', packageName]
     case 'clear-data':
       return ['pm', 'clear', '--user', '0', packageName]
+    case 'restore-install':
+      // Verified against a real device (`pm` itself, not just docs): this
+      // subcommand exists and takes exactly these flags. Only ever
+      // reachable for a package the device still knows about — see
+      // recovery.service.ts.
+      return ['pm', 'install-existing', '--user', '0', packageName]
   }
 }
 
@@ -39,7 +45,7 @@ const NOT_INSTALLED_STATE = 'not installed for this user'
  *  real device: filtering for "com.google.android.gm" also matched
  *  "com.google.android.gms" and its sub-packages), so the filtered output
  *  still has to be parsed and checked for the exact name. */
-async function isPackageDisabled(
+export async function isPackageDisabled(
   adbClient: AdbClient,
   serial: string,
   packageName: string
@@ -48,7 +54,7 @@ async function isPackageDisabled(
   return parsePackageNameList(output).includes(packageName)
 }
 
-async function isPackageInstalledForUser(
+export async function isPackageInstalledForUser(
   adbClient: AdbClient,
   serial: string,
   packageName: string
@@ -131,7 +137,7 @@ async function getStateLabel(
       ? DISABLED_STATE
       : ENABLED_STATE
   }
-  if (operation === 'uninstall-for-user') {
+  if (operation === 'uninstall-for-user' || operation === 'restore-install') {
     return (await isPackageInstalledForUser(adbClient, serial, packageName))
       ? INSTALLED_STATE
       : NOT_INSTALLED_STATE
@@ -149,5 +155,7 @@ function describeSuccess(operation: OperationType): string {
       return 'Package uninstalled for this user.'
     case 'clear-data':
       return 'App data cleared.'
+    case 'restore-install':
+      return 'Package reinstalled for this user.'
   }
 }

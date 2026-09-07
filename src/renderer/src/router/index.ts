@@ -4,6 +4,7 @@ import AppsView from '@renderer/views/AppsView.vue'
 import HistoryView from '@renderer/views/HistoryView.vue'
 import OverviewView from '@renderer/views/OverviewView.vue'
 import PlaceholderView from '@renderer/views/PlaceholderView.vue'
+import RecoveryView from '@renderer/views/RecoveryView.vue'
 
 /**
  * Hash history is used because the renderer is loaded from a file:// URL in
@@ -36,11 +37,7 @@ export const router = createRouter({
     {
       path: '/recovery',
       name: 'recovery',
-      component: PlaceholderView,
-      props: {
-        title: 'Device Recovery',
-        description: 'Restoring changes made by this application lands here.'
-      }
+      component: RecoveryView
     },
     {
       path: '/settings',

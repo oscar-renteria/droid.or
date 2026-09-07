@@ -4,6 +4,7 @@ import type { AdbAvailability, KnownDevice } from './device'
 import type { DeviceDashboardInfo } from './device-dashboard'
 import type { AppMetadataResult, AppPackageInfo } from './package'
 import type { OperationHistoryEntry, OperationResult, OperationType } from './operation'
+import type { DeviceChanges } from './recovery'
 
 /**
  * Contract for the API the preload script exposes on window.droidor.
@@ -45,4 +46,8 @@ export interface DroidorApi {
     operation: OperationType
   ) => Promise<OperationResult>
   getOperationHistory: (deviceId: string) => Promise<OperationHistoryEntry[]>
+  /** Rejects if the device isn't currently connected and authorized. What
+   *  this app has changed on the device and is still in effect, re-verified
+   *  against its live state — not just what history recorded. */
+  getDeviceChanges: (deviceId: string) => Promise<DeviceChanges>
 }

@@ -1,6 +1,15 @@
 import { z } from 'zod'
 
-export const operationTypeSchema = z.enum(['disable', 'enable', 'uninstall-for-user', 'clear-data'])
+export const operationTypeSchema = z.enum([
+  'disable',
+  'enable',
+  'uninstall-for-user',
+  'clear-data',
+  // Reverses a prior `uninstall-for-user` on a package the device still
+  // knows about (its APK is still on the system partition) — used only by
+  // the Device Recovery page, never offered as a first-class action.
+  'restore-install'
+])
 export type OperationType = z.infer<typeof operationTypeSchema>
 
 export const performOperationRequestSchema = z.object({

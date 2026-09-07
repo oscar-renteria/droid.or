@@ -121,6 +121,34 @@ describe('performPackageOperation', () => {
     expect(result.message).toBe('not installed for 0')
   })
 
+  it('restores (reinstalls) a package for the current user, verifying it re-entered the visible package list', async () => {
+    adb.shellResponses.set(`${SERIAL}\npm list packages ${PKG}`, ['', `package:${PKG}`])
+    adb.mutationResponses.set(`${SERIAL}\npm install-existing --user 0 ${PKG}`, {
+      exitCode: 0,
+      stdout: `Package ${PKG} installed for user: 0\n`,
+      stderr: ''
+    })
+
+    const result = await performPackageOperation(db, adb, SERIAL, PKG, 'restore-install')
+    expect(result.success).toBe(true)
+    expect(result.message).toBe('Package reinstalled for this user.')
+  })
+
+  it('reports a real `pm install-existing` failure for a package the device no longer knows about', async () => {
+    adb.shellResponses.set(`${SERIAL}\npm list packages ${PKG}`, '')
+    adb.mutationResponses.set(`${SERIAL}\npm install-existing --user 0 ${PKG}`, {
+      exitCode: 1,
+      stdout: '',
+      stderr: `android.content.pm.PackageManager$NameNotFoundException: Package ${PKG} doesn't exist`
+    })
+
+    const result = await performPackageOperation(db, adb, SERIAL, PKG, 'restore-install')
+    expect(result.success).toBe(false)
+    expect(result.message).toBe(
+      `android.content.pm.PackageManager$NameNotFoundException: Package ${PKG} doesn't exist`
+    )
+  })
+
   it('clears app data, trusting the device-reported result since there is nothing to independently verify', async () => {
     adb.mutationResponses.set(`${SERIAL}\npm clear --user 0 ${PKG}`, {
       exitCode: 0,

@@ -65,3 +65,34 @@ export function getOperationHistory(
     .all(deviceId) as HistoryRow[]
   return rows.map(toHistoryEntry)
 }
+
+/**
+ * The single most recent *successful* operation for each package this app
+ * has ever touched on this device — the basis for detecting what is
+ * currently still modified (a package disabled and later re-enabled has
+ * "enable" as its latest entry, and correctly drops out of that set).
+ * `id` (not `performed_at`) breaks ties, since it is a strictly increasing
+ * insertion order regardless of timestamp precision.
+ */
+export function getLatestSuccessfulOperationPerPackage(
+  db: Database.Database,
+  deviceId: string
+): OperationHistoryEntry[] {
+  const rows = db
+    .prepare(
+      `
+      SELECT h.*
+      FROM operation_history h
+      INNER JOIN (
+        SELECT package_name, MAX(id) AS max_id
+        FROM operation_history
+        WHERE device_id = @deviceId AND success = 1
+        GROUP BY package_name
+      ) latest ON latest.max_id = h.id
+      WHERE h.device_id = @deviceId
+      ORDER BY h.package_name
+      `
+    )
+    .all({ deviceId }) as HistoryRow[]
+  return rows.map(toHistoryEntry)
+}

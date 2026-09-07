@@ -13,6 +13,7 @@ import {
   operationHistoryListSchema,
   operationResultSchema
 } from '@shared/validation/operation.schema'
+import { deviceChangesSchema } from '@shared/validation/recovery.schema'
 import type { DroidorApi } from '@shared/types/droidor-api'
 
 /**
@@ -93,6 +94,11 @@ const droidorApi: DroidorApi = {
   getOperationHistory: async (deviceId) => {
     const result = await ipcRenderer.invoke(IpcChannel.GetOperationHistory, { deviceId })
     return operationHistoryListSchema.parse(result)
+  },
+
+  getDeviceChanges: async (deviceId) => {
+    const result = await ipcRenderer.invoke(IpcChannel.GetDeviceChanges, { deviceId })
+    return deviceChangesSchema.parse(result)
   }
 }
 
