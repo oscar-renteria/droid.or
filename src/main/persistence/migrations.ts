@@ -38,6 +38,17 @@ const MIGRATIONS: Migration[] = [
         )
       `)
     }
+  },
+  {
+    version: 3,
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE ignored_packages (
+          package_name TEXT PRIMARY KEY,
+          ignored_at TEXT NOT NULL
+        )
+      `)
+    }
   }
 ]
 

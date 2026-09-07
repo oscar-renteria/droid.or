@@ -1,3 +1,4 @@
+import type { AnalyzeDeviceResult } from './analyzer'
 import type { AppInfo } from './app-info'
 import type { AdbAvailability, KnownDevice } from './device'
 import type { DeviceDashboardInfo } from './device-dashboard'
@@ -32,4 +33,7 @@ export interface DroidorApi {
     apkPath: string
     versionCode: number | null
   }) => Promise<AppMetadataResult>
+  /** Rejects if the device isn't currently connected and authorized. */
+  analyzeDevice: (deviceId: string) => Promise<AnalyzeDeviceResult>
+  setPackageIgnored: (packageName: string, ignored: boolean) => Promise<void>
 }
