@@ -1,27 +1,4 @@
-// app-info-parser ships no types, and its subpath resolves to a real .js
-// file on disk — which means an ambient `declare module` for that exact
-// path is never consulted (TypeScript only falls back to ambient
-// declarations when normal resolution fails to find a file at all), so the
-// import is asserted to a local interface instead, typing only the fields
-// this file actually reads.
-// @ts-expect-error -- untyped package; see comment above.
-import ApkParserImport from 'app-info-parser/src/apk'
-
-interface ApkParseResult {
-  /** The resolved, human-readable app label (e.g. "Waze"). */
-  name: string
-  /** A `data:image/...;base64,...` URL. The declared mime type is not
-   *  always accurate — verified against a real APK whose icon was
-   *  actually WebP but labeled "image/png" — so the actual bytes must be
-   *  sniffed before trusting the mime type. */
-  icon: string
-}
-
-interface ApkParserConstructor {
-  new (filePath: string): { parse: () => Promise<ApkParseResult> }
-}
-
-const ApkParser = ApkParserImport as unknown as ApkParserConstructor
+import { parseApkFile, type RawApkApplication } from './apk-parser-loader'
 
 export interface ApkMetadata {
   label: string | null
@@ -70,16 +47,33 @@ export function fixDataUrlMimeType(dataUrl: string): string | null {
   return null
 }
 
+/**
+ * Resolves `application.label` to a single display string. Verified
+ * against several real APKs: this field is never a plain string — it is
+ * always an array of every value the resource table stores under that
+ * string resource's id (one per locale/density configuration bucket, even
+ * for a single-locale app), and on a heavily localized app it can contain
+ * dozens of entries that are other strings entirely (a resource-table
+ * lookup quirk in the parsing library, not real translations of the app
+ * name). The first entry was, in every real APK checked, the correct
+ * base/default-configuration app name — so this takes that one rather
+ * than attempting to disambiguate the rest.
+ */
+export function resolveApkLabel(application: RawApkApplication | undefined): string | null {
+  const label = application?.label
+  const resolved = Array.isArray(label) ? label[0] : label
+  return resolved?.trim() || null
+}
+
 /** Parses a locally-available APK file (already pulled from the device) for
  *  its resolved app label and icon. Never throws: any parse failure (a
  *  malformed or split APK, an unsupported icon format) degrades to nulls
  *  rather than breaking the caller. */
 export async function extractApkMetadata(localApkPath: string): Promise<ApkMetadata> {
   try {
-    const parser = new ApkParser(localApkPath)
-    const result = await parser.parse()
+    const result = await parseApkFile(localApkPath)
     return {
-      label: result.name?.trim() || null,
+      label: resolveApkLabel(result.application),
       iconDataUrl: result.icon ? fixDataUrlMimeType(result.icon) : null
     }
   } catch {

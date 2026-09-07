@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fixDataUrlMimeType } from '@main/android/apk-metadata-extractor'
+import { fixDataUrlMimeType, resolveApkLabel } from '@main/android/apk-metadata-extractor'
 
 function dataUrl(declaredMime: string, bytes: number[]): string {
   return `data:${declaredMime};base64,${Buffer.from(bytes).toString('base64')}`
@@ -43,5 +43,38 @@ describe('fixDataUrlMimeType', () => {
 
   it('returns null if the input is not a data URL at all', () => {
     expect(fixDataUrlMimeType('not-a-data-url')).toBeNull()
+  })
+})
+
+describe('resolveApkLabel', () => {
+  it('takes the first entry when the label is an array (the real, always-true shape)', () => {
+    // Verified against real APKs: app-info-parser never returns a plain
+    // string here, always an array — one value per locale/density
+    // configuration bucket, even for a single-locale app (e.g. real output
+    // for Trade Republic: the same string repeated 8 times).
+    expect(resolveApkLabel({ label: ['Trade Republic', 'Trade Republic', 'Trade Republic'] })).toBe(
+      'Trade Republic'
+    )
+  })
+
+  it('takes the first entry even when later entries are unrelated strings (a real, verified quirk)', () => {
+    // Verified against a real, heavily localized APK where the array
+    // contained the correct app name first, followed by ~150 unrelated
+    // UI strings from other resource ids (a resource-table lookup quirk
+    // in the parsing library) — this is exactly why the first entry,
+    // not any kind of "most common value", is what's taken.
+    expect(resolveApkLabel({ label: ['Video Downloader', 'Cancelar', '%1$.2f Mbps'] })).toBe(
+      'Video Downloader'
+    )
+  })
+
+  it('accepts a plain string too, in case a future library version stops wrapping it', () => {
+    expect(resolveApkLabel({ label: 'Gmail' })).toBe('Gmail')
+  })
+
+  it('returns null when there is no label at all', () => {
+    expect(resolveApkLabel({})).toBeNull()
+    expect(resolveApkLabel(undefined)).toBeNull()
+    expect(resolveApkLabel({ label: [] })).toBeNull()
   })
 })
