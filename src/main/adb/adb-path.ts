@@ -4,17 +4,6 @@ import type { AdbAvailability } from '@shared/validation/device.schema'
 const VERIFY_TIMEOUT_MS = 5000
 
 /**
- * Resolves which adb executable to invoke. For now this is just an optional
- * user-configured override falling back to plain "adb" (resolved via PATH by
- * the OS, the same way execFile/spawn always resolve a bare command name) —
- * bundling platform-tools into the app is a packaging-milestone concern, not
- * a transport-layer one, and would slot in here as another fallback later.
- */
-export function resolveAdbCommand(configuredPath?: string | null): string {
-  return configuredPath && configuredPath.trim().length > 0 ? configuredPath : 'adb'
-}
-
-/**
  * Confirms the resolved adb command actually exists and runs, and reports
  * its version. Never throws: every failure mode (not found, not executable,
  * unparsable output, timeout) becomes an { available: false, reason }

@@ -68,6 +68,17 @@ const MIGRATIONS: Migration[] = [
         CREATE INDEX idx_operation_history_device ON operation_history (device_id, performed_at DESC);
       `)
     }
+  },
+  {
+    version: 5,
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE app_settings (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL
+        )
+      `)
+    }
   }
 ]
 

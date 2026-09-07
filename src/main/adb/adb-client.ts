@@ -23,6 +23,12 @@ export interface MutationCommandResult {
  */
 export interface AdbClient {
   getAvailability(): Promise<AdbAvailability>
+  /** Changes which adb executable every subsequent call uses — e.g. after
+   *  the user sets a custom path or a managed platform-tools download
+   *  completes. Takes effect immediately for one-shot commands; a
+   *  long-running watch (track-devices) started before this call keeps
+   *  using the old binary until it's restarted. */
+  setAdbCommand(adbCommand: string): void
   listDevicesOnce(): Promise<RawAdbDevice[]>
   getDeviceProperties(serial: string): Promise<Map<string, string>>
   /** Runs one predefined, hard-coded shell command against a device and
@@ -54,7 +60,11 @@ export interface AdbClient {
 }
 
 export class RealAdbClient implements AdbClient {
-  constructor(private readonly adbCommand: string) {}
+  constructor(private adbCommand: string) {}
+
+  setAdbCommand(adbCommand: string): void {
+    this.adbCommand = adbCommand
+  }
 
   getAvailability(): Promise<AdbAvailability> {
     return verifyAdb(this.adbCommand)

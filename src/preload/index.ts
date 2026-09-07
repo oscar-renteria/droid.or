@@ -14,6 +14,7 @@ import {
   operationResultSchema
 } from '@shared/validation/operation.schema'
 import { deviceChangesSchema } from '@shared/validation/recovery.schema'
+import { adbStatusSchema } from '@shared/validation/adb-settings.schema'
 import type { DroidorApi } from '@shared/types/droidor-api'
 
 /**
@@ -99,6 +100,26 @@ const droidorApi: DroidorApi = {
   getDeviceChanges: async (deviceId) => {
     const result = await ipcRenderer.invoke(IpcChannel.GetDeviceChanges, { deviceId })
     return deviceChangesSchema.parse(result)
+  },
+
+  getAdbStatus: async () => {
+    const result = await ipcRenderer.invoke(IpcChannel.GetAdbStatus)
+    return adbStatusSchema.parse(result)
+  },
+
+  setCustomAdbPath: async (path) => {
+    const result = await ipcRenderer.invoke(IpcChannel.SetCustomAdbPath, { path })
+    return adbStatusSchema.parse(result)
+  },
+
+  downloadPlatformTools: async () => {
+    const result = await ipcRenderer.invoke(IpcChannel.DownloadPlatformTools)
+    return adbStatusSchema.parse(result)
+  },
+
+  browseForAdbExecutable: async () => {
+    const result: unknown = await ipcRenderer.invoke(IpcChannel.BrowseForAdbExecutable)
+    return typeof result === 'string' ? result : null
   }
 }
 

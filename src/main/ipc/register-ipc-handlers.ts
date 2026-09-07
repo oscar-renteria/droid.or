@@ -18,7 +18,7 @@ import { registerRecoveryHandlers } from './handlers/recovery.handler'
 export function registerIpcHandlers(context: AppContext): void {
   ipcMain.handle(IpcChannel.GetAppInfo, () => getAppInfo())
 
-  registerAdbHandlers(context.adbClient)
+  registerAdbHandlers(context.adbClient, context.adbSettingsService)
   registerDeviceHandlers(context.deviceRegistry)
   registerDashboardHandlers(context.adbClient, context.deviceRegistry)
   registerPackagesHandlers(context.adbClient, context.deviceRegistry, context.appMetadataService)

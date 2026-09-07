@@ -1,4 +1,5 @@
 import type { AnalyzeDeviceResult } from './analyzer'
+import type { AdbStatus } from './adb-settings'
 import type { AppInfo } from './app-info'
 import type { AdbAvailability, KnownDevice } from './device'
 import type { DeviceDashboardInfo } from './device-dashboard'
@@ -14,6 +15,22 @@ import type { DeviceChanges } from './recovery'
 export interface DroidorApi {
   getAppInfo: () => Promise<AppInfo>
   getAdbAvailability: () => Promise<AdbAvailability>
+  /** Full picture of where the effective adb command came from and what
+   *  else is available (a managed download, a configured custom path). */
+  getAdbStatus: () => Promise<AdbStatus>
+  /** Validates the path before persisting it — rejects if it doesn't look
+   *  like a working adb executable. Pass null to clear a previous
+   *  override. Takes effect immediately, including for any already-open
+   *  device watch. */
+  setCustomAdbPath: (path: string | null) => Promise<AdbStatus>
+  /** Downloads the official platform-tools package for this OS/arch
+   *  directly from Google's own distribution server, verifies it, and (if
+   *  no custom path is set) switches to it immediately. Rejects if this
+   *  platform/architecture has no managed build available. */
+  downloadPlatformTools: () => Promise<AdbStatus>
+  /** Opens a native file picker for choosing an adb executable. Resolves
+   *  to null if the user cancels. */
+  browseForAdbExecutable: () => Promise<string | null>
   getDevices: () => Promise<KnownDevice[]>
   renameDevice: (id: string, nickname: string | null) => Promise<void>
   removeDevice: (id: string) => Promise<void>

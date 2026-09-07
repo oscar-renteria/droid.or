@@ -27,12 +27,18 @@ export class FakeAdbClient implements AdbClient {
   readonly pullResponses = new Map<string, Error | undefined>()
   readonly pullCalls: Array<{ serial: string; remotePath: string; localPath: string }> = []
   watchCallCount = 0
+  /** Records every command the tested code switched to, for assertions. */
+  adbCommandHistory: string[] = []
 
   private onUpdate: ((devices: RawAdbDevice[]) => void) | null = null
   private onError: ((error: Error) => void) | null = null
 
   getAvailability(): Promise<AdbAvailability> {
     return Promise.resolve(this.availability)
+  }
+
+  setAdbCommand(adbCommand: string): void {
+    this.adbCommandHistory.push(adbCommand)
   }
 
   listDevicesOnce(): Promise<RawAdbDevice[]> {

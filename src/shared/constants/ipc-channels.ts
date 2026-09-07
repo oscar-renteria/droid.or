@@ -6,6 +6,10 @@
 export enum IpcChannel {
   GetAppInfo = 'app:get-info',
   GetAdbAvailability = 'adb:get-availability',
+  GetAdbStatus = 'adb:get-status',
+  SetCustomAdbPath = 'adb:set-custom-path',
+  DownloadPlatformTools = 'adb:download-platform-tools',
+  BrowseForAdbExecutable = 'adb:browse-for-executable',
   GetDevices = 'device:get-all',
   RenameDevice = 'device:rename',
   RemoveDevice = 'device:remove',

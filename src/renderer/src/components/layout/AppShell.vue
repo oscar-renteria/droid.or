@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NAlert, NTabPane, NTabs } from 'naive-ui'
+import { NAlert, NButton, NTabPane, NTabs } from 'naive-ui'
 import { onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAdbAvailability } from '@renderer/composables/useAdbAvailability'
@@ -64,6 +64,9 @@ function onTabUpdate(name: string): void {
       class="shrink-0 rounded-none"
     >
       {{ adbAvailability.reason }}
+      <NButton size="tiny" class="mt-2" @click="router.push({ name: 'settings' })">
+        Go to Settings
+      </NButton>
     </NAlert>
 
     <div class="flex min-h-0 flex-1">

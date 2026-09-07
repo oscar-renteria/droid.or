@@ -5,6 +5,7 @@ import HistoryView from '@renderer/views/HistoryView.vue'
 import OverviewView from '@renderer/views/OverviewView.vue'
 import PlaceholderView from '@renderer/views/PlaceholderView.vue'
 import RecoveryView from '@renderer/views/RecoveryView.vue'
+import SettingsView from '@renderer/views/SettingsView.vue'
 
 /**
  * Hash history is used because the renderer is loaded from a file:// URL in
@@ -42,11 +43,7 @@ export const router = createRouter({
     {
       path: '/settings',
       name: 'settings',
-      component: PlaceholderView,
-      props: {
-        title: 'Settings',
-        description: 'ADB configuration and application preferences land here.'
-      }
+      component: SettingsView
     },
     {
       path: '/logs',
