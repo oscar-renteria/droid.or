@@ -8,6 +8,7 @@ import { createTrackDevicesFrameSplitter } from './track-devices-frame-reader'
 const EXEC_TIMEOUT_MS = 10_000
 const SHELL_COMMAND_TIMEOUT_MS = 30_000
 const PULL_TIMEOUT_MS = 120_000
+const INSTALL_TIMEOUT_MS = 180_000
 
 export interface MutationCommandResult {
   exitCode: number
@@ -51,6 +52,12 @@ export interface AdbClient {
    *  extract its label/icon locally — nothing about this reads from or
    *  writes to arbitrary device paths chosen by the renderer). */
   pullFile(serial: string, remotePath: string, localPath: string): Promise<void>
+  /** Installs (or replaces, always with -r) a local .apk file — a direct
+   *  `adb install`, not a `shell pm` command, since installation is a
+   *  host-side adb verb of its own. Same "never discard stdout/stderr on
+   *  a non-zero exit" behavior as runMutationCommand, for the same
+   *  reason: adb's own failure text is the diagnostic a user needs. */
+  installApk(serial: string, localApkPath: string): Promise<MutationCommandResult>
   /** Starts a persistent `adb track-devices` watch. Returns a function that
    *  stops it; safe to call more than once. */
   watchDevices(
@@ -159,6 +166,23 @@ export class RealAdbClient implements AdbClient {
             return
           }
           resolve()
+        }
+      )
+    })
+  }
+
+  installApk(serial: string, localApkPath: string): Promise<MutationCommandResult> {
+    return new Promise((resolve, reject) => {
+      execFile(
+        this.adbCommand,
+        ['-s', serial, 'install', '-r', localApkPath],
+        { timeout: INSTALL_TIMEOUT_MS, maxBuffer: 4 * 1024 * 1024 },
+        (error, stdout, stderr) => {
+          if (error && typeof error.code !== 'number') {
+            reject(error)
+            return
+          }
+          resolve({ exitCode: typeof error?.code === 'number' ? error.code : 0, stdout, stderr })
         }
       )
     })

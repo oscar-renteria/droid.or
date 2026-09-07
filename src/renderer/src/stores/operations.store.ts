@@ -1,4 +1,8 @@
-import type { OperationHistoryEntry, OperationResult, OperationType } from '@shared/types/operation'
+import type {
+  MutatingOperationType,
+  OperationHistoryEntry,
+  OperationResult
+} from '@shared/types/operation'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
@@ -14,7 +18,7 @@ export const useOperationsStore = defineStore('operations', () => {
   async function performOperation(
     deviceId: string,
     packageName: string,
-    operation: OperationType
+    operation: MutatingOperationType
   ): Promise<OperationResult | null> {
     if (!window.droidor) {
       return null

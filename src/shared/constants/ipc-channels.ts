@@ -21,7 +21,10 @@ export enum IpcChannel {
   AnalyzeDevice = 'analyzer:analyze-device',
   PerformOperation = 'packages:perform-operation',
   GetOperationHistory = 'history:get-for-device',
-  GetDeviceChanges = 'recovery:get-device-changes'
+  GetDeviceChanges = 'recovery:get-device-changes',
+  BrowseForApkFiles = 'install:browse-for-apk-files',
+  InspectApkFile = 'install:inspect-apk-file',
+  InstallApk = 'install:install-apk'
 }
 
 /**

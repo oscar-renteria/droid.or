@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import AnalyzerView from '@renderer/views/AnalyzerView.vue'
 import AppsView from '@renderer/views/AppsView.vue'
 import HistoryView from '@renderer/views/HistoryView.vue'
+import InstallView from '@renderer/views/InstallView.vue'
 import OverviewView from '@renderer/views/OverviewView.vue'
 import PlaceholderView from '@renderer/views/PlaceholderView.vue'
 import RecoveryView from '@renderer/views/RecoveryView.vue'
@@ -29,6 +30,11 @@ export const router = createRouter({
       path: '/analyzer',
       name: 'analyzer',
       component: AnalyzerView
+    },
+    {
+      path: '/install',
+      name: 'install',
+      component: InstallView
     },
     {
       path: '/history',

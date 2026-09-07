@@ -1,4 +1,5 @@
 export type {
+  MutatingOperationType,
   OperationHistoryEntry,
   OperationResult,
   OperationType

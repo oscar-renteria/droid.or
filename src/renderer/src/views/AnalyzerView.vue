@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { PackageRecommendation } from '@shared/types/analyzer'
-import type { OperationType } from '@shared/types/operation'
+import type { MutatingOperationType } from '@shared/types/operation'
 import { NAlert, NButton, NEmpty, NSelect, NSpin, NTag, useMessage } from 'naive-ui'
 import { computed, ref, watch } from 'vue'
 import OperationConfirmDialog from '@renderer/components/OperationConfirmDialog.vue'
@@ -83,7 +83,7 @@ async function toggleIgnore(recommendation: PackageRecommendation): Promise<void
 }
 
 const confirmTarget = ref<PackageRecommendation | null>(null)
-const confirmOperation = ref<OperationType>('disable')
+const confirmOperation = ref<MutatingOperationType>('disable')
 const dialogVisible = computed({
   get: () => confirmTarget.value !== null,
   set: (value: boolean) => {
@@ -93,7 +93,10 @@ const dialogVisible = computed({
   }
 })
 
-function openConfirm(recommendation: PackageRecommendation, operation: OperationType): void {
+function openConfirm(
+  recommendation: PackageRecommendation,
+  operation: MutatingOperationType
+): void {
   confirmTarget.value = recommendation
   confirmOperation.value = operation
 }

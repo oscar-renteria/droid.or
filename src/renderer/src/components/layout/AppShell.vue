@@ -25,6 +25,7 @@ const tabs: Array<{ name: string; label: string }> = [
   { name: 'overview', label: 'Overview' },
   { name: 'apps', label: 'Apps' },
   { name: 'analyzer', label: 'Analyzer' },
+  { name: 'install', label: 'Install' },
   { name: 'history', label: 'History' },
   { name: 'recovery', label: 'Recovery' },
   { name: 'settings', label: 'Settings' },

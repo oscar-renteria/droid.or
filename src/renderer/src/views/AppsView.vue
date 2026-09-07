@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { AppPackageInfo } from '@shared/types/package'
-import type { OperationType } from '@shared/types/operation'
+import type { MutatingOperationType } from '@shared/types/operation'
 import {
   NButton,
   NDataTable,
@@ -115,7 +115,7 @@ const drawerVisible = computed({
   }
 })
 
-const confirmOperation = ref<OperationType | null>(null)
+const confirmOperation = ref<MutatingOperationType | null>(null)
 const confirmDialogVisible = computed({
   get: () => confirmOperation.value !== null,
   set: (value: boolean) => {
@@ -125,7 +125,7 @@ const confirmDialogVisible = computed({
   }
 })
 
-function openConfirm(operation: OperationType): void {
+function openConfirm(operation: MutatingOperationType): void {
   confirmOperation.value = operation
 }
 

@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
+import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron'
 import { IpcChannel, IpcEventChannel } from '@shared/constants/ipc-channels'
 import { appInfoSchema } from '@shared/validation/app-info.schema'
 import {
@@ -15,6 +15,7 @@ import {
 } from '@shared/validation/operation.schema'
 import { deviceChangesSchema } from '@shared/validation/recovery.schema'
 import { adbStatusSchema } from '@shared/validation/adb-settings.schema'
+import { apkInspectionResultSchema } from '@shared/validation/apk-install.schema'
 import type { DroidorApi } from '@shared/types/droidor-api'
 
 /**
@@ -120,6 +121,25 @@ const droidorApi: DroidorApi = {
   browseForAdbExecutable: async () => {
     const result: unknown = await ipcRenderer.invoke(IpcChannel.BrowseForAdbExecutable)
     return typeof result === 'string' ? result : null
+  },
+
+  browseForApkFiles: async () => {
+    const result: unknown = await ipcRenderer.invoke(IpcChannel.BrowseForApkFiles)
+    return Array.isArray(result)
+      ? result.filter((path): path is string => typeof path === 'string')
+      : []
+  },
+
+  getPathForFile: (file) => webUtils.getPathForFile(file),
+
+  inspectApkFile: async (deviceId, filePath) => {
+    const result = await ipcRenderer.invoke(IpcChannel.InspectApkFile, { deviceId, filePath })
+    return apkInspectionResultSchema.parse(result)
+  },
+
+  installApk: async (deviceId, filePath) => {
+    const result = await ipcRenderer.invoke(IpcChannel.InstallApk, { deviceId, filePath })
+    return operationResultSchema.parse(result)
   }
 }
 

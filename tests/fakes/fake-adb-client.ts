@@ -88,6 +88,13 @@ export class FakeAdbClient implements AdbClient {
     return Promise.resolve()
   }
 
+  /** Reuses the same mutationResponses/mutationCalls map as
+   *  runMutationCommand, keyed by the equivalent argv (without -s
+   *  <serial>) — install is just another mutating adb command. */
+  installApk(serial: string, localApkPath: string): Promise<MutationCommandResult> {
+    return this.runMutationCommand(serial, ['install', '-r', localApkPath])
+  }
+
   watchDevices(
     onUpdate: (devices: RawAdbDevice[]) => void,
     onError: (error: Error) => void

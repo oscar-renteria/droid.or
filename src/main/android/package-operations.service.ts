@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3'
-import type { OperationResult, OperationType } from '@shared/validation/operation.schema'
+import type { MutatingOperationType, OperationResult } from '@shared/validation/operation.schema'
 import type { AdbClient } from '../adb/adb-client'
 import { isValidPackageName } from '../adb/android-package-name'
 import { extractFailureMessage } from '../adb/mutation-result-parser'
@@ -12,7 +12,7 @@ import { recordOperation } from '../persistence/operation-history.repository'
  * which of these four to run, never any of their arguments beyond the
  * already-validated package name.
  */
-function buildCommandArgs(operation: OperationType, packageName: string): string[] {
+function buildCommandArgs(operation: MutatingOperationType, packageName: string): string[] {
   switch (operation) {
     case 'disable':
       return ['pm', 'disable-user', '--user', '0', packageName]
@@ -78,7 +78,7 @@ export async function performPackageOperation(
   adbClient: AdbClient,
   serial: string,
   packageName: string,
-  operation: OperationType
+  operation: MutatingOperationType
 ): Promise<OperationResult> {
   if (!isValidPackageName(packageName)) {
     throw new Error(`Refusing to operate on an invalid package name: "${packageName}"`)
@@ -130,7 +130,7 @@ async function getStateLabel(
   adbClient: AdbClient,
   serial: string,
   packageName: string,
-  operation: OperationType
+  operation: MutatingOperationType
 ): Promise<string | null> {
   if (operation === 'disable' || operation === 'enable') {
     return (await isPackageDisabled(adbClient, serial, packageName))
@@ -145,7 +145,7 @@ async function getStateLabel(
   return null
 }
 
-function describeSuccess(operation: OperationType): string {
+function describeSuccess(operation: MutatingOperationType): string {
   switch (operation) {
     case 'disable':
       return 'Package disabled for this user.'
