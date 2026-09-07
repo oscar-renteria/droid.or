@@ -4,5 +4,18 @@
  * so a typo becomes a compile error instead of a silent no-op handler.
  */
 export enum IpcChannel {
-  GetAppInfo = 'app:get-info'
+  GetAppInfo = 'app:get-info',
+  GetAdbAvailability = 'adb:get-availability',
+  GetDevices = 'device:get-all',
+  RenameDevice = 'device:rename',
+  RemoveDevice = 'device:remove',
+  ClearDeviceHistory = 'device:clear-history'
+}
+
+/**
+ * Push channels: the main process sends these unsolicited (webContents.send),
+ * rather than in response to a renderer-initiated invoke() call.
+ */
+export enum IpcEventChannel {
+  DevicesChanged = 'device:list-changed'
 }

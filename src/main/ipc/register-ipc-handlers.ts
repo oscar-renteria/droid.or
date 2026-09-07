@@ -1,12 +1,24 @@
-import { ipcMain } from 'electron'
-import { IpcChannel } from '@shared/constants/ipc-channels'
+import { BrowserWindow, ipcMain } from 'electron'
+import { IpcChannel, IpcEventChannel } from '@shared/constants/ipc-channels'
+import type { AppContext } from '../app-context'
 import { getAppInfo } from './handlers/app-info.handler'
+import { registerAdbHandlers } from './handlers/adb.handler'
+import { registerDeviceHandlers } from './handlers/device.handler'
 
 /**
  * Wires every supported IPC channel to its handler. This is the only place
  * that calls ipcMain.handle, so the full set of channels the renderer can
  * ever reach is visible in one file.
  */
-export function registerIpcHandlers(): void {
+export function registerIpcHandlers(context: AppContext): void {
   ipcMain.handle(IpcChannel.GetAppInfo, () => getAppInfo())
+
+  registerAdbHandlers(context.adbClient)
+  registerDeviceHandlers(context.deviceRegistry)
+
+  context.deviceRegistry.onDevicesChanged((devices) => {
+    for (const window of BrowserWindow.getAllWindows()) {
+      window.webContents.send(IpcEventChannel.DevicesChanged, devices)
+    }
+  })
 }

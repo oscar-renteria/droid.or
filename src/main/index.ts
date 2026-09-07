@@ -1,5 +1,6 @@
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
+import { createAppContext } from './app-context'
 import { registerIpcHandlers } from './ipc/register-ipc-handlers'
 
 // A second launch (e.g. double-clicking the app while it's already running)
@@ -57,13 +58,20 @@ app.on('second-instance', () => {
 })
 
 app.whenReady().then(() => {
-  registerIpcHandlers()
+  const context = createAppContext()
+  registerIpcHandlers(context)
+  context.deviceRegistry.start()
   createMainWindow()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createMainWindow()
     }
+  })
+
+  app.on('will-quit', () => {
+    context.deviceRegistry.stop()
+    context.db.close()
   })
 })
 

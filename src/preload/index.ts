@@ -1,6 +1,11 @@
-import { contextBridge, ipcRenderer } from 'electron'
-import { IpcChannel } from '@shared/constants/ipc-channels'
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
+import { IpcChannel, IpcEventChannel } from '@shared/constants/ipc-channels'
 import { appInfoSchema } from '@shared/validation/app-info.schema'
+import {
+  adbAvailabilitySchema,
+  deviceListSchema,
+  type KnownDevice
+} from '@shared/validation/device.schema'
 import type { DroidorApi } from '@shared/types/droidor-api'
 
 /**
@@ -13,6 +18,36 @@ const droidorApi: DroidorApi = {
   getAppInfo: async () => {
     const result = await ipcRenderer.invoke(IpcChannel.GetAppInfo)
     return appInfoSchema.parse(result)
+  },
+
+  getAdbAvailability: async () => {
+    const result = await ipcRenderer.invoke(IpcChannel.GetAdbAvailability)
+    return adbAvailabilitySchema.parse(result)
+  },
+
+  getDevices: async () => {
+    const result = await ipcRenderer.invoke(IpcChannel.GetDevices)
+    return deviceListSchema.parse(result)
+  },
+
+  renameDevice: async (id, nickname) => {
+    await ipcRenderer.invoke(IpcChannel.RenameDevice, { id, nickname })
+  },
+
+  removeDevice: async (id) => {
+    await ipcRenderer.invoke(IpcChannel.RemoveDevice, { id })
+  },
+
+  clearDeviceHistory: async () => {
+    await ipcRenderer.invoke(IpcChannel.ClearDeviceHistory)
+  },
+
+  onDevicesChanged: (callback) => {
+    const listener = (_event: IpcRendererEvent, payload: unknown): void => {
+      callback(deviceListSchema.parse(payload) as KnownDevice[])
+    }
+    ipcRenderer.on(IpcEventChannel.DevicesChanged, listener)
+    return () => ipcRenderer.removeListener(IpcEventChannel.DevicesChanged, listener)
   }
 }
 

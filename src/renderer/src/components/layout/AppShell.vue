@@ -1,12 +1,25 @@
 <script setup lang="ts">
-import { NTabPane, NTabs } from 'naive-ui'
+import { NAlert, NTabPane, NTabs } from 'naive-ui'
+import { onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAdbAvailability } from '@renderer/composables/useAdbAvailability'
 import { useAppInfo } from '@renderer/composables/useAppInfo'
+import { useDevicesStore } from '@renderer/stores/devices.store'
+import { getDeviceStateMeta } from '@renderer/utils/device-state-meta'
 import DeviceSidebar from './DeviceSidebar.vue'
 
 const route = useRoute()
 const router = useRouter()
 const { appInfo } = useAppInfo()
+const { adbAvailability } = useAdbAvailability()
+const devicesStore = useDevicesStore()
+
+onMounted(() => {
+  void devicesStore.initialize()
+})
+onUnmounted(() => {
+  devicesStore.dispose()
+})
 
 const tabs: Array<{ name: string; label: string }> = [
   { name: 'overview', label: 'Overview' },
@@ -31,8 +44,27 @@ function onTabUpdate(name: string): void {
       class="flex h-12 shrink-0 items-center justify-between border-b border-gray-200 px-4 dark:border-gray-800"
     >
       <span class="text-sm font-semibold">droid.or</span>
-      <span class="text-xs text-gray-500 dark:text-gray-400">No device selected</span>
+      <span class="text-xs text-gray-500 dark:text-gray-400">
+        <template v-if="devicesStore.selectedDevice">
+          {{
+            devicesStore.selectedDevice.nickname ??
+            devicesStore.selectedDevice.model ??
+            devicesStore.selectedDevice.id
+          }}
+          · {{ getDeviceStateMeta(devicesStore.selectedDevice.connectionState).label }}
+        </template>
+        <template v-else>No device selected</template>
+      </span>
     </header>
+
+    <NAlert
+      v-if="adbAvailability && !adbAvailability.available"
+      type="error"
+      title="ADB is not available"
+      class="shrink-0 rounded-none"
+    >
+      {{ adbAvailability.reason }}
+    </NAlert>
 
     <div class="flex min-h-0 flex-1">
       <DeviceSidebar />

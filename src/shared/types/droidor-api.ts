@@ -1,4 +1,5 @@
 import type { AppInfo } from './app-info'
+import type { AdbAvailability, KnownDevice } from './device'
 
 /**
  * Contract for the API the preload script exposes on window.droidor.
@@ -7,4 +8,12 @@ import type { AppInfo } from './app-info'
  */
 export interface DroidorApi {
   getAppInfo: () => Promise<AppInfo>
+  getAdbAvailability: () => Promise<AdbAvailability>
+  getDevices: () => Promise<KnownDevice[]>
+  renameDevice: (id: string, nickname: string | null) => Promise<void>
+  removeDevice: (id: string) => Promise<void>
+  clearDeviceHistory: () => Promise<void>
+  /** Subscribes to live device-list updates pushed from main. Returns an
+   *  unsubscribe function. */
+  onDevicesChanged: (callback: (devices: KnownDevice[]) => void) => () => void
 }

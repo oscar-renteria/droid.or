@@ -14,9 +14,10 @@
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "npm run build && electron-builder --mac",
     "preview": "node scripts/run-electron-vite.mjs preview",
-    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "typecheck": "npm run typecheck:node && npm run typecheck:web && npm run typecheck:test",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
     "typecheck:web": "vue-tsc --noEmit -p tsconfig.web.json",
+    "typecheck:test": "tsc --noEmit -p tsconfig.test.json",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -24,15 +25,17 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@vicons/ionicons5": "0.13.0",
+    "better-sqlite3": "13.0.3",
     "naive-ui": "2.45.3",
     "pinia": "4.0.3",
     "vue": "3.5.42",
     "vue-router": "5.3.1",
-    "zod": "4.5.4",
-    "@vicons/ionicons5": "0.13.0"
+    "zod": "4.5.4"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@types/better-sqlite3": "9.6.0",
     "@tailwindcss/vite": "4.3.3",
     "@types/node": "26.5.0",
     "@typescript-eslint/eslint-plugin": "8.69.0",
