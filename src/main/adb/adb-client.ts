@@ -17,6 +17,12 @@ export interface AdbClient {
   getAvailability(): Promise<AdbAvailability>
   listDevicesOnce(): Promise<RawAdbDevice[]>
   getDeviceProperties(serial: string): Promise<Map<string, string>>
+  /** Runs one predefined, hard-coded shell command against a device and
+   *  returns its raw stdout. `args` is always a fixed argv array chosen by
+   *  the caller in source code — never built from renderer/user input — so
+   *  this stays within "predefined ADB operations only", not a general
+   *  shell escape hatch. */
+  shellCommand(serial: string, args: string[]): Promise<string>
   /** Starts a persistent `adb track-devices` watch. Returns a function that
    *  stops it; safe to call more than once. */
   watchDevices(
@@ -65,6 +71,23 @@ export class RealAdbClient implements AdbClient {
             return
           }
           resolve(parseGetprop(stdout))
+        }
+      )
+    })
+  }
+
+  shellCommand(serial: string, args: string[]): Promise<string> {
+    return new Promise((resolve, reject) => {
+      execFile(
+        this.adbCommand,
+        ['-s', serial, 'shell', ...args],
+        { timeout: EXEC_TIMEOUT_MS, maxBuffer: 4 * 1024 * 1024 },
+        (error, stdout) => {
+          if (error) {
+            reject(error)
+            return
+          }
+          resolve(stdout)
         }
       )
     })

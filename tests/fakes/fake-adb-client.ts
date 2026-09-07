@@ -11,6 +11,8 @@ import type { AdbAvailability } from '@shared/validation/device.schema'
 export class FakeAdbClient implements AdbClient {
   availability: AdbAvailability = { available: true, version: '1.0.41-fake' }
   readonly deviceProperties = new Map<string, Map<string, string>>()
+  /** Keyed by `${serial}\n${args.join(' ')}`. */
+  readonly shellResponses = new Map<string, string>()
   watchCallCount = 0
 
   private onUpdate: ((devices: RawAdbDevice[]) => void) | null = null
@@ -30,6 +32,15 @@ export class FakeAdbClient implements AdbClient {
       return Promise.reject(new Error(`FakeAdbClient: no properties configured for ${serial}`))
     }
     return Promise.resolve(properties)
+  }
+
+  shellCommand(serial: string, args: string[]): Promise<string> {
+    const key = `${serial}\n${args.join(' ')}`
+    const response = this.shellResponses.get(key)
+    if (response === undefined) {
+      return Promise.reject(new Error(`FakeAdbClient: no shell response configured for "${key}"`))
+    }
+    return Promise.resolve(response)
   }
 
   watchDevices(

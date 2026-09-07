@@ -1,4 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
+import OverviewView from '@renderer/views/OverviewView.vue'
 import PlaceholderView from '@renderer/views/PlaceholderView.vue'
 
 /**
@@ -12,11 +13,7 @@ export const router = createRouter({
     {
       path: '/overview',
       name: 'overview',
-      component: PlaceholderView,
-      props: {
-        title: 'Overview',
-        description: 'The device dashboard lands here once device detection is implemented.'
-      }
+      component: OverviewView
     },
     {
       path: '/apps',

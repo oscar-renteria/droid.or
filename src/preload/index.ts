@@ -6,6 +6,7 @@ import {
   deviceListSchema,
   type KnownDevice
 } from '@shared/validation/device.schema'
+import { deviceDashboardInfoSchema } from '@shared/validation/device-dashboard.schema'
 import type { DroidorApi } from '@shared/types/droidor-api'
 
 /**
@@ -48,6 +49,11 @@ const droidorApi: DroidorApi = {
     }
     ipcRenderer.on(IpcEventChannel.DevicesChanged, listener)
     return () => ipcRenderer.removeListener(IpcEventChannel.DevicesChanged, listener)
+  },
+
+  getDeviceDashboardInfo: async (id) => {
+    const result = await ipcRenderer.invoke(IpcChannel.GetDeviceDashboardInfo, { id })
+    return deviceDashboardInfoSchema.parse(result)
   }
 }
 

@@ -1,5 +1,6 @@
 import type { AppInfo } from './app-info'
 import type { AdbAvailability, KnownDevice } from './device'
+import type { DeviceDashboardInfo } from './device-dashboard'
 
 /**
  * Contract for the API the preload script exposes on window.droidor.
@@ -16,4 +17,6 @@ export interface DroidorApi {
   /** Subscribes to live device-list updates pushed from main. Returns an
    *  unsubscribe function. */
   onDevicesChanged: (callback: (devices: KnownDevice[]) => void) => () => void
+  /** Rejects if the device isn't currently connected and authorized. */
+  getDeviceDashboardInfo: (id: string) => Promise<DeviceDashboardInfo>
 }

@@ -9,7 +9,8 @@ export enum IpcChannel {
   GetDevices = 'device:get-all',
   RenameDevice = 'device:rename',
   RemoveDevice = 'device:remove',
-  ClearDeviceHistory = 'device:clear-history'
+  ClearDeviceHistory = 'device:clear-history',
+  GetDeviceDashboardInfo = 'device:get-dashboard-info'
 }
 
 /**
