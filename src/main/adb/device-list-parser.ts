@@ -46,9 +46,14 @@ export function parseDeviceListBody(body: string): RawAdbDevice[] {
 }
 
 function parseDeviceLine(line: string): RawAdbDevice {
-  const tabIndex = line.indexOf('\t')
-  const serialField = tabIndex === -1 ? line : line.slice(0, tabIndex)
-  const rest = (tabIndex === -1 ? '' : line.slice(tabIndex + 1)).trim()
+  // Verified against a real device on the installed adb (platform-tools
+  // 34.0.4): the serial/state column is separated by space-padding for
+  // alignment, not a tab character as adb's own historical documentation
+  // examples suggest. Splitting on any whitespace run handles both that and
+  // a literal tab, in case a different adb build ever emits one.
+  const tokens = line.trim().split(/\s+/).filter(Boolean)
+  const serialField = tokens[0] ?? ''
+  const rest = tokens.slice(1).join(' ')
 
   if (rest.startsWith('no permissions')) {
     return {
@@ -59,14 +64,14 @@ function parseDeviceLine(line: string): RawAdbDevice {
     }
   }
 
-  const tokens = rest.split(/\s+/).filter(Boolean)
-  const stateToken = tokens[0] ?? 'offline'
+  const restTokens = tokens.slice(1)
+  const stateToken = restTokens[0] ?? 'offline'
   const state: DeviceConnectionState = KNOWN_STATES.has(stateToken)
     ? (stateToken as DeviceConnectionState)
     : 'offline'
 
   const properties: Record<string, string> = {}
-  for (const token of tokens.slice(1)) {
+  for (const token of restTokens.slice(1)) {
     const colonIndex = token.indexOf(':')
     if (colonIndex > 0) {
       properties[token.slice(0, colonIndex)] = token.slice(colonIndex + 1)
