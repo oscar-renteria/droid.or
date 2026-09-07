@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import type { PackageRecommendation } from '@shared/types/analyzer'
-import { NAlert, NButton, NEmpty, NSelect, NSpin, NTag } from 'naive-ui'
+import type { OperationType } from '@shared/types/operation'
+import { NAlert, NButton, NEmpty, NSelect, NSpin, NTag, useMessage } from 'naive-ui'
 import { computed, ref, watch } from 'vue'
+import OperationConfirmDialog from '@renderer/components/OperationConfirmDialog.vue'
 import { useAnalyzerStore } from '@renderer/stores/analyzer.store'
 import { useDevicesStore } from '@renderer/stores/devices.store'
+import { useOperationsStore } from '@renderer/stores/operations.store'
 import { usePackagesStore } from '@renderer/stores/packages.store'
 import { getDeviceStateMeta } from '@renderer/utils/device-state-meta'
 import { getRiskMeta } from '@renderer/utils/risk-meta'
@@ -11,6 +14,8 @@ import { getRiskMeta } from '@renderer/utils/risk-meta'
 const devicesStore = useDevicesStore()
 const analyzerStore = useAnalyzerStore()
 const packagesStore = usePackagesStore()
+const operationsStore = useOperationsStore()
+const message = useMessage()
 
 const selectedDevice = computed(() => devicesStore.selectedDevice)
 
@@ -75,6 +80,51 @@ function displayLabel(recommendation: PackageRecommendation): string {
 
 async function toggleIgnore(recommendation: PackageRecommendation): Promise<void> {
   await analyzerStore.setIgnored(recommendation.packageName, !recommendation.isIgnored)
+}
+
+const confirmTarget = ref<PackageRecommendation | null>(null)
+const confirmOperation = ref<OperationType>('disable')
+const dialogVisible = computed({
+  get: () => confirmTarget.value !== null,
+  set: (value: boolean) => {
+    if (!value) {
+      confirmTarget.value = null
+    }
+  }
+})
+
+function openConfirm(recommendation: PackageRecommendation, operation: OperationType): void {
+  confirmTarget.value = recommendation
+  confirmOperation.value = operation
+}
+
+async function handleConfirm(): Promise<void> {
+  const device = selectedDevice.value
+  const target = confirmTarget.value
+  if (!device || !target) {
+    return
+  }
+  confirmTarget.value = null
+
+  const result = await operationsStore.performOperation(
+    device.id,
+    target.packageName,
+    confirmOperation.value
+  )
+  if (!result) {
+    return
+  }
+
+  if (result.success) {
+    message.success(result.message)
+    if (confirmOperation.value === 'disable') {
+      target.isDisabled = true
+    } else if (confirmOperation.value === 'enable') {
+      target.isDisabled = false
+    }
+  } else {
+    message.error(result.message)
+  }
 }
 </script>
 
@@ -189,12 +239,29 @@ async function toggleIgnore(recommendation: PackageRecommendation): Promise<void
               </p>
 
               <div class="mt-3 flex items-center gap-2">
-                <NButton size="small" disabled title="Available in a later milestone">
+                <NButton
+                  size="small"
+                  :loading="operationsStore.pending.has(recommendation.packageName)"
+                  @click="openConfirm(recommendation, 'uninstall-for-user')"
+                >
                   Uninstall for User
                 </NButton>
-                <NButton size="small" disabled title="Available in a later milestone"
-                  >Disable</NButton
+                <NButton
+                  size="small"
+                  :loading="operationsStore.pending.has(recommendation.packageName)"
+                  @click="
+                    openConfirm(recommendation, recommendation.isDisabled ? 'enable' : 'disable')
+                  "
                 >
+                  {{ recommendation.isDisabled ? 'Enable' : 'Disable' }}
+                </NButton>
+                <NButton
+                  size="small"
+                  :loading="operationsStore.pending.has(recommendation.packageName)"
+                  @click="openConfirm(recommendation, 'clear-data')"
+                >
+                  Clear Data
+                </NButton>
                 <NButton size="small" quaternary @click="toggleIgnore(recommendation)">
                   {{ recommendation.isIgnored ? 'Un-ignore' : 'Ignore' }}
                 </NButton>
@@ -204,5 +271,16 @@ async function toggleIgnore(recommendation: PackageRecommendation): Promise<void
         </div>
       </div>
     </NSpin>
+
+    <OperationConfirmDialog
+      v-if="confirmTarget"
+      v-model:show="dialogVisible"
+      :package-name="confirmTarget.packageName"
+      :display-name="displayLabel(confirmTarget)"
+      :operation="confirmOperation"
+      :is-system-app="confirmTarget.isSystemApp"
+      :risk="confirmTarget.risk"
+      @confirm="handleConfirm"
+    />
   </div>
 </template>

@@ -3,6 +3,7 @@ import type { AppInfo } from './app-info'
 import type { AdbAvailability, KnownDevice } from './device'
 import type { DeviceDashboardInfo } from './device-dashboard'
 import type { AppMetadataResult, AppPackageInfo } from './package'
+import type { OperationHistoryEntry, OperationResult, OperationType } from './operation'
 
 /**
  * Contract for the API the preload script exposes on window.droidor.
@@ -36,4 +37,12 @@ export interface DroidorApi {
   /** Rejects if the device isn't currently connected and authorized. */
   analyzeDevice: (deviceId: string) => Promise<AnalyzeDeviceResult>
   setPackageIgnored: (packageName: string, ignored: boolean) => Promise<void>
+  /** Rejects if the device isn't currently connected and authorized, or if
+   *  another operation is already in progress for this exact package. */
+  performOperation: (
+    deviceId: string,
+    packageName: string,
+    operation: OperationType
+  ) => Promise<OperationResult>
+  getOperationHistory: (deviceId: string) => Promise<OperationHistoryEntry[]>
 }

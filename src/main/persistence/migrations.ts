@@ -49,6 +49,25 @@ const MIGRATIONS: Migration[] = [
         )
       `)
     }
+  },
+  {
+    version: 4,
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE operation_history (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          device_id TEXT NOT NULL,
+          package_name TEXT NOT NULL,
+          operation TEXT NOT NULL,
+          previous_state TEXT,
+          new_state TEXT,
+          success INTEGER NOT NULL,
+          raw_output TEXT NOT NULL,
+          performed_at TEXT NOT NULL
+        );
+        CREATE INDEX idx_operation_history_device ON operation_history (device_id, performed_at DESC);
+      `)
+    }
   }
 ]
 

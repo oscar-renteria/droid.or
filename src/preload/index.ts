@@ -9,6 +9,10 @@ import {
 import { analyzeDeviceResultSchema } from '@shared/validation/analyzer.schema'
 import { deviceDashboardInfoSchema } from '@shared/validation/device-dashboard.schema'
 import { appMetadataResultSchema, packageListSchema } from '@shared/validation/package.schema'
+import {
+  operationHistoryListSchema,
+  operationResultSchema
+} from '@shared/validation/operation.schema'
 import type { DroidorApi } from '@shared/types/droidor-api'
 
 /**
@@ -75,6 +79,20 @@ const droidorApi: DroidorApi = {
 
   setPackageIgnored: async (packageName, ignored) => {
     await ipcRenderer.invoke(IpcChannel.SetPackageIgnored, { packageName, ignored })
+  },
+
+  performOperation: async (deviceId, packageName, operation) => {
+    const result = await ipcRenderer.invoke(IpcChannel.PerformOperation, {
+      deviceId,
+      packageName,
+      operation
+    })
+    return operationResultSchema.parse(result)
+  },
+
+  getOperationHistory: async (deviceId) => {
+    const result = await ipcRenderer.invoke(IpcChannel.GetOperationHistory, { deviceId })
+    return operationHistoryListSchema.parse(result)
   }
 }
 

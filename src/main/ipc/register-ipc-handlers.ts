@@ -6,6 +6,7 @@ import { registerAdbHandlers } from './handlers/adb.handler'
 import { registerAnalyzerHandlers } from './handlers/analyzer.handler'
 import { registerDashboardHandlers } from './handlers/dashboard.handler'
 import { registerDeviceHandlers } from './handlers/device.handler'
+import { registerOperationsHandlers } from './handlers/operations.handler'
 import { registerPackagesHandlers } from './handlers/packages.handler'
 
 /**
@@ -21,6 +22,7 @@ export function registerIpcHandlers(context: AppContext): void {
   registerDashboardHandlers(context.adbClient, context.deviceRegistry)
   registerPackagesHandlers(context.adbClient, context.deviceRegistry, context.appMetadataService)
   registerAnalyzerHandlers(context.db, context.adbClient, context.deviceRegistry)
+  registerOperationsHandlers(context.db, context.adbClient, context.deviceRegistry)
 
   context.deviceRegistry.onDevicesChanged((devices) => {
     for (const window of BrowserWindow.getAllWindows()) {

@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import AnalyzerView from '@renderer/views/AnalyzerView.vue'
 import AppsView from '@renderer/views/AppsView.vue'
+import HistoryView from '@renderer/views/HistoryView.vue'
 import OverviewView from '@renderer/views/OverviewView.vue'
 import PlaceholderView from '@renderer/views/PlaceholderView.vue'
 
@@ -30,11 +31,7 @@ export const router = createRouter({
     {
       path: '/history',
       name: 'history',
-      component: PlaceholderView,
-      props: {
-        title: 'Operation History',
-        description: 'A record of every change this application makes lands here.'
-      }
+      component: HistoryView
     },
     {
       path: '/recovery',

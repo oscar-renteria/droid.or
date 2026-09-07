@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AppPackageInfo } from '@shared/types/package'
+import type { OperationType } from '@shared/types/operation'
 import {
   NButton,
   NDataTable,
@@ -11,10 +12,13 @@ import {
   NInput,
   NSelect,
   NTag,
+  useMessage,
   type DataTableColumns
 } from 'naive-ui'
 import { computed, h, ref, watch } from 'vue'
+import OperationConfirmDialog from '@renderer/components/OperationConfirmDialog.vue'
 import { useDevicesStore } from '@renderer/stores/devices.store'
+import { useOperationsStore } from '@renderer/stores/operations.store'
 import { usePackagesStore } from '@renderer/stores/packages.store'
 import { getDeviceStateMeta } from '@renderer/utils/device-state-meta'
 import {
@@ -30,6 +34,8 @@ const RECENT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
 
 const devicesStore = useDevicesStore()
 const packagesStore = usePackagesStore()
+const operationsStore = useOperationsStore()
+const message = useMessage()
 
 const selectedDevice = computed(() => devicesStore.selectedDevice)
 const searchText = ref('')
@@ -108,6 +114,46 @@ const drawerVisible = computed({
     }
   }
 })
+
+const confirmOperation = ref<OperationType | null>(null)
+const confirmDialogVisible = computed({
+  get: () => confirmOperation.value !== null,
+  set: (value: boolean) => {
+    if (!value) {
+      confirmOperation.value = null
+    }
+  }
+})
+
+function openConfirm(operation: OperationType): void {
+  confirmOperation.value = operation
+}
+
+async function handleConfirm(): Promise<void> {
+  const device = selectedDevice.value
+  const pkg = selectedPackage.value
+  const operation = confirmOperation.value
+  if (!device || !pkg || !operation) {
+    return
+  }
+  confirmOperation.value = null
+
+  const result = await operationsStore.performOperation(device.id, pkg.packageName, operation)
+  if (!result) {
+    return
+  }
+
+  if (result.success) {
+    message.success(result.message)
+    if (operation === 'disable') {
+      pkg.isDisabled = true
+    } else if (operation === 'enable') {
+      pkg.isDisabled = false
+    }
+  } else {
+    message.error(result.message)
+  }
+}
 
 const selectedPackageMetadata = computed(() => {
   if (!selectedPackage.value) {
@@ -317,7 +363,42 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
             selectedPackage.apkPath ?? 'Not available'
           }}</NDescriptionsItem>
         </NDescriptions>
+
+        <div class="mt-4 flex flex-wrap items-center gap-2">
+          <NButton
+            size="small"
+            :loading="operationsStore.pending.has(selectedPackage.packageName)"
+            @click="openConfirm('uninstall-for-user')"
+          >
+            Uninstall for User
+          </NButton>
+          <NButton
+            size="small"
+            :loading="operationsStore.pending.has(selectedPackage.packageName)"
+            @click="openConfirm(selectedPackage.isDisabled ? 'enable' : 'disable')"
+          >
+            {{ selectedPackage.isDisabled ? 'Enable' : 'Disable' }}
+          </NButton>
+          <NButton
+            size="small"
+            :loading="operationsStore.pending.has(selectedPackage.packageName)"
+            @click="openConfirm('clear-data')"
+          >
+            Clear Data
+          </NButton>
+        </div>
       </NDrawerContent>
     </NDrawer>
+
+    <OperationConfirmDialog
+      v-if="selectedPackage && confirmOperation"
+      v-model:show="confirmDialogVisible"
+      :package-name="selectedPackage.packageName"
+      :display-name="selectedPackageMetadata?.label ?? selectedPackage.displayName"
+      :operation="confirmOperation"
+      :is-system-app="selectedPackage.isSystemApp"
+      :risk="null"
+      @confirm="handleConfirm"
+    />
   </div>
 </template>

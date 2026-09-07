@@ -9,6 +9,12 @@ const EXEC_TIMEOUT_MS = 10_000
 const SHELL_COMMAND_TIMEOUT_MS = 30_000
 const PULL_TIMEOUT_MS = 120_000
 
+export interface MutationCommandResult {
+  exitCode: number
+  stdout: string
+  stderr: string
+}
+
 /**
  * Everything the rest of the app needs from ADB, kept narrow on purpose so a
  * FakeAdbClient (used in tests, and by anyone developing without a phone
@@ -25,6 +31,16 @@ export interface AdbClient {
    *  this stays within "predefined ADB operations only", not a general
    *  shell escape hatch. */
   shellCommand(serial: string, args: string[]): Promise<string>
+  /** Like shellCommand, but for predefined *mutating* operations: resolves
+   *  with the exit code and both stdout/stderr regardless of whether the
+   *  command reported success or failure (only rejects for a real spawn
+   *  failure, e.g. adb itself missing). Verified against a real device that
+   *  this matters: `pm uninstall` writes its failure text to stdout while
+   *  `pm disable-user`/`pm enable` write theirs to stderr as a raw Java
+   *  exception dump, and plain execFile-style rejection on a non-zero exit
+   *  discards that text — which is exactly the diagnostic a user needs to
+   *  see when an operation fails. */
+  runMutationCommand(serial: string, args: string[]): Promise<MutationCommandResult>
   /** Copies one file from the device to a local path (e.g. an APK, to
    *  extract its label/icon locally — nothing about this reads from or
    *  writes to arbitrary device paths chosen by the renderer). */
@@ -98,6 +114,24 @@ export class RealAdbClient implements AdbClient {
             return
           }
           resolve(stdout)
+        }
+      )
+    })
+  }
+
+  runMutationCommand(serial: string, args: string[]): Promise<MutationCommandResult> {
+    return new Promise((resolve, reject) => {
+      execFile(
+        this.adbCommand,
+        ['-s', serial, 'shell', ...args],
+        { timeout: SHELL_COMMAND_TIMEOUT_MS, maxBuffer: 4 * 1024 * 1024 },
+        (error, stdout, stderr) => {
+          if (error && typeof error.code !== 'number') {
+            // Not a command exit code — adb itself failed to spawn/run.
+            reject(error)
+            return
+          }
+          resolve({ exitCode: typeof error?.code === 'number' ? error.code : 0, stdout, stderr })
         }
       )
     })
