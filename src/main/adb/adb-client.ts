@@ -6,6 +6,7 @@ import { parseGetprop } from './getprop-parser'
 import { createTrackDevicesFrameSplitter } from './track-devices-frame-reader'
 
 const EXEC_TIMEOUT_MS = 10_000
+const SHELL_COMMAND_TIMEOUT_MS = 30_000
 
 /**
  * Everything the rest of the app needs from ADB, kept narrow on purpose so a
@@ -81,7 +82,11 @@ export class RealAdbClient implements AdbClient {
       execFile(
         this.adbCommand,
         ['-s', serial, 'shell', ...args],
-        { timeout: EXEC_TIMEOUT_MS, maxBuffer: 4 * 1024 * 1024 },
+        // A bulk `dumpsys package packages` on a heavily bloated device can
+        // run past ten seconds and several megabytes of output (a real
+        // 595-package device produced ~3MB), well beyond a typical
+        // one-line shell command.
+        { timeout: SHELL_COMMAND_TIMEOUT_MS, maxBuffer: 32 * 1024 * 1024 },
         (error, stdout) => {
           if (error) {
             reject(error)

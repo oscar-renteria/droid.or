@@ -5,6 +5,7 @@ import { getAppInfo } from './handlers/app-info.handler'
 import { registerAdbHandlers } from './handlers/adb.handler'
 import { registerDashboardHandlers } from './handlers/dashboard.handler'
 import { registerDeviceHandlers } from './handlers/device.handler'
+import { registerPackagesHandlers } from './handlers/packages.handler'
 
 /**
  * Wires every supported IPC channel to its handler. This is the only place
@@ -17,6 +18,7 @@ export function registerIpcHandlers(context: AppContext): void {
   registerAdbHandlers(context.adbClient)
   registerDeviceHandlers(context.deviceRegistry)
   registerDashboardHandlers(context.adbClient, context.deviceRegistry)
+  registerPackagesHandlers(context.adbClient, context.deviceRegistry)
 
   context.deviceRegistry.onDevicesChanged((devices) => {
     for (const window of BrowserWindow.getAllWindows()) {

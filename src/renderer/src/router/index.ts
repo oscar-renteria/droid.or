@@ -1,4 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
+import AppsView from '@renderer/views/AppsView.vue'
 import OverviewView from '@renderer/views/OverviewView.vue'
 import PlaceholderView from '@renderer/views/PlaceholderView.vue'
 
@@ -18,11 +19,7 @@ export const router = createRouter({
     {
       path: '/apps',
       name: 'apps',
-      component: PlaceholderView,
-      props: {
-        title: 'Installed Applications',
-        description: 'The package list and filters land here in a later milestone.'
-      }
+      component: AppsView
     },
     {
       path: '/analyzer',
