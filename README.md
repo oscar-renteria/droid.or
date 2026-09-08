@@ -48,6 +48,11 @@ partition is not, and the app never claims otherwise.
 - **Managed ADB** — detects an existing `adb` install, lets you point at a
   custom executable, or downloads the official platform-tools package
   directly from Google's own distribution server.
+- **AI-assisted analysis (optional, off by default)** — an "Ask AI" button
+  for a second opinion on one package at a time, using a provider and API
+  key you configure yourself (Anthropic or any OpenAI-compatible endpoint).
+  Nothing is sent anywhere unless you click it, and the result is shown as
+  advisory only — it never overrides droid.or's own local classification.
 
 See [`docs/specification.md`](docs/specification.md) for the full original product
 specification this project is built against.
@@ -98,10 +103,9 @@ what's still outstanding.
 ## Project status
 
 This is an actively developed, milestone-by-milestone project. Core device
-management, debloating, backup/restore, and installer functionality are
-implemented and covered by an automated test suite. AI/web-assisted package
-analysis (an optional, pluggable enhancement to the local analyzer) is not
-yet implemented.
+management, debloating, backup/restore, installer, and optional AI-assisted
+analysis functionality are implemented and covered by an automated test
+suite.
 
 ## License
 

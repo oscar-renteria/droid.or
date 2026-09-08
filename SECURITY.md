@@ -83,20 +83,30 @@ dialogs are ever reached.
 
 ## Network usage
 
-The only network request this app makes is one the user explicitly
-triggers: downloading the official `platform-tools` package directly from
-Google's own distribution server (`dl.google.com`) when the user clicks
-"Download platform-tools" in Settings, having found no usable `adb`
-otherwise. That download is verified (the extracted binary is actually run
-and its version output checked) before it's trusted.
+Every network request this app makes is one the user explicitly triggers.
+There is no telemetry, no analytics, and no background/automatic network
+call anywhere in the codebase.
 
-There is no telemetry, no analytics, and no other outbound network call
-anywhere in the codebase. Package/device information is never sent
-anywhere for analysis — the only analysis provider implemented today is
-entirely local and offline (see `ARCHITECTURE.md`). If an AI/web-assisted
-analysis provider is added in the future, per the original specification
-it must be opt-in, must clearly disclose what's transmitted, and must
-never be the only way the app functions.
+- **Downloading `platform-tools`**: when the user clicks "Download
+  platform-tools" in Settings, having found no usable `adb` otherwise, the
+  official package is fetched directly from Google's own distribution
+  server (`dl.google.com`) and verified (the extracted binary is actually
+  run and its version output checked) before it's trusted.
+- **AI-assisted package analysis** (optional, off by default): only when
+  the user has configured a provider and API key in Settings, and only
+  when they click "Ask AI" on one specific package, a single request goes
+  to that provider (Anthropic's API, or a configured OpenAI-compatible
+  endpoint). It sends only manufacturer/model/Android version, the
+  package name, app label, version, requested permissions, and system/user
+  classification — never a device serial, never other packages, never
+  anything beyond that one package. This never runs automatically or in
+  bulk across a device. The response is shown as advisory free text,
+  labeled as such, and never merged into or treated as this app's own risk
+  classification (see `ARCHITECTURE.md`). The API key itself is encrypted
+  at rest via Electron's `safeStorage` (the OS's own keychain/credential
+  store) and is never sent back to the renderer once saved.
+
+No other package or device information is ever sent anywhere.
 
 ## Local-first persistence
 

@@ -93,14 +93,39 @@ the full installed-package list, merging `pm list packages` output with a
 `analyzeDevice` (`analyzer.service.ts`) layers a local, offline risk
 classifier (`risk-classifier.ts`) plus a curated table of well-known package
 names (`known-package-names.ts`) on top of that list to produce reviewable
-recommendations. This is the only analysis provider implemented today.
+recommendations. This local analyzer is what generates every recommendation
+shown across the app — it never depends on network access, and nothing
+below changes that.
 
-The original specification calls for this to sit behind a pluggable
+### Optional AI analysis
+
+A second, separate, on-demand capability sits alongside the local analyzer
+rather than replacing or feeding into it: `src/main/ai/` defines a narrow
+`AiProvider` interface (`analyzePackage(input, config) => { text, model }`)
+with two real implementations, `AnthropicProvider` and
+`OpenAiCompatibleProvider` (`src/main/android/ai-analysis.service.ts` picks
+between them based on what's configured in Settings). Both post a single
+JSON request via Electron's `net.request` — the same module the
+platform-tools downloader uses — and both take their actual HTTP call as an
+injectable constructor parameter purely for testability (Electron's `net`
+isn't available under Vitest), the identical pattern
+`platform-tools-manager.ts` already established for its own download
+function.
+
+This is only ever triggered per-package, on demand ("Ask AI" in the Apps
+drawer) — never automatically, never in bulk across a device. The result is
+rendered as free-text "AI opinion", never parsed into a `RiskLevel` or
+merged into the local analyzer's own output: per the original
+specification, AI output is advisory information, not authoritative truth.
+The API key is encrypted at rest via Electron's `safeStorage`
+(`ai-settings.repository.ts`, itself injectable the same way, for the same
+reason) and is never returned to the renderer once saved.
+
+This is a narrower realization of the specification's suggested
 `PackageAnalysisProvider` abstraction (local rules / knowledge base / AI /
-web research), so an optional AI-assisted provider could be added later
-without the app depending on it. That abstraction has **not** been built
-yet — there's exactly one provider, and it's entirely local. No package
-information is ever sent anywhere for analysis in the current codebase.
+web research) — scoped here to just the AI leg, kept deliberately separate
+from (not layered underneath) the existing local classifier, rather than
+unifying both behind one shared interface.
 
 ## Persistence
 
