@@ -74,7 +74,7 @@ async function installOne(filePath: string): Promise<void> {
   if (!device || !item) {
     return
   }
-  await apkInstallStore.installItem(device.id, item)
+  await apkInstallStore.installItem(device.id, item.filePath)
   if (item.status === 'success') {
     message.success(item.message ?? 'Installed.')
   } else if (item.status === 'failed') {

@@ -13,8 +13,14 @@ export default defineConfig({
     }
   },
   test: {
+    // Default environment for everything under tests/. Renderer/component
+    // tests that need a DOM (jsdom) opt in per file with a
+    // `// @vitest-environment jsdom` docblock at the very top of the file
+    // — this project's Vitest version (5.x) has no config-level
+    // per-glob environment option (`environmentMatchGlobs` existed in
+    // older Vitest majors; it's silently ignored here, not an error,
+    // which is why this was wrong for a while with nothing to catch it).
     environment: 'node',
-    environmentMatchGlobs: [['tests/renderer/**', 'jsdom']],
     include: ['tests/**/*.test.ts']
   }
 })
