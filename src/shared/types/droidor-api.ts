@@ -8,6 +8,7 @@ import type { MutatingOperationType, OperationHistoryEntry, OperationResult } fr
 import type { DeviceChanges } from './recovery'
 import type { ApkInspectionResult } from './apk-install'
 import type { PackageBackupResult } from './apk-backup'
+import type { SecurityReviewResult } from './security-review'
 
 /**
  * Contract for the API the preload script exposes on window.droidor.
@@ -100,4 +101,11 @@ export interface DroidorApi {
     packageNames: string[],
     destDir: string
   ) => Promise<PackageBackupResult[]>
+  /** Two read-only signals for a human to review — which apps hold Device
+   *  Admin, and which hold an enabled Accessibility Service. This is
+   *  explicitly not malware detection: holding either is normal for many
+   *  legitimate apps, and a non-rooted ADB session cannot see firmware,
+   *  the kernel, or network activity at all. Rejects if the device isn't
+   *  currently connected and authorized. */
+  getSecurityReview: (deviceId: string) => Promise<SecurityReviewResult>
 }

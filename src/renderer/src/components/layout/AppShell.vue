@@ -29,6 +29,7 @@ const tabs: Array<{ name: string; label: string }> = [
   { name: 'install', label: 'Install' },
   { name: 'history', label: 'History' },
   { name: 'recovery', label: 'Recovery' },
+  { name: 'security', label: 'Security Review' },
   { name: 'settings', label: 'Settings' },
   { name: 'logs', label: 'Logs' }
 ]

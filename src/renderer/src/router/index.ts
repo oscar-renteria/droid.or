@@ -7,6 +7,7 @@ import OverviewView from '@renderer/views/OverviewView.vue'
 import PlaceholderView from '@renderer/views/PlaceholderView.vue'
 import ProfilesView from '@renderer/views/ProfilesView.vue'
 import RecoveryView from '@renderer/views/RecoveryView.vue'
+import SecurityReviewView from '@renderer/views/SecurityReviewView.vue'
 import SettingsView from '@renderer/views/SettingsView.vue'
 
 /**
@@ -51,6 +52,11 @@ export const router = createRouter({
       path: '/recovery',
       name: 'recovery',
       component: RecoveryView
+    },
+    {
+      path: '/security',
+      name: 'security',
+      component: SecurityReviewView
     },
     {
       path: '/settings',

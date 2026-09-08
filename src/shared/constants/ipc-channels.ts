@@ -26,7 +26,8 @@ export enum IpcChannel {
   InspectApkFile = 'install:inspect-apk-file',
   InstallApk = 'install:install-apk',
   BrowseForBackupDirectory = 'backup:browse-for-directory',
-  BackupPackages = 'backup:backup-packages'
+  BackupPackages = 'backup:backup-packages',
+  GetSecurityReview = 'security:get-review'
 }
 
 /**

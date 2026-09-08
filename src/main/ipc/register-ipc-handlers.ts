@@ -11,6 +11,7 @@ import { registerDeviceHandlers } from './handlers/device.handler'
 import { registerOperationsHandlers } from './handlers/operations.handler'
 import { registerPackagesHandlers } from './handlers/packages.handler'
 import { registerRecoveryHandlers } from './handlers/recovery.handler'
+import { registerSecurityReviewHandlers } from './handlers/security-review.handler'
 
 /**
  * Wires every supported IPC channel to its handler. This is the only place
@@ -29,6 +30,7 @@ export function registerIpcHandlers(context: AppContext): void {
   registerRecoveryHandlers(context.db, context.adbClient, context.deviceRegistry)
   registerApkInstallHandlers(context.db, context.adbClient, context.deviceRegistry)
   registerApkBackupHandlers(context.adbClient, context.deviceRegistry)
+  registerSecurityReviewHandlers(context.adbClient, context.deviceRegistry)
 
   context.deviceRegistry.onDevicesChanged((devices) => {
     for (const window of BrowserWindow.getAllWindows()) {

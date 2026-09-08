@@ -18,6 +18,7 @@ import { adbStatusSchema } from '@shared/validation/adb-settings.schema'
 import { apkInspectionResultSchema } from '@shared/validation/apk-install.schema'
 import { z } from 'zod'
 import { packageBackupResultSchema } from '@shared/validation/apk-backup.schema'
+import { securityReviewResultSchema } from '@shared/validation/security-review.schema'
 import type { DroidorApi } from '@shared/types/droidor-api'
 
 /**
@@ -156,6 +157,11 @@ const droidorApi: DroidorApi = {
       destDir
     })
     return z.array(packageBackupResultSchema).parse(result)
+  },
+
+  getSecurityReview: async (deviceId) => {
+    const result = await ipcRenderer.invoke(IpcChannel.GetSecurityReview, { deviceId })
+    return securityReviewResultSchema.parse(result)
   }
 }
 
