@@ -33,7 +33,10 @@ export enum IpcChannel {
   ClearLogs = 'logs:clear',
   ExportLogs = 'logs:export',
   GetSafetyDisclaimerStatus = 'safety-disclaimer:get-status',
-  AcknowledgeSafetyDisclaimer = 'safety-disclaimer:acknowledge'
+  AcknowledgeSafetyDisclaimer = 'safety-disclaimer:acknowledge',
+  GetAiSettings = 'ai:get-settings',
+  SetAiSettings = 'ai:set-settings',
+  AnalyzePackageWithAi = 'ai:analyze-package'
 }
 
 /**

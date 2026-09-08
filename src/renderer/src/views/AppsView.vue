@@ -2,6 +2,7 @@
 import type { AppPackageInfo } from '@shared/types/package'
 import type { MutatingOperationType } from '@shared/types/operation'
 import {
+  NAlert,
   NButton,
   NDataTable,
   NDescriptions,
@@ -11,13 +12,16 @@ import {
   NEmpty,
   NInput,
   NSelect,
+  NSpin,
   NTag,
   useMessage,
   type DataTableColumns
 } from 'naive-ui'
-import { computed, h, ref, watch } from 'vue'
+import { computed, h, onMounted, ref, watch } from 'vue'
 import BackupDialog from '@renderer/components/BackupDialog.vue'
 import OperationConfirmDialog from '@renderer/components/OperationConfirmDialog.vue'
+import { useAiAnalysisStore } from '@renderer/stores/ai-analysis.store'
+import { useAiSettingsStore } from '@renderer/stores/ai-settings.store'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { useOperationsStore } from '@renderer/stores/operations.store'
 import { usePackagesStore } from '@renderer/stores/packages.store'
@@ -37,7 +41,13 @@ const RECENT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
 const devicesStore = useDevicesStore()
 const packagesStore = usePackagesStore()
 const operationsStore = useOperationsStore()
+const aiSettingsStore = useAiSettingsStore()
+const aiAnalysisStore = useAiAnalysisStore()
 const message = useMessage()
+
+onMounted(() => {
+  void aiSettingsStore.load()
+})
 
 const selectedDevice = computed(() => devicesStore.selectedDevice)
 const searchText = ref('')
@@ -177,6 +187,28 @@ const selectedPackageMetadata = computed(() => {
   const cached = packagesStore.metadataCache.get(selectedPackage.value.packageName)
   return cached && cached !== 'loading' ? cached : null
 })
+
+const selectedPackageAiState = computed(() => {
+  if (!selectedPackage.value) {
+    return null
+  }
+  return aiAnalysisStore.stateFor(selectedPackage.value.packageName)
+})
+
+function askAi(): void {
+  const device = selectedDevice.value
+  const pkg = selectedPackage.value
+  if (!device || !pkg) {
+    return
+  }
+  void aiAnalysisStore.analyze(
+    device.id,
+    pkg.packageName,
+    selectedPackageMetadata.value?.label ?? pkg.displayName,
+    pkg.versionName,
+    pkg.isSystemApp
+  )
+}
 
 /** Triggers a lazy metadata fetch for a row and renders whatever's known so
  *  far — package name and curated name are instant, the real APK-parsed
@@ -447,6 +479,41 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
           >
             Clear Data
           </NButton>
+          <NButton
+            v-if="aiSettingsStore.settings?.provider"
+            size="small"
+            :loading="selectedPackageAiState?.loading ?? false"
+            @click="askAi"
+          >
+            Ask AI
+          </NButton>
+        </div>
+
+        <div
+          v-if="
+            selectedPackageAiState?.loading ||
+            selectedPackageAiState?.result ||
+            selectedPackageAiState?.errorMessage
+          "
+          class="mt-4"
+        >
+          <h4 class="text-xs font-medium text-gray-700 dark:text-gray-300">AI opinion</h4>
+          <NSpin :show="selectedPackageAiState.loading" class="mt-1 w-full">
+            <NAlert v-if="selectedPackageAiState.errorMessage" type="error" :show-icon="true">
+              {{ selectedPackageAiState.errorMessage }}
+            </NAlert>
+            <div
+              v-else-if="selectedPackageAiState.result"
+              class="rounded border border-gray-200 p-3 text-sm text-gray-700 dark:border-gray-800 dark:text-gray-300"
+            >
+              <p class="whitespace-pre-wrap">{{ selectedPackageAiState.result.text }}</p>
+              <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                {{ selectedPackageAiState.result.model }} — advisory only, not droid.or's own
+                classification.
+              </p>
+            </div>
+            <div v-else class="h-16" />
+          </NSpin>
         </div>
       </NDrawerContent>
     </NDrawer>

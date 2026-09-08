@@ -11,6 +11,7 @@ import type { PackageBackupResult } from './apk-backup'
 import type { SecurityReviewResult } from './security-review'
 import type { AdbCommandLogEntry } from './logs'
 import type { SafetyDisclaimerStatus } from './safety-disclaimer'
+import type { AiAnalysisResult, AiProviderId, AiSettings } from './ai-settings'
 
 /**
  * Contract for the API the preload script exposes on window.droidor.
@@ -128,4 +129,30 @@ export interface DroidorApi {
    *  disclaimer, and when. Persists across restarts. */
   getSafetyDisclaimerStatus: () => Promise<SafetyDisclaimerStatus>
   acknowledgeSafetyDisclaimer: () => Promise<SafetyDisclaimerStatus>
+  /** Which AI provider (if any) is configured, and whether a key is
+   *  stored — the key itself is never returned here. */
+  getAiSettings: () => Promise<AiSettings>
+  /** Omit `apiKey` to leave a previously-saved key untouched; pass null or
+   *  an empty string to clear it. Rejects if OS-level secret storage isn't
+   *  available on this system when a new key is provided. */
+  setAiSettings: (update: {
+    provider: AiProviderId | null
+    model: string | null
+    baseUrl: string | null
+    apiKey?: string | null | undefined
+  }) => Promise<AiSettings>
+  /** On-demand, single-package AI opinion — sends only manufacturer,
+   *  model, Android version, package name, app label, version, requested
+   *  permissions, and system/user classification; nothing else about the
+   *  device. Never run automatically or in bulk. Rejects if no provider is
+   *  configured yet, or if the device isn't currently connected and
+   *  authorized. The result is advisory only — it never feeds back into
+   *  this app's own risk classification. */
+  analyzePackageWithAi: (request: {
+    deviceId: string
+    packageName: string
+    displayName: string | null
+    versionName: string | null
+    isSystemApp: boolean
+  }) => Promise<AiAnalysisResult>
 }

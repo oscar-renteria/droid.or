@@ -1,14 +1,81 @@
 <script setup lang="ts">
-import { NAlert, NButton, NInput, NSpin, NTag, useMessage } from 'naive-ui'
+import type { AiProviderId } from '@shared/types/ai-settings'
+import { NAlert, NButton, NInput, NSelect, NSpin, NTag, useMessage } from 'naive-ui'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useAdbSettingsStore } from '@renderer/stores/adb-settings.store'
+import { useAiSettingsStore } from '@renderer/stores/ai-settings.store'
 
 const adbSettingsStore = useAdbSettingsStore()
+const aiSettingsStore = useAiSettingsStore()
 const message = useMessage()
 
 onMounted(() => {
   void adbSettingsStore.load()
+  void aiSettingsStore.load()
 })
+
+type AiProviderSelection = AiProviderId | 'none'
+
+const aiProviderOptions: Array<{ label: string; value: AiProviderSelection }> = [
+  { label: 'Disabled', value: 'none' },
+  { label: 'Anthropic (Claude)', value: 'anthropic' },
+  { label: 'OpenAI-compatible', value: 'openai-compatible' }
+]
+
+const providerInput = ref<AiProviderSelection>('none')
+const modelInput = ref('')
+const baseUrlInput = ref('')
+const apiKeyInput = ref('')
+const aiSaving = ref(false)
+
+watch(
+  () => aiSettingsStore.settings,
+  (settings) => {
+    providerInput.value = settings?.provider ?? 'none'
+    modelInput.value = settings?.model ?? ''
+    baseUrlInput.value = settings?.baseUrl ?? ''
+  },
+  { immediate: true }
+)
+
+async function saveAiSettings(): Promise<void> {
+  aiSaving.value = true
+  try {
+    const ok = await aiSettingsStore.save({
+      provider: providerInput.value === 'none' ? null : providerInput.value,
+      model: modelInput.value.trim().length > 0 ? modelInput.value.trim() : null,
+      baseUrl: baseUrlInput.value.trim().length > 0 ? baseUrlInput.value.trim() : null,
+      // Leave the stored key untouched unless the user actually typed a
+      // new one — never resend/overwrite it with an empty value just
+      // because the field is (as always) blank on load.
+      apiKey: apiKeyInput.value.length > 0 ? apiKeyInput.value : undefined
+    })
+    if (ok) {
+      apiKeyInput.value = ''
+      message.success('AI settings saved.')
+    }
+  } finally {
+    aiSaving.value = false
+  }
+}
+
+async function clearAiApiKey(): Promise<void> {
+  aiSaving.value = true
+  try {
+    const ok = await aiSettingsStore.save({
+      provider: providerInput.value === 'none' ? null : providerInput.value,
+      model: modelInput.value.trim().length > 0 ? modelInput.value.trim() : null,
+      baseUrl: baseUrlInput.value.trim().length > 0 ? baseUrlInput.value.trim() : null,
+      apiKey: null
+    })
+    if (ok) {
+      apiKeyInput.value = ''
+      message.success('API key cleared.')
+    }
+  } finally {
+    aiSaving.value = false
+  }
+}
 
 const customPathInput = ref('')
 watch(
@@ -158,6 +225,86 @@ async function downloadPlatformTools(): Promise<void> {
               Overrides both the downloaded and system-PATH ADB. Validated before it's saved.
             </p>
           </div>
+        </template>
+      </div>
+    </NSpin>
+
+    <NSpin :show="aiSettingsStore.loading">
+      <div class="flex flex-col gap-3 rounded border border-gray-200 p-4 dark:border-gray-800">
+        <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">AI Analysis (optional)</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+          Off by default. When enabled, an "Ask AI" button becomes available on individual packages
+          — nothing is sent anywhere unless you click it. Each request sends only the device's
+          manufacturer/model/Android version, the package name, app label, version, requested
+          permissions, and whether it's a system app. This never runs automatically or in bulk, and
+          an AI opinion is never treated as authoritative — it's shown alongside droid.or's own
+          local classification, not in place of it.
+        </p>
+
+        <NAlert v-if="aiSettingsStore.errorMessage" type="error" closable>
+          {{ aiSettingsStore.errorMessage }}
+        </NAlert>
+
+        <div>
+          <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Provider</label>
+          <NSelect v-model:value="providerInput" :options="aiProviderOptions" class="mt-1" />
+        </div>
+
+        <template v-if="providerInput !== 'none'">
+          <div>
+            <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Model</label>
+            <NInput
+              v-model:value="modelInput"
+              class="mt-1"
+              :placeholder="
+                providerInput === 'anthropic' ? 'e.g. claude-sonnet-5' : 'e.g. gpt-4o-mini'
+              "
+            />
+          </div>
+
+          <div v-if="providerInput === 'openai-compatible'">
+            <label class="text-xs font-medium text-gray-700 dark:text-gray-300">
+              Base URL (optional)
+            </label>
+            <NInput
+              v-model:value="baseUrlInput"
+              class="mt-1"
+              placeholder="https://api.openai.com/v1"
+            />
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Leave blank for OpenAI itself, or point at any OpenAI-compatible endpoint (Azure
+              OpenAI, a self-hosted proxy, ...).
+            </p>
+          </div>
+
+          <div>
+            <label class="text-xs font-medium text-gray-700 dark:text-gray-300">API key</label>
+            <NInput
+              v-model:value="apiKeyInput"
+              class="mt-1"
+              type="password"
+              show-password-on="click"
+              :placeholder="aiSettingsStore.settings?.hasApiKey ? 'A key is already set' : 'sk-...'"
+            />
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Stored encrypted using this OS's own secret storage. Leave blank to keep the existing
+              key when saving other fields.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <NButton type="primary" :loading="aiSaving" @click="saveAiSettings">Save</NButton>
+            <NButton
+              v-if="aiSettingsStore.settings?.hasApiKey"
+              :loading="aiSaving"
+              @click="clearAiApiKey"
+            >
+              Clear API key
+            </NButton>
+          </div>
+        </template>
+        <template v-else>
+          <NButton type="primary" :loading="aiSaving" @click="saveAiSettings">Save</NButton>
         </template>
       </div>
     </NSpin>

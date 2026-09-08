@@ -21,6 +21,7 @@ import { packageBackupResultSchema } from '@shared/validation/apk-backup.schema'
 import { securityReviewResultSchema } from '@shared/validation/security-review.schema'
 import { adbCommandLogListSchema } from '@shared/validation/logs.schema'
 import { safetyDisclaimerStatusSchema } from '@shared/validation/safety-disclaimer.schema'
+import { aiAnalysisResultSchema, aiSettingsSchema } from '@shared/validation/ai-settings.schema'
 import type { DroidorApi } from '@shared/types/droidor-api'
 
 /**
@@ -192,6 +193,21 @@ const droidorApi: DroidorApi = {
   acknowledgeSafetyDisclaimer: async () => {
     const result = await ipcRenderer.invoke(IpcChannel.AcknowledgeSafetyDisclaimer)
     return safetyDisclaimerStatusSchema.parse(result)
+  },
+
+  getAiSettings: async () => {
+    const result = await ipcRenderer.invoke(IpcChannel.GetAiSettings)
+    return aiSettingsSchema.parse(result)
+  },
+
+  setAiSettings: async (update) => {
+    const result = await ipcRenderer.invoke(IpcChannel.SetAiSettings, update)
+    return aiSettingsSchema.parse(result)
+  },
+
+  analyzePackageWithAi: async (request) => {
+    const result = await ipcRenderer.invoke(IpcChannel.AnalyzePackageWithAi, request)
+    return aiAnalysisResultSchema.parse(result)
   }
 }
 
