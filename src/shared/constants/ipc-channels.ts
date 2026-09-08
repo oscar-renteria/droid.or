@@ -30,7 +30,9 @@ export enum IpcChannel {
   GetSecurityReview = 'security:get-review',
   GetLogs = 'logs:get',
   ClearLogs = 'logs:clear',
-  ExportLogs = 'logs:export'
+  ExportLogs = 'logs:export',
+  GetSafetyDisclaimerStatus = 'safety-disclaimer:get-status',
+  AcknowledgeSafetyDisclaimer = 'safety-disclaimer:acknowledge'
 }
 
 /**

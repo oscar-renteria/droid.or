@@ -10,6 +10,7 @@ import type { ApkInspectionResult } from './apk-install'
 import type { PackageBackupResult } from './apk-backup'
 import type { SecurityReviewResult } from './security-review'
 import type { AdbCommandLogEntry } from './logs'
+import type { SafetyDisclaimerStatus } from './safety-disclaimer'
 
 /**
  * Contract for the API the preload script exposes on window.droidor.
@@ -119,4 +120,8 @@ export interface DroidorApi {
   /** Opens a native save-file dialog and writes the current log as JSON.
    *  Resolves to the chosen path, or null if the user cancels. */
   exportLogs: () => Promise<string | null>
+  /** Whether the user has ever clicked through the first-launch safety
+   *  disclaimer, and when. Persists across restarts. */
+  getSafetyDisclaimerStatus: () => Promise<SafetyDisclaimerStatus>
+  acknowledgeSafetyDisclaimer: () => Promise<SafetyDisclaimerStatus>
 }

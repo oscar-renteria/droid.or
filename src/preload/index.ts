@@ -20,6 +20,7 @@ import { z } from 'zod'
 import { packageBackupResultSchema } from '@shared/validation/apk-backup.schema'
 import { securityReviewResultSchema } from '@shared/validation/security-review.schema'
 import { adbCommandLogListSchema } from '@shared/validation/logs.schema'
+import { safetyDisclaimerStatusSchema } from '@shared/validation/safety-disclaimer.schema'
 import type { DroidorApi } from '@shared/types/droidor-api'
 
 /**
@@ -177,6 +178,16 @@ const droidorApi: DroidorApi = {
   exportLogs: async () => {
     const result: unknown = await ipcRenderer.invoke(IpcChannel.ExportLogs)
     return typeof result === 'string' ? result : null
+  },
+
+  getSafetyDisclaimerStatus: async () => {
+    const result = await ipcRenderer.invoke(IpcChannel.GetSafetyDisclaimerStatus)
+    return safetyDisclaimerStatusSchema.parse(result)
+  },
+
+  acknowledgeSafetyDisclaimer: async () => {
+    const result = await ipcRenderer.invoke(IpcChannel.AcknowledgeSafetyDisclaimer)
+    return safetyDisclaimerStatusSchema.parse(result)
   }
 }
 

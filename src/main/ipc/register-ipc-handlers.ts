@@ -12,6 +12,7 @@ import { registerLogsHandlers } from './handlers/logs.handler'
 import { registerOperationsHandlers } from './handlers/operations.handler'
 import { registerPackagesHandlers } from './handlers/packages.handler'
 import { registerRecoveryHandlers } from './handlers/recovery.handler'
+import { registerSafetyDisclaimerHandlers } from './handlers/safety-disclaimer.handler'
 import { registerSecurityReviewHandlers } from './handlers/security-review.handler'
 
 /**
@@ -33,6 +34,7 @@ export function registerIpcHandlers(context: AppContext): void {
   registerApkBackupHandlers(context.adbClient, context.deviceRegistry)
   registerSecurityReviewHandlers(context.adbClient, context.deviceRegistry)
   registerLogsHandlers(context.adbCommandLog)
+  registerSafetyDisclaimerHandlers(context.db)
 
   context.deviceRegistry.onDevicesChanged((devices) => {
     for (const window of BrowserWindow.getAllWindows()) {
