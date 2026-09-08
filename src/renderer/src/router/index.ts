@@ -3,8 +3,8 @@ import AnalyzerView from '@renderer/views/AnalyzerView.vue'
 import AppsView from '@renderer/views/AppsView.vue'
 import HistoryView from '@renderer/views/HistoryView.vue'
 import InstallView from '@renderer/views/InstallView.vue'
+import LogsView from '@renderer/views/LogsView.vue'
 import OverviewView from '@renderer/views/OverviewView.vue'
-import PlaceholderView from '@renderer/views/PlaceholderView.vue'
 import ProfilesView from '@renderer/views/ProfilesView.vue'
 import RecoveryView from '@renderer/views/RecoveryView.vue'
 import SecurityReviewView from '@renderer/views/SecurityReviewView.vue'
@@ -66,11 +66,7 @@ export const router = createRouter({
     {
       path: '/logs',
       name: 'logs',
-      component: PlaceholderView,
-      props: {
-        title: 'Logs',
-        description: 'A viewer for application and ADB operation logs lands here.'
-      }
+      component: LogsView
     }
   ]
 })

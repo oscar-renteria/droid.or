@@ -9,6 +9,7 @@ import type { DeviceChanges } from './recovery'
 import type { ApkInspectionResult } from './apk-install'
 import type { PackageBackupResult } from './apk-backup'
 import type { SecurityReviewResult } from './security-review'
+import type { AdbCommandLogEntry } from './logs'
 
 /**
  * Contract for the API the preload script exposes on window.droidor.
@@ -108,4 +109,14 @@ export interface DroidorApi {
    *  the kernel, or network activity at all. Rejects if the device isn't
    *  currently connected and authorized. */
   getSecurityReview: (deviceId: string) => Promise<SecurityReviewResult>
+  /** Every discrete ADB command this app has run this session (all
+   *  devices), newest first — an in-memory diagnostic log, not the
+   *  persisted "what did this app change" history (see
+   *  getOperationHistory/getDeviceChanges for that). Cleared on app
+   *  restart. */
+  getLogs: () => Promise<AdbCommandLogEntry[]>
+  clearLogs: () => Promise<void>
+  /** Opens a native save-file dialog and writes the current log as JSON.
+   *  Resolves to the chosen path, or null if the user cancels. */
+  exportLogs: () => Promise<string | null>
 }

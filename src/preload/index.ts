@@ -19,6 +19,7 @@ import { apkInspectionResultSchema } from '@shared/validation/apk-install.schema
 import { z } from 'zod'
 import { packageBackupResultSchema } from '@shared/validation/apk-backup.schema'
 import { securityReviewResultSchema } from '@shared/validation/security-review.schema'
+import { adbCommandLogListSchema } from '@shared/validation/logs.schema'
 import type { DroidorApi } from '@shared/types/droidor-api'
 
 /**
@@ -162,6 +163,20 @@ const droidorApi: DroidorApi = {
   getSecurityReview: async (deviceId) => {
     const result = await ipcRenderer.invoke(IpcChannel.GetSecurityReview, { deviceId })
     return securityReviewResultSchema.parse(result)
+  },
+
+  getLogs: async () => {
+    const result = await ipcRenderer.invoke(IpcChannel.GetLogs)
+    return adbCommandLogListSchema.parse(result)
+  },
+
+  clearLogs: async () => {
+    await ipcRenderer.invoke(IpcChannel.ClearLogs)
+  },
+
+  exportLogs: async () => {
+    const result: unknown = await ipcRenderer.invoke(IpcChannel.ExportLogs)
+    return typeof result === 'string' ? result : null
   }
 }
 
