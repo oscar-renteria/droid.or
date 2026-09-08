@@ -19,8 +19,18 @@ export async function fetchInstalledPackages(
 ): Promise<AppPackageInfo[]> {
   const [listOutput, disabledOutput, thirdPartyOutput, dumpOutput] = await Promise.all([
     adbClient.shellCommand(serial, ['pm', 'list', 'packages', '-f', '-i', '-u']),
-    adbClient.shellCommand(serial, ['pm', 'list', 'packages', '-d']),
-    adbClient.shellCommand(serial, ['pm', 'list', 'packages', '-3']),
+    // -u ("also include uninstalled packages") is required here, not just
+    // decorative — verified against a real Android 10 tablet where a
+    // disabled package (a real, currently-disabled Gmail) was completely
+    // absent from `pm list packages -d` without it, silently misreporting
+    // it as enabled. The same real device confirmed the identical gap for
+    // `-3` two lines below (a disabled third-party app vanished from it
+    // too, which would have misclassified it as a system app). The
+    // original Samsung/Android 16 device this was first built against
+    // happened to list disabled packages via `-d` alone, which is why
+    // this went unnoticed until a second, older device was tested.
+    adbClient.shellCommand(serial, ['pm', 'list', 'packages', '-d', '-u']),
+    adbClient.shellCommand(serial, ['pm', 'list', 'packages', '-3', '-u']),
     adbClient.shellCommand(serial, ['dumpsys', 'package', 'packages'])
   ])
 

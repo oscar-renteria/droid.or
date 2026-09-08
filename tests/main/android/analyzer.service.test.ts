@@ -22,8 +22,8 @@ function setUpPackageList(adb: FakeAdbClient): void {
       'package:/data/app/com.spotify.music/base.apk=com.spotify.music  installer=com.android.vending'
     ].join('\n')
   )
-  adb.shellResponses.set(`${SERIAL}\npm list packages -d`, '')
-  adb.shellResponses.set(`${SERIAL}\npm list packages -3`, 'package:com.spotify.music')
+  adb.shellResponses.set(`${SERIAL}\npm list packages -d -u`, '')
+  adb.shellResponses.set(`${SERIAL}\npm list packages -3 -u`, 'package:com.spotify.music')
   adb.shellResponses.set(`${SERIAL}\ndumpsys package packages`, '')
 }
 

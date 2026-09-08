@@ -16,8 +16,8 @@ describe('fetchInstalledPackages', () => {
         'package:/system/app/Disabled/d.apk=com.disabled.thing  installer=null'
       ].join('\n')
     )
-    adb.shellResponses.set(`${SERIAL}\npm list packages -d`, 'package:com.disabled.thing')
-    adb.shellResponses.set(`${SERIAL}\npm list packages -3`, 'package:com.example.app')
+    adb.shellResponses.set(`${SERIAL}\npm list packages -d -u`, 'package:com.disabled.thing')
+    adb.shellResponses.set(`${SERIAL}\npm list packages -3 -u`, 'package:com.example.app')
     adb.shellResponses.set(
       `${SERIAL}\ndumpsys package packages`,
       [
@@ -67,5 +67,31 @@ describe('fetchInstalledPackages', () => {
       versionName: null,
       versionCode: null
     })
+  })
+
+  it('passes -u alongside -d and -3, not just -f -i -u — a disabled third-party app was found completely absent from both without it on a real Android 10 device', async () => {
+    const adb = new FakeAdbClient()
+
+    adb.shellResponses.set(
+      `${SERIAL}\npm list packages -f -i -u`,
+      'package:/data/app/com.example.disabled3p/base.apk=com.example.disabled3p  installer=com.android.vending'
+    )
+    // Both queries include -u this time — reproduces the real device
+    // finding that a disabled package is invisible to `-d`/`-3` without
+    // it, by asserting the code actually sends -u, not by testing a
+    // fallback.
+    adb.shellResponses.set(`${SERIAL}\npm list packages -d -u`, 'package:com.example.disabled3p')
+    adb.shellResponses.set(`${SERIAL}\npm list packages -3 -u`, 'package:com.example.disabled3p')
+    adb.shellResponses.set(`${SERIAL}\ndumpsys package packages`, '')
+
+    const result = await fetchInstalledPackages(adb, SERIAL)
+
+    expect(result).toEqual([
+      expect.objectContaining({
+        packageName: 'com.example.disabled3p',
+        isSystemApp: false,
+        isDisabled: true
+      })
+    ])
   })
 })

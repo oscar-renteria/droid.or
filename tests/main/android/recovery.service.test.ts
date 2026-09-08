@@ -32,7 +32,7 @@ describe('getDeviceChanges', () => {
       rawOutput: 'ok'
     })
     adb.shellResponses.set(
-      `${SERIAL}\npm list packages -d com.example.disabled`,
+      `${SERIAL}\npm list packages -d -u com.example.disabled`,
       'package:com.example.disabled'
     )
 
@@ -63,7 +63,7 @@ describe('getDeviceChanges', () => {
     })
     // The device now reports it as enabled — e.g. the user flipped it back
     // on from Settings, entirely outside this app's knowledge.
-    adb.shellResponses.set(`${SERIAL}\npm list packages -d com.example.disabled`, '')
+    adb.shellResponses.set(`${SERIAL}\npm list packages -d -u com.example.disabled`, '')
 
     const changes = await getDeviceChanges(db, adb, SERIAL)
 
@@ -95,7 +95,7 @@ describe('getDeviceChanges', () => {
     expect(changes.disabled).toEqual([])
     // No shell call for this package should even have been made — it was
     // filtered out purely from the history fold, before any live check.
-    expect(adb.shellResponses.has(`${SERIAL}\npm list packages -d com.example.a`)).toBe(false)
+    expect(adb.shellResponses.has(`${SERIAL}\npm list packages -d -u com.example.a`)).toBe(false)
   })
 
   it('marks a still-uninstalled system package as restorable when pm still knows about it', async () => {
@@ -109,6 +109,7 @@ describe('getDeviceChanges', () => {
       rawOutput: 'ok'
     })
     adb.shellResponses.set(`${SERIAL}\npm list packages com.samsung.android.mhs.ai`, '')
+    adb.shellResponses.set(`${SERIAL}\npm list packages -d -u com.samsung.android.mhs.ai`, '')
     adb.shellResponses.set(
       `${SERIAL}\npm list packages -u com.samsung.android.mhs.ai`,
       'package:com.samsung.android.mhs.ai'
@@ -138,6 +139,7 @@ describe('getDeviceChanges', () => {
       rawOutput: 'ok'
     })
     adb.shellResponses.set(`${SERIAL}\npm list packages com.example.gone`, '')
+    adb.shellResponses.set(`${SERIAL}\npm list packages -d -u com.example.gone`, '')
     adb.shellResponses.set(`${SERIAL}\npm list packages -u com.example.gone`, '')
 
     const changes = await getDeviceChanges(db, adb, SERIAL)

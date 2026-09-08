@@ -44,23 +44,61 @@ const NOT_INSTALLED_STATE = 'not installed for this user'
  *  matches any package name *containing* the filter (verified against a
  *  real device: filtering for "com.google.android.gm" also matched
  *  "com.google.android.gms" and its sub-packages), so the filtered output
- *  still has to be parsed and checked for the exact name. */
+ *  still has to be parsed and checked for the exact name.
+ *
+ *  -u ("also include uninstalled packages") is required, not optional —
+ *  verified against a real Android 10 device where `-d` alone omitted a
+ *  package that genuinely was disabled, which made this function silently
+ *  and consistently report it as enabled both before and after a real
+ *  disable command actually succeeded (previousState === newState, so the
+ *  operation was wrongly reported as having failed to take effect). The
+ *  Android 16 device this was first built against didn't exhibit the
+ *  gap, which is why it went unnoticed until a second real device with an
+ *  older Android version was tested. */
 export async function isPackageDisabled(
   adbClient: AdbClient,
   serial: string,
   packageName: string
 ): Promise<boolean> {
-  const output = await adbClient.shellCommand(serial, ['pm', 'list', 'packages', '-d', packageName])
+  const output = await adbClient.shellCommand(serial, [
+    'pm',
+    'list',
+    'packages',
+    '-d',
+    '-u',
+    packageName
+  ])
   return parsePackageNameList(output).includes(packageName)
 }
 
+/** A package that's merely disabled (not uninstalled) is still genuinely
+ *  "installed for this user" — but on the same real Android 10 device
+ *  where a plain `pm list packages <pkg>` was confirmed to omit a
+ *  disabled-but-installed package entirely, checking only the plain
+ *  query would misreport it as not installed. Checked against both the
+ *  plain query (catches the common enabled+installed case) and the
+ *  disabled-but-installed query (catches exactly the gap above). A
+ *  package genuinely uninstalled for this user is documented AOSP
+ *  behavior to be a different, stronger pm state than merely disabled
+ *  ("not installed" vs. "installed but disabled-user"), so it should
+ *  correctly match neither query — reasoned from that documented
+ *  distinction, not independently re-verified against a real
+ *  uninstalled-for-user package on this device, since creating one
+ *  would require an actual uninstall this investigation deliberately
+ *  avoided performing. */
 export async function isPackageInstalledForUser(
   adbClient: AdbClient,
   serial: string,
   packageName: string
 ): Promise<boolean> {
-  const output = await adbClient.shellCommand(serial, ['pm', 'list', 'packages', packageName])
-  return parsePackageNameList(output).includes(packageName)
+  const [plainOutput, disabledOutput] = await Promise.all([
+    adbClient.shellCommand(serial, ['pm', 'list', 'packages', packageName]),
+    adbClient.shellCommand(serial, ['pm', 'list', 'packages', '-d', '-u', packageName])
+  ])
+  return (
+    parsePackageNameList(plainOutput).includes(packageName) ||
+    parsePackageNameList(disabledOutput).includes(packageName)
+  )
 }
 
 /**
