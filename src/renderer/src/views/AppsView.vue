@@ -16,6 +16,7 @@ import {
   type DataTableColumns
 } from 'naive-ui'
 import { computed, h, ref, watch } from 'vue'
+import BackupDialog from '@renderer/components/BackupDialog.vue'
 import OperationConfirmDialog from '@renderer/components/OperationConfirmDialog.vue'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { useOperationsStore } from '@renderer/stores/operations.store'
@@ -41,6 +42,7 @@ const selectedDevice = computed(() => devicesStore.selectedDevice)
 const searchText = ref('')
 const filterKey = ref<FilterKey>('all')
 const selectedPackage = ref<AppPackageInfo | null>(null)
+const checkedKeys = ref<string[]>([])
 
 const filterOptions: Array<{ label: string; value: FilterKey }> = [
   { label: 'All apps', value: 'all' },
@@ -63,7 +65,10 @@ async function loadPackages(): Promise<void> {
 
 watch(
   () => `${selectedDevice.value?.id ?? ''}:${selectedDevice.value?.connectionState ?? ''}`,
-  loadPackages,
+  () => {
+    checkedKeys.value = []
+    void loadPackages()
+  },
   { immediate: true }
 )
 
@@ -124,6 +129,12 @@ const confirmDialogVisible = computed({
     }
   }
 })
+
+const backupDialogVisible = ref(false)
+
+function onBackupDone(): void {
+  checkedKeys.value = []
+}
 
 function openConfirm(operation: MutatingOperationType): void {
   confirmOperation.value = operation
@@ -200,6 +211,9 @@ function renderAppCell(row: AppPackageInfo) {
 
 const columns: DataTableColumns<AppPackageInfo> = [
   {
+    type: 'selection'
+  },
+  {
     title: 'App',
     key: 'packageName',
     sorter: (a, b) =>
@@ -253,7 +267,15 @@ const columns: DataTableColumns<AppPackageInfo> = [
 function rowProps(row: AppPackageInfo): Record<string, unknown> {
   return {
     style: 'cursor: pointer',
-    onClick: () => openDetail(row)
+    // Clicking the row's own selection checkbox shouldn't also open the
+    // detail drawer underneath it — NDataTable doesn't stop that
+    // propagation itself, so it's checked for here instead.
+    onClick: (event: MouseEvent) => {
+      if ((event.target as HTMLElement).closest('.n-checkbox')) {
+        return
+      }
+      openDetail(row)
+    }
   }
 }
 </script>
@@ -297,6 +319,9 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
         {{ filteredPackages.length }} / {{ packagesStore.packages.length }} packages
       </span>
       <div class="flex-1" />
+      <NButton v-if="checkedKeys.length > 0" size="small" @click="backupDialogVisible = true">
+        Backup Selected ({{ checkedKeys.length }})
+      </NButton>
       <NButton size="small" quaternary :loading="packagesStore.loading" @click="loadPackages">
         Refresh
       </NButton>
@@ -310,6 +335,7 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
 
     <NDataTable
       v-else
+      v-model:checked-row-keys="checkedKeys"
       class="min-h-0 flex-1"
       flex-height
       :loading="packagesStore.loading"
@@ -399,6 +425,14 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
       :is-system-app="selectedPackage.isSystemApp"
       :risk="null"
       @confirm="handleConfirm"
+    />
+
+    <BackupDialog
+      v-if="selectedDevice"
+      v-model:show="backupDialogVisible"
+      :device-id="selectedDevice.id"
+      :package-names="checkedKeys"
+      @done="onBackupDone"
     />
   </div>
 </template>

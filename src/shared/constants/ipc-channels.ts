@@ -24,7 +24,9 @@ export enum IpcChannel {
   GetDeviceChanges = 'recovery:get-device-changes',
   BrowseForApkFiles = 'install:browse-for-apk-files',
   InspectApkFile = 'install:inspect-apk-file',
-  InstallApk = 'install:install-apk'
+  InstallApk = 'install:install-apk',
+  BrowseForBackupDirectory = 'backup:browse-for-directory',
+  BackupPackages = 'backup:backup-packages'
 }
 
 /**

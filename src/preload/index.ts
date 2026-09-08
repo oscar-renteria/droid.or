@@ -16,6 +16,8 @@ import {
 import { deviceChangesSchema } from '@shared/validation/recovery.schema'
 import { adbStatusSchema } from '@shared/validation/adb-settings.schema'
 import { apkInspectionResultSchema } from '@shared/validation/apk-install.schema'
+import { z } from 'zod'
+import { packageBackupResultSchema } from '@shared/validation/apk-backup.schema'
 import type { DroidorApi } from '@shared/types/droidor-api'
 
 /**
@@ -140,6 +142,20 @@ const droidorApi: DroidorApi = {
   installApk: async (deviceId, filePath) => {
     const result = await ipcRenderer.invoke(IpcChannel.InstallApk, { deviceId, filePath })
     return operationResultSchema.parse(result)
+  },
+
+  browseForBackupDirectory: async () => {
+    const result: unknown = await ipcRenderer.invoke(IpcChannel.BrowseForBackupDirectory)
+    return typeof result === 'string' ? result : null
+  },
+
+  backupPackages: async (deviceId, packageNames, destDir) => {
+    const result = await ipcRenderer.invoke(IpcChannel.BackupPackages, {
+      deviceId,
+      packageNames,
+      destDir
+    })
+    return z.array(packageBackupResultSchema).parse(result)
   }
 }
 

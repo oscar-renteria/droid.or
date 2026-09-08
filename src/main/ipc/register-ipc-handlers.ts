@@ -3,6 +3,7 @@ import { IpcChannel, IpcEventChannel } from '@shared/constants/ipc-channels'
 import type { AppContext } from '../app-context'
 import { getAppInfo } from './handlers/app-info.handler'
 import { registerAdbHandlers } from './handlers/adb.handler'
+import { registerApkBackupHandlers } from './handlers/apk-backup.handler'
 import { registerApkInstallHandlers } from './handlers/apk-install.handler'
 import { registerAnalyzerHandlers } from './handlers/analyzer.handler'
 import { registerDashboardHandlers } from './handlers/dashboard.handler'
@@ -27,6 +28,7 @@ export function registerIpcHandlers(context: AppContext): void {
   registerOperationsHandlers(context.db, context.adbClient, context.deviceRegistry)
   registerRecoveryHandlers(context.db, context.adbClient, context.deviceRegistry)
   registerApkInstallHandlers(context.db, context.adbClient, context.deviceRegistry)
+  registerApkBackupHandlers(context.adbClient, context.deviceRegistry)
 
   context.deviceRegistry.onDevicesChanged((devices) => {
     for (const window of BrowserWindow.getAllWindows()) {

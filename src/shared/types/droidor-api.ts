@@ -7,6 +7,7 @@ import type { AppMetadataResult, AppPackageInfo } from './package'
 import type { MutatingOperationType, OperationHistoryEntry, OperationResult } from './operation'
 import type { DeviceChanges } from './recovery'
 import type { ApkInspectionResult } from './apk-install'
+import type { PackageBackupResult } from './apk-backup'
 
 /**
  * Contract for the API the preload script exposes on window.droidor.
@@ -86,4 +87,17 @@ export interface DroidorApi {
    *  isn't currently connected and authorized, or if this exact file is
    *  already being installed. */
   installApk: (deviceId: string, filePath: string) => Promise<OperationResult>
+  /** Opens a native directory picker for choosing a backup destination.
+   *  Resolves to null if the user cancels. */
+  browseForBackupDirectory: () => Promise<string | null>
+  /** Copies every APK file (more than one for a split/bundle install) for
+   *  each given package into its own subfolder of destDir. One package
+   *  failing (not found, a copy error) doesn't stop the rest — check each
+   *  result's own `success`. Rejects only if the device isn't currently
+   *  connected and authorized. */
+  backupPackages: (
+    deviceId: string,
+    packageNames: string[],
+    destDir: string
+  ) => Promise<PackageBackupResult[]>
 }
