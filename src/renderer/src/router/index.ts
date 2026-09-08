@@ -5,6 +5,7 @@ import HistoryView from '@renderer/views/HistoryView.vue'
 import InstallView from '@renderer/views/InstallView.vue'
 import OverviewView from '@renderer/views/OverviewView.vue'
 import PlaceholderView from '@renderer/views/PlaceholderView.vue'
+import ProfilesView from '@renderer/views/ProfilesView.vue'
 import RecoveryView from '@renderer/views/RecoveryView.vue'
 import SettingsView from '@renderer/views/SettingsView.vue'
 
@@ -30,6 +31,11 @@ export const router = createRouter({
       path: '/analyzer',
       name: 'analyzer',
       component: AnalyzerView
+    },
+    {
+      path: '/profiles',
+      name: 'profiles',
+      component: ProfilesView
     },
     {
       path: '/install',
