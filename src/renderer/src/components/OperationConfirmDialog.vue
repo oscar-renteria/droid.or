@@ -14,6 +14,9 @@ const props = defineProps<{
    *  from the Apps tab rather than the Analyzer) — confirmation severity
    *  then falls back to the operation/isSystemApp combination alone. */
   risk: RiskLevel | null
+  /** User-marked "Important" (spec §16) — always requires typed
+   *  confirmation, regardless of risk classification. */
+  isFavorite: boolean
 }>()
 
 const emit = defineEmits<{
@@ -75,11 +78,15 @@ const copy = computed(() => {
 })
 
 /** Extra typed confirmation for the combinations most likely to surprise or
- *  be hard to reverse: an uncertain/critical-classified package, or
- *  uninstalling a system app specifically (the spec singles out
- *  "particularly dangerous" operations for this, rather than applying it
- *  uniformly to every action). */
+ *  be hard to reverse: an uncertain/critical-classified package, uninstalling
+ *  a system app specifically (the spec singles out "particularly dangerous"
+ *  operations for this, rather than applying it uniformly to every action),
+ *  or a package the user themselves marked Important (spec §16 — "Important
+ *  applications should receive stronger warnings before modification"). */
 const requiresTypedConfirmation = computed(() => {
+  if (props.isFavorite) {
+    return true
+  }
   if (props.risk === 'advanced' || props.risk === 'critical') {
     return true
   }
@@ -123,6 +130,11 @@ function handleClose(): void {
         <span class="ml-1 text-xs text-gray-500 dark:text-gray-400">{{ packageName }}</span>
       </div>
       <p class="text-sm text-gray-700 dark:text-gray-300">{{ copy.description }}</p>
+
+      <NAlert v-if="isFavorite" type="error" :show-icon="true">
+        You marked this app as Important. Double-check that you really want to do this before
+        continuing.
+      </NAlert>
 
       <NAlert v-if="requiresTypedConfirmation" type="warning" :show-icon="true">
         This action needs extra confirmation. Type

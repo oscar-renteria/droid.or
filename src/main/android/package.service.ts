@@ -15,7 +15,8 @@ import { KNOWN_PACKAGE_NAMES } from './known-package-names'
  */
 export async function fetchInstalledPackages(
   adbClient: AdbClient,
-  serial: string
+  serial: string,
+  favoritePackages: Set<string>
 ): Promise<AppPackageInfo[]> {
   const [listOutput, disabledOutput, thirdPartyOutput, dumpOutput] = await Promise.all([
     adbClient.shellCommand(serial, ['pm', 'list', 'packages', '-f', '-i', '-u']),
@@ -48,6 +49,7 @@ export async function fetchInstalledPackages(
       installerPackage: entry.installerPackage,
       isSystemApp: !thirdPartyNames.has(entry.packageName),
       isDisabled: disabledNames.has(entry.packageName),
+      isFavorite: favoritePackages.has(entry.packageName),
       versionName: dump?.versionName ?? null,
       versionCode: dump?.versionCode ?? null,
       firstInstallTimeMs: dump?.firstInstallTimeMs ?? null,

@@ -2,6 +2,7 @@ import type Database from 'better-sqlite3'
 import type { AnalyzeDeviceResult, PackageRecommendation } from '@shared/validation/analyzer.schema'
 import type { AdbClient } from '../adb/adb-client'
 import { parseRunningPackages } from '../adb/parsers/running-packages-parser'
+import { getFavoritePackages } from '../persistence/favorite-packages.repository'
 import { getIgnoredPackages } from '../persistence/ignored-packages.repository'
 import { fetchInstalledPackages } from './package.service'
 import { classifyPackage } from './risk-classifier'
@@ -20,7 +21,7 @@ export async function analyzeDevice(
   serial: string
 ): Promise<AnalyzeDeviceResult> {
   const [packages, runningOutput] = await Promise.all([
-    fetchInstalledPackages(adbClient, serial),
+    fetchInstalledPackages(adbClient, serial, getFavoritePackages(db)),
     adbClient.shellCommand(serial, ['dumpsys', 'activity', 'processes']).catch(() => '')
   ])
 
@@ -57,7 +58,8 @@ export async function analyzeDevice(
       reason: classification.reason,
       potentialImpact: classification.potentialImpact,
       isKnownPackage: classification.isKnownPackage,
-      isIgnored
+      isIgnored,
+      isFavorite: pkg.isFavorite
     })
   }
 

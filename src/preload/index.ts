@@ -89,6 +89,10 @@ const droidorApi: DroidorApi = {
     await ipcRenderer.invoke(IpcChannel.SetPackageIgnored, { packageName, ignored })
   },
 
+  setPackageFavorite: async (packageName, favorite) => {
+    await ipcRenderer.invoke(IpcChannel.SetPackageFavorite, { packageName, favorite })
+  },
+
   performOperation: async (deviceId, packageName, operation) => {
     const result = await ipcRenderer.invoke(IpcChannel.PerformOperation, {
       deviceId,

@@ -19,7 +19,8 @@ export const packageRecommendationSchema = z.object({
    *  the user can tell a specific, reasoned recommendation apart from a
    *  generic "we don't actually know" default. */
   isKnownPackage: z.boolean(),
-  isIgnored: z.boolean()
+  isIgnored: z.boolean(),
+  isFavorite: z.boolean()
 })
 
 export type PackageRecommendation = z.infer<typeof packageRecommendationSchema>

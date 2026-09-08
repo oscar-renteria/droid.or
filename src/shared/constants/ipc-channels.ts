@@ -18,6 +18,7 @@ export enum IpcChannel {
   GetPackages = 'packages:get-all',
   GetAppMetadata = 'packages:get-app-metadata',
   SetPackageIgnored = 'packages:set-ignored',
+  SetPackageFavorite = 'packages:set-favorite',
   AnalyzeDevice = 'analyzer:analyze-device',
   PerformOperation = 'packages:perform-operation',
   GetOperationHistory = 'history:get-for-device',

@@ -26,7 +26,12 @@ export function registerIpcHandlers(context: AppContext): void {
   registerAdbHandlers(context.adbClient, context.adbSettingsService)
   registerDeviceHandlers(context.deviceRegistry)
   registerDashboardHandlers(context.adbClient, context.deviceRegistry)
-  registerPackagesHandlers(context.adbClient, context.deviceRegistry, context.appMetadataService)
+  registerPackagesHandlers(
+    context.db,
+    context.adbClient,
+    context.deviceRegistry,
+    context.appMetadataService
+  )
   registerAnalyzerHandlers(context.db, context.adbClient, context.deviceRegistry)
   registerOperationsHandlers(context.db, context.adbClient, context.deviceRegistry)
   registerRecoveryHandlers(context.db, context.adbClient, context.deviceRegistry)

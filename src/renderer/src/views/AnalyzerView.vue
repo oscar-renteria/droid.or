@@ -228,6 +228,9 @@ async function handleConfirm(): Promise<void> {
                 <NTag v-if="recommendation.isDisabled" size="small">Already disabled</NTag>
                 <NTag v-if="recommendation.isRunning" size="small" type="info">Running now</NTag>
                 <NTag v-if="!recommendation.isKnownPackage" size="small">Not yet reviewed</NTag>
+                <NTag v-if="recommendation.isFavorite" size="small" type="warning">
+                  ★ Important
+                </NTag>
               </div>
               <div class="text-xs text-gray-500 dark:text-gray-400">
                 {{ recommendation.packageName }}
@@ -283,6 +286,7 @@ async function handleConfirm(): Promise<void> {
       :operation="confirmOperation"
       :is-system-app="confirmTarget.isSystemApp"
       :risk="confirmTarget.risk"
+      :is-favorite="confirmTarget.isFavorite"
       @confirm="handleConfirm"
     />
   </div>

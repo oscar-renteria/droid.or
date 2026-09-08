@@ -12,6 +12,11 @@ export const appPackageInfoSchema = z.object({
   installerPackage: z.string().nullable(),
   isSystemApp: z.boolean(),
   isDisabled: z.boolean(),
+  /** User-marked "Important" (spec §16) — packages the user has flagged
+   *  themselves, independent of any risk classification. Confirmation
+   *  dialogs use this to require extra confirmation regardless of the
+   *  operation's own risk level. */
+  isFavorite: z.boolean(),
   versionName: z.string().nullable(),
   versionCode: z.number().nullable(),
   /** Parsed in the host's local timezone since dumpsys's raw string carries
@@ -28,6 +33,11 @@ export const packageListSchema = z.array(appPackageInfoSchema)
 
 export const packageListRequestSchema = z.object({
   deviceId: z.string().min(1)
+})
+
+export const setPackageFavoriteRequestSchema = z.object({
+  packageName: z.string().min(1),
+  favorite: z.boolean()
 })
 
 export const appMetadataRequestSchema = z.object({

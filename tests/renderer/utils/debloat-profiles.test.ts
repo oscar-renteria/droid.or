@@ -18,6 +18,7 @@ function recommendation(overrides: Partial<PackageRecommendation> = {}): Package
     potentialImpact: 'test',
     isKnownPackage: true,
     isIgnored: false,
+    isFavorite: false,
     ...overrides
   }
 }

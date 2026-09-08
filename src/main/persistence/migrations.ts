@@ -79,6 +79,17 @@ const MIGRATIONS: Migration[] = [
         )
       `)
     }
+  },
+  {
+    version: 6,
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE favorite_packages (
+          package_name TEXT PRIMARY KEY,
+          favorited_at TEXT NOT NULL
+        )
+      `)
+    }
   }
 ]
 

@@ -358,6 +358,7 @@ async function confirmBulkRestore(): Promise<void> {
     :operation="confirmTarget.operation"
     :is-system-app="false"
     :risk="null"
+    :is-favorite="false"
     @confirm="handleSingleConfirm"
   />
 

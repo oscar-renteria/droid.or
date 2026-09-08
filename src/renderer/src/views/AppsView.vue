@@ -29,7 +29,8 @@ import {
   isFromPlayStore
 } from '@renderer/utils/format-package-value'
 
-type FilterKey = 'all' | 'user' | 'system' | 'disabled' | 'recent' | 'play-store' | 'unknown-source'
+type FilterKey =
+  'all' | 'user' | 'system' | 'disabled' | 'recent' | 'play-store' | 'unknown-source' | 'favorites'
 
 const RECENT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
 
@@ -51,7 +52,8 @@ const filterOptions: Array<{ label: string; value: FilterKey }> = [
   { label: 'Disabled apps', value: 'disabled' },
   { label: 'Recently installed', value: 'recent' },
   { label: 'From Play Store', value: 'play-store' },
-  { label: 'Unknown source', value: 'unknown-source' }
+  { label: 'Unknown source', value: 'unknown-source' },
+  { label: 'Important', value: 'favorites' }
 ]
 
 async function loadPackages(): Promise<void> {
@@ -97,6 +99,8 @@ const filteredPackages = computed(() => {
         return isFromPlayStore(pkg.installerPackage)
       case 'unknown-source':
         return pkg.installerPackage === null
+      case 'favorites':
+        return pkg.isFavorite
       default:
         return true
     }
@@ -209,9 +213,31 @@ function renderAppCell(row: AppPackageInfo) {
   ])
 }
 
+async function toggleFavorite(pkg: AppPackageInfo, event: MouseEvent): Promise<void> {
+  event.stopPropagation()
+  await packagesStore.setFavorite(pkg.packageName, !pkg.isFavorite)
+}
+
 const columns: DataTableColumns<AppPackageInfo> = [
   {
     type: 'selection'
+  },
+  {
+    title: '',
+    key: 'isFavorite',
+    width: 44,
+    sorter: (a, b) => Number(b.isFavorite) - Number(a.isFavorite),
+    render: (row) =>
+      h(
+        NButton,
+        {
+          text: true,
+          class: row.isFavorite ? 'text-amber-500' : 'text-gray-300 dark:text-gray-700',
+          title: row.isFavorite ? 'Marked Important' : 'Mark as Important',
+          onClick: (event: MouseEvent) => toggleFavorite(row, event)
+        },
+        { default: () => (row.isFavorite ? '★' : '☆') }
+      )
   },
   {
     title: 'App',
@@ -393,6 +419,15 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
         <div class="mt-4 flex flex-wrap items-center gap-2">
           <NButton
             size="small"
+            :type="selectedPackage.isFavorite ? 'warning' : 'default'"
+            @click="
+              packagesStore.setFavorite(selectedPackage.packageName, !selectedPackage.isFavorite)
+            "
+          >
+            {{ selectedPackage.isFavorite ? '★ Marked Important' : '☆ Mark as Important' }}
+          </NButton>
+          <NButton
+            size="small"
             :loading="operationsStore.pending.has(selectedPackage.packageName)"
             @click="openConfirm('uninstall-for-user')"
           >
@@ -424,6 +459,7 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
       :operation="confirmOperation"
       :is-system-app="selectedPackage.isSystemApp"
       :risk="null"
+      :is-favorite="selectedPackage.isFavorite"
       @confirm="handleConfirm"
     />
 

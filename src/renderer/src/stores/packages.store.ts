@@ -57,6 +57,19 @@ export const usePackagesStore = defineStore('packages', () => {
       })
   }
 
+  /** Persists the favorite flag, then mutates the matching entry already in
+   *  `packages` in place (through the reactive array's own proxy, not a
+   *  freshly-built object) so every view reading from this store's list —
+   *  the Apps table, an open detail drawer, a confirm dialog — reflects the
+   *  change immediately without a full re-fetch. */
+  async function setFavorite(packageName: string, favorite: boolean): Promise<void> {
+    await window.droidor?.setPackageFavorite(packageName, favorite)
+    const pkg = packages.value.find((candidate) => candidate.packageName === packageName)
+    if (pkg) {
+      pkg.isFavorite = favorite
+    }
+  }
+
   return {
     packages,
     loading,
@@ -65,6 +78,7 @@ export const usePackagesStore = defineStore('packages', () => {
     metadataCache,
     fetchPackages,
     reset,
-    fetchMetadata
+    fetchMetadata,
+    setFavorite
   }
 })

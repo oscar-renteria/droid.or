@@ -60,6 +60,10 @@ export interface DroidorApi {
   /** Rejects if the device isn't currently connected and authorized. */
   analyzeDevice: (deviceId: string) => Promise<AnalyzeDeviceResult>
   setPackageIgnored: (packageName: string, ignored: boolean) => Promise<void>
+  /** Marks/unmarks a package "Important" (spec §16) — persists globally,
+   *  not per-device. Confirmation dialogs use this to require extra
+   *  confirmation before modifying it, regardless of risk classification. */
+  setPackageFavorite: (packageName: string, favorite: boolean) => Promise<void>
   /** Rejects if the device isn't currently connected and authorized, or if
    *  another operation is already in progress for this exact package. */
   performOperation: (

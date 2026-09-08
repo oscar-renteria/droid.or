@@ -32,7 +32,7 @@ describe('fetchInstalledPackages', () => {
       ].join('\n')
     )
 
-    const result = await fetchInstalledPackages(adb, SERIAL)
+    const result = await fetchInstalledPackages(adb, SERIAL, new Set(['com.example.app']))
 
     expect(result).toHaveLength(3)
 
@@ -41,6 +41,7 @@ describe('fetchInstalledPackages', () => {
       displayName: 'Gmail',
       isSystemApp: true,
       isDisabled: false,
+      isFavorite: false,
       versionName: '1.0',
       versionCode: 100,
       installerPackage: null
@@ -53,6 +54,8 @@ describe('fetchInstalledPackages', () => {
       displayName: null,
       isSystemApp: false,
       isDisabled: false,
+      // In the favoritePackages set passed in above.
+      isFavorite: true,
       versionName: '0.5',
       versionCode: 5,
       installerPackage: 'com.android.vending'
@@ -62,6 +65,7 @@ describe('fetchInstalledPackages', () => {
     expect(disabled).toMatchObject({
       isSystemApp: true,
       isDisabled: true,
+      isFavorite: false,
       // Not present in the dumpsys capture, so version info degrades to null
       // rather than failing the whole package.
       versionName: null,
@@ -84,7 +88,7 @@ describe('fetchInstalledPackages', () => {
     adb.shellResponses.set(`${SERIAL}\npm list packages -3 -u`, 'package:com.example.disabled3p')
     adb.shellResponses.set(`${SERIAL}\ndumpsys package packages`, '')
 
-    const result = await fetchInstalledPackages(adb, SERIAL)
+    const result = await fetchInstalledPackages(adb, SERIAL, new Set())
 
     expect(result).toEqual([
       expect.objectContaining({
