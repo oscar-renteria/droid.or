@@ -116,13 +116,63 @@ tests/          # Mirrors src/
 
 ```bash
 npm run build         # type-check + bundle (out/)
-npm run build:linux   # + electron-builder --linux
-npm run build:win     # + electron-builder --win
-npm run build:mac     # + electron-builder --mac
+npm run build:linux   # + electron-builder --linux  (AppImage)
+npm run build:win     # + electron-builder --win    (NSIS installer)
+npm run build:mac     # + electron-builder --mac    (dmg + zip)
 ```
 
-Only the Linux target (`AppImage`) is currently configured with real
-packaging settings in `electron-builder.yml`; `build:win`/`build:mac` exist
-as scripts but haven't been exercised or configured with code
-signing/notarization. See `ADB.md` for platform-specific ADB/USB
-considerations independent of packaging.
+All three platforms have real settings configured in `electron-builder.yml`
+(installer behavior, categories, entitlements) — but **only the Linux
+target has actually been built and run** from this project's own (Linux)
+dev environment. The other two have real, hard platform constraints, not
+just "untested":
+
+- **Windows**: `npm run build:win` currently **fails** even on Linux CI,
+  for a reason unrelated to the electron-builder config itself —
+  `better-sqlite3` is a native module that `@electron/rebuild` recompiles
+  against Electron's own ABI for the target platform, and `node-gyp`
+  cannot cross-compile a native module for Windows from Linux. Building a
+  real Windows installer requires running `build:win` on Windows itself
+  (or a Windows CI runner) — there is no config change that fixes this
+  from Linux.
+- **macOS**: electron-builder can only produce a macOS build (`.app`,
+  `dmg`, `zip`) on macOS itself — this is a hard restriction of
+  electron-builder, independent of the native-module issue above. Building
+  a real macOS release requires an actual Mac (or macOS CI runner).
+
+### Code signing and notarization
+
+Nothing above produces a _signed_ build — an unsigned Windows installer
+triggers a Windows SmartScreen warning, and an unsigned/unnotarized macOS
+app is blocked outright by Gatekeeper. Neither can be fixed by
+configuration alone; both require credentials this project does not have:
+
+- **Windows**: a code-signing certificate (a paid Authenticode certificate
+  from a CA). Once you have one, electron-builder picks it up
+  automatically from the `CSC_LINK` (path or base64-encoded `.pfx`) and
+  `CSC_KEY_PASSWORD` environment variables — no config change needed.
+- **macOS**: a "Developer ID Application" certificate from a paid Apple
+  Developer Program membership, for signing (`CSC_LINK`/`CSC_KEY_PASSWORD`
+  again), **plus** notarization credentials for Gatekeeper to trust the
+  signed build — electron-builder notarizes automatically (via
+  `@electron/notarize`, already an installed dependency) once
+  `hardenedRuntime: true` is set (already is) and either
+  `APPLE_ID` + `APPLE_APP_SPECIFIC_PASSWORD` + `APPLE_TEAM_ID`, or an App
+  Store Connect API key (`APPLE_API_KEY` + `APPLE_API_KEY_ID` +
+  `APPLE_API_ISSUER`), are set as environment variables. With none of
+  these set, electron-builder just logs a warning and skips signing/
+  notarization — it does not fail the build.
+
+### App icon
+
+No custom icon exists yet (nothing under `build/`) — every target
+currently falls back to electron-builder's own default Electron icon
+(confirmed via a real build: `default Electron icon is used` in the log,
+not a failure). Add one real, high-resolution source image at
+`build/icon.png` (at least 1024×1024) and reference it as
+`icon: build/icon.png` under each platform section in
+`electron-builder.yml` — electron-builder derives the platform-specific
+`.ico`/`.icns` from that single file itself.
+
+See `ADB.md` for platform-specific ADB/USB considerations independent of
+packaging.

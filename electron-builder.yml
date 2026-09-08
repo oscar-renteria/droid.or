@@ -6,9 +6,61 @@ directories:
 files:
   - out/**/*
   - package.json
-# Platform-specific targets, code signing, and bundling the ADB platform-tools
-# binaries are configured in a later milestone once packaging is actually
-# exercised — this file only proves electron-builder is wired up correctly.
+# No custom app icon exists yet (nothing under build/) — every target below
+# falls back to electron-builder's own default Electron icon rather than
+# failing. Once a real icon exists, add a single high-resolution source
+# (build/icon.png, at least 1024x1024) and reference it as `icon:
+# build/icon.png` under each platform section below; electron-builder
+# derives the .ico/.icns itself from that one file.
+
 linux:
   target: AppImage
   category: Utility
+  # Makes the installed .desktop filename (and Electron's app_id/WM_CLASS)
+  # derive from `desktopName` in package.json instead of a generic
+  # fallback — otherwise desktop environments can't reliably associate the
+  # running window with its own launcher entry/icon.
+  syncDesktopName: true
+
+# NSIS itself is bundled with electron-builder and runs natively on Linux —
+# but the actual `npm run build:win` from this project's (Linux) dev
+# environment fails regardless, for an unrelated reason: better-sqlite3 is
+# a native module that needs recompiling against Electron's own ABI for
+# each target platform, and node-gyp cannot cross-compile native modules
+# for Windows from Linux. This config is correct per electron-builder's own
+# docs but has NOT been verified to produce a working installer — that
+# needs an actual Windows machine or CI runner. See DEVELOPMENT.md.
+# `oneClick: false` is deliberate regardless: a silent one-click install is
+# the wrong default for a tool with real ADB capabilities on the machine it
+# installs to, matching the rest of this app's confirm-before-acting
+# philosophy.
+win:
+  target:
+    - target: nsis
+  artifactName: ${productName}-${version}-${arch}-setup.${ext}
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: droid.or
+
+# Cannot be built or verified from this project's (Linux) dev environment —
+# electron-builder can only produce a macOS build on macOS itself. Config
+# below is correct per electron-builder's own docs but unverified in
+# practice; build and test on a real Mac before distributing. See
+# DEVELOPMENT.md for what code signing/notarization actually requires
+# beyond this file (a paid Apple Developer account - this config alone
+# does not provide either).
+mac:
+  category: public.app-category.utilities
+  target:
+    - target: dmg
+    - target: zip
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  minimumSystemVersion: '11.0'
+dmg:
+  artifactName: ${productName}-${version}-${arch}.${ext}

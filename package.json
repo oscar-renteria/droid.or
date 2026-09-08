@@ -5,6 +5,7 @@
   "private": true,
   "type": "module",
   "main": "./out/main/index.cjs",
+  "desktopName": "droid.or.desktop",
   "author": "",
   "license": "UNLICENSED",
   "scripts": {
