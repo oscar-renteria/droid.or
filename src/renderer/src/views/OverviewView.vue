@@ -57,8 +57,8 @@ watch(
     v-if="!selectedDevice"
     class="flex h-full flex-col items-center justify-center gap-2 text-center"
   >
-    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">No device selected</h2>
-    <p class="max-w-md text-sm text-gray-500 dark:text-gray-400">
+    <h2 class="text-lg font-medium text-text">No device selected</h2>
+    <p class="max-w-md text-sm text-text-muted">
       Select a device from the sidebar to see its details.
     </p>
   </div>
@@ -67,10 +67,10 @@ watch(
     v-else-if="selectedDevice.connectionState !== 'device'"
     class="flex h-full flex-col items-center justify-center gap-2 text-center"
   >
-    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+    <h2 class="text-lg font-medium text-text">
       {{ getDeviceStateMeta(selectedDevice.connectionState).label }}
     </h2>
-    <p class="max-w-md text-sm text-gray-500 dark:text-gray-400">
+    <p class="max-w-md text-sm text-text-muted">
       {{
         getDeviceStateMeta(selectedDevice.connectionState).guidance ??
         'Device details require an authorized, connected device.'
@@ -81,12 +81,10 @@ watch(
   <NSpin v-else :show="loading" class="h-full">
     <div class="flex flex-col gap-4 pb-4">
       <div class="flex items-center justify-between">
-        <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+        <h2 class="text-lg font-medium text-text">
           {{ selectedDevice.nickname ?? selectedDevice.model ?? selectedDevice.id }}
         </h2>
-        <NButton size="small" quaternary :loading="loading" @click="fetchDashboard"
-          >Refresh</NButton
-        >
+        <NButton size="small" :loading="loading" @click="fetchDashboard">Refresh</NButton>
       </div>
 
       <NAlert v-if="errorMessage" type="error" title="Couldn't load device information">

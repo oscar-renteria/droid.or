@@ -132,11 +132,11 @@ async function downloadPlatformTools(): Promise<void> {
 
 <template>
   <div class="flex h-full flex-col gap-4 overflow-y-auto pr-1">
-    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Settings</h2>
+    <h2 class="text-lg font-medium text-text">Settings</h2>
 
     <NSpin :show="adbSettingsStore.loading">
-      <div class="flex flex-col gap-3 rounded border border-gray-200 p-4 dark:border-gray-800">
-        <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">ADB Connection</h3>
+      <div class="flex flex-col gap-3 rounded border border-border p-4">
+        <h3 class="text-sm font-medium text-text">ADB Connection</h3>
 
         <NAlert v-if="adbSettingsStore.errorMessage" type="error" closable>
           {{ adbSettingsStore.errorMessage }}
@@ -150,16 +150,13 @@ async function downloadPlatformTools(): Promise<void> {
             >
               {{ adbSettingsStore.status.availability.available ? 'Available' : 'Not available' }}
             </NTag>
-            <span
-              v-if="adbSettingsStore.status.availability.available"
-              class="text-gray-600 dark:text-gray-400"
-            >
+            <span v-if="adbSettingsStore.status.availability.available" class="text-text-muted">
               ADB {{ adbSettingsStore.status.availability.version }}
             </span>
             <NTag v-if="sourceLabel" size="small">{{ sourceLabel }}</NTag>
           </div>
 
-          <p class="truncate text-xs text-gray-500 dark:text-gray-400">
+          <p class="truncate text-xs text-text-muted">
             {{ adbSettingsStore.status.resolvedPath }}
           </p>
 
@@ -171,7 +168,7 @@ async function downloadPlatformTools(): Promise<void> {
             {{ adbSettingsStore.status.availability.reason }}
           </NAlert>
 
-          <div class="border-t border-gray-100 pt-3 dark:border-gray-800">
+          <div class="border-t border-divider pt-3">
             <template v-if="adbSettingsStore.status.managedSupported">
               <NButton :loading="adbSettingsStore.busy" @click="downloadPlatformTools">
                 {{
@@ -180,22 +177,20 @@ async function downloadPlatformTools(): Promise<void> {
                     : 'Download Platform-Tools'
                 }}
               </NButton>
-              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p class="mt-1 text-xs text-text-muted">
                 Downloads the official Android platform-tools package directly from Google
                 (dl.google.com) and manages ADB for you — no manual install needed.
               </p>
             </template>
-            <p v-else class="text-xs text-gray-500 dark:text-gray-400">
+            <p v-else class="text-xs text-text-muted">
               A managed platform-tools download isn't available for this operating
               system/architecture. Install Android platform-tools manually, then set a custom path
               below.
             </p>
           </div>
 
-          <div class="border-t border-gray-100 pt-3 dark:border-gray-800">
-            <label class="text-xs font-medium text-gray-700 dark:text-gray-300"
-              >Custom ADB path</label
-            >
+          <div class="border-t border-divider pt-3">
+            <label class="text-xs font-medium text-text-secondary">Custom ADB path</label>
             <div class="mt-1 flex items-center gap-2">
               <NInput
                 v-model:value="customPathInput"
@@ -221,7 +216,7 @@ async function downloadPlatformTools(): Promise<void> {
                 Clear override
               </NButton>
             </div>
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p class="mt-1 text-xs text-text-muted">
               Overrides both the downloaded and system-PATH ADB. Validated before it's saved.
             </p>
           </div>
@@ -230,9 +225,9 @@ async function downloadPlatformTools(): Promise<void> {
     </NSpin>
 
     <NSpin :show="aiSettingsStore.loading">
-      <div class="flex flex-col gap-3 rounded border border-gray-200 p-4 dark:border-gray-800">
-        <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">AI Analysis (optional)</h3>
-        <p class="text-xs text-gray-500 dark:text-gray-400">
+      <div class="flex flex-col gap-3 rounded border border-border p-4">
+        <h3 class="text-sm font-medium text-text">AI Analysis (optional)</h3>
+        <p class="text-xs text-text-muted">
           Off by default. When enabled, an "Ask AI" button becomes available on individual packages
           — nothing is sent anywhere unless you click it. Each request sends only the device's
           manufacturer/model/Android version, the package name, app label, version, requested
@@ -246,13 +241,13 @@ async function downloadPlatformTools(): Promise<void> {
         </NAlert>
 
         <div>
-          <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Provider</label>
+          <label class="text-xs font-medium text-text-secondary">Provider</label>
           <NSelect v-model:value="providerInput" :options="aiProviderOptions" class="mt-1" />
         </div>
 
         <template v-if="providerInput !== 'none'">
           <div>
-            <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Model</label>
+            <label class="text-xs font-medium text-text-secondary">Model</label>
             <NInput
               v-model:value="modelInput"
               class="mt-1"
@@ -263,22 +258,20 @@ async function downloadPlatformTools(): Promise<void> {
           </div>
 
           <div v-if="providerInput === 'openai-compatible'">
-            <label class="text-xs font-medium text-gray-700 dark:text-gray-300">
-              Base URL (optional)
-            </label>
+            <label class="text-xs font-medium text-text-secondary"> Base URL (optional) </label>
             <NInput
               v-model:value="baseUrlInput"
               class="mt-1"
               placeholder="https://api.openai.com/v1"
             />
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p class="mt-1 text-xs text-text-muted">
               Leave blank for OpenAI itself, or point at any OpenAI-compatible endpoint (Azure
               OpenAI, a self-hosted proxy, ...).
             </p>
           </div>
 
           <div>
-            <label class="text-xs font-medium text-gray-700 dark:text-gray-300">API key</label>
+            <label class="text-xs font-medium text-text-secondary">API key</label>
             <NInput
               v-model:value="apiKeyInput"
               class="mt-1"
@@ -286,7 +279,7 @@ async function downloadPlatformTools(): Promise<void> {
               show-password-on="click"
               :placeholder="aiSettingsStore.settings?.hasApiKey ? 'A key is already set' : 'sk-...'"
             />
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p class="mt-1 text-xs text-text-muted">
               Stored encrypted using this OS's own secret storage. Leave blank to keep the existing
               key when saving other fields.
             </p>

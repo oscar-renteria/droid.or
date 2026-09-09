@@ -83,9 +83,9 @@ function handleAction(key: ActionKey, device: KnownDevice): void {
 </script>
 
 <template>
-  <aside class="flex h-full w-64 flex-col border-r border-gray-200 dark:border-gray-800">
+  <aside class="flex h-full w-64 flex-col border-r border-border">
     <div
-      class="flex items-center justify-between px-4 py-3 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400"
+      class="flex items-center justify-between px-4 py-3 text-xs font-semibold tracking-wide text-text-muted uppercase"
     >
       <span>Devices</span>
     </div>
@@ -96,7 +96,7 @@ function handleAction(key: ActionKey, device: KnownDevice): void {
     >
       <NEmpty description="No devices yet" size="small">
         <template #extra>
-          <p class="max-w-[16rem] text-center text-xs text-gray-500 dark:text-gray-400">
+          <p class="max-w-[16rem] text-center text-xs text-text-muted">
             Connect an Android phone via USB with USB debugging enabled.
           </p>
         </template>
@@ -107,8 +107,12 @@ function handleAction(key: ActionKey, device: KnownDevice): void {
       <div
         v-for="device in devicesStore.devices"
         :key="device.id"
-        class="group flex cursor-pointer items-start gap-2 border-b border-gray-100 px-4 py-3 hover:bg-gray-50 dark:border-gray-900 dark:hover:bg-gray-900"
-        :class="{ 'bg-gray-50 dark:bg-gray-900': devicesStore.selectedDeviceId === device.id }"
+        class="group flex cursor-pointer items-start gap-2 border-b border-l-2 border-b-divider px-4 py-3"
+        :class="
+          devicesStore.selectedDeviceId === device.id
+            ? 'border-l-primary bg-primary/10 hover:bg-primary/15'
+            : 'border-l-transparent hover:bg-surface'
+        "
         @click="selectDevice(device)"
       >
         <span
@@ -116,10 +120,10 @@ function handleAction(key: ActionKey, device: KnownDevice): void {
           :class="getDeviceStateMeta(device.connectionState).dotClass"
         />
         <div class="min-w-0 flex-1">
-          <div class="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+          <div class="truncate text-sm font-medium text-text">
             {{ displayName(device) }}
           </div>
-          <div class="truncate text-xs text-gray-500 dark:text-gray-400">
+          <div class="truncate text-xs text-text-muted">
             <template v-if="device.androidVersion">Android {{ device.androidVersion }} · </template>
             {{ getDeviceStateMeta(device.connectionState).label }}
           </div>
@@ -147,7 +151,7 @@ function handleAction(key: ActionKey, device: KnownDevice): void {
       </div>
     </div>
 
-    <div v-if="hasHistoryToClear" class="border-t border-gray-200 p-2 dark:border-gray-800">
+    <div v-if="hasHistoryToClear" class="border-t border-border p-2">
       <NPopconfirm @positive-click="clearHistory">
         <template #trigger>
           <NButton size="small" quaternary block>Clear History</NButton>

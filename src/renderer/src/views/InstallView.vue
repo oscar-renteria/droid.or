@@ -114,8 +114,8 @@ async function confirmInstallAll(): Promise<void> {
     v-if="!selectedDevice"
     class="flex h-full flex-col items-center justify-center gap-2 text-center"
   >
-    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">No device selected</h2>
-    <p class="max-w-md text-sm text-gray-500 dark:text-gray-400">
+    <h2 class="text-lg font-medium text-text">No device selected</h2>
+    <p class="max-w-md text-sm text-text-muted">
       Select a device from the sidebar to install an APK onto it.
     </p>
   </div>
@@ -124,10 +124,10 @@ async function confirmInstallAll(): Promise<void> {
     v-else-if="selectedDevice.connectionState !== 'device'"
     class="flex h-full flex-col items-center justify-center gap-2 text-center"
   >
-    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+    <h2 class="text-lg font-medium text-text">
       {{ getDeviceStateMeta(selectedDevice.connectionState).label }}
     </h2>
-    <p class="max-w-md text-sm text-gray-500 dark:text-gray-400">
+    <p class="max-w-md text-sm text-text-muted">
       {{
         getDeviceStateMeta(selectedDevice.connectionState).guidance ??
         'Installing an APK requires an authorized, connected device.'
@@ -137,7 +137,7 @@ async function confirmInstallAll(): Promise<void> {
 
   <div v-else class="flex h-full flex-col gap-3">
     <div class="flex shrink-0 items-center justify-between">
-      <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Install APK</h2>
+      <h2 class="text-lg font-medium text-text">Install APK</h2>
       <NButton
         v-if="readyItems.length > 0"
         type="primary"
@@ -153,17 +153,17 @@ async function confirmInstallAll(): Promise<void> {
       :class="
         isDragging
           ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30'
-          : 'border-gray-300 dark:border-gray-700'
+          : 'border-border-strong'
       "
       @dragover="handleDragOver"
       @dragleave="handleDragLeave"
       @drop="handleDrop"
       @click="browseFiles"
     >
-      <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+      <p class="text-sm font-medium text-text-secondary">
         Drag & drop .apk files here, or click to browse
       </p>
-      <p class="text-xs text-gray-500 dark:text-gray-400">
+      <p class="text-xs text-text-muted">
         Only .apk files are supported — split APK sets, .apks and .xapk are not.
       </p>
     </div>
@@ -172,7 +172,7 @@ async function confirmInstallAll(): Promise<void> {
       <div
         v-for="item in apkInstallStore.queue"
         :key="item.filePath"
-        class="flex items-start gap-3 rounded border border-gray-200 p-3 dark:border-gray-800"
+        class="flex items-start gap-3 rounded border border-border p-3"
       >
         <NSpin v-if="item.status === 'inspecting'" :size="24" class="mt-1 shrink-0" />
         <img
@@ -183,7 +183,7 @@ async function confirmInstallAll(): Promise<void> {
         />
         <div
           v-else
-          class="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-gray-200 text-xs font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+          class="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-surface-elevated text-xs font-medium text-text-muted"
         >
           {{
             (item.info?.label ?? item.info?.packageName ?? item.filePath).charAt(0).toUpperCase()
@@ -192,14 +192,14 @@ async function confirmInstallAll(): Promise<void> {
 
         <div class="min-w-0 flex-1">
           <template v-if="item.status === 'error'">
-            <div class="truncate font-medium text-gray-900 dark:text-gray-100">
+            <div class="truncate font-medium text-text">
               {{ item.filePath }}
             </div>
             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ item.message }}</p>
           </template>
           <template v-else-if="item.info">
             <div class="flex flex-wrap items-center gap-2">
-              <span class="font-medium text-gray-900 dark:text-gray-100">{{
+              <span class="font-medium text-text">{{
                 item.info.label ?? item.info.packageName
               }}</span>
               <NTag v-if="item.plan" size="small" :type="PLAN_META[item.plan.operation].tagType">
@@ -208,7 +208,7 @@ async function confirmInstallAll(): Promise<void> {
               <NTag v-if="item.status === 'success'" size="small" type="success">Installed</NTag>
               <NTag v-if="item.status === 'failed'" size="small" type="error">Failed</NTag>
             </div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">
+            <div class="text-xs text-text-muted">
               {{ item.info.packageName }} · {{ item.info.versionName ?? 'unknown version' }} (code
               {{ item.info.versionCode ?? '?' }}) · {{ formatBytes(item.info.fileSizeBytes) }}
             </div>
@@ -223,9 +223,7 @@ async function confirmInstallAll(): Promise<void> {
               v-if="(item.status === 'failed' || item.status === 'success') && item.message"
               class="mt-1 text-sm"
               :class="
-                item.status === 'failed'
-                  ? 'text-red-600 dark:text-red-400'
-                  : 'text-gray-600 dark:text-gray-400'
+                item.status === 'failed' ? 'text-red-600 dark:text-red-400' : 'text-text-muted'
               "
             >
               {{ item.message }}
@@ -258,7 +256,7 @@ async function confirmInstallAll(): Promise<void> {
       title="Install all queued apps?"
       type="warning"
     >
-      <div class="flex flex-col gap-2 text-sm text-gray-700 dark:text-gray-300">
+      <div class="flex flex-col gap-2 text-sm text-text-secondary">
         <p>This will install {{ readyItems.length }} app(s) on this device, one at a time.</p>
       </div>
       <template #action>

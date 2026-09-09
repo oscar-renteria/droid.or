@@ -40,14 +40,10 @@ function onTabUpdate(name: string): void {
 </script>
 
 <template>
-  <div
-    class="flex h-screen w-screen flex-col bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100"
-  >
-    <header
-      class="flex h-12 shrink-0 items-center justify-between border-b border-gray-200 px-4 dark:border-gray-800"
-    >
+  <div class="flex h-screen w-screen flex-col bg-background text-text">
+    <header class="flex h-12 shrink-0 items-center justify-between border-b border-border px-4">
       <span class="text-sm font-semibold">droid.or</span>
-      <span class="text-xs text-gray-500 dark:text-gray-400">
+      <span class="text-xs text-text-muted">
         <template v-if="devicesStore.selectedDevice">
           {{
             devicesStore.selectedDevice.nickname ??
@@ -94,7 +90,7 @@ function onTabUpdate(name: string): void {
     </div>
 
     <footer
-      class="flex h-6 shrink-0 items-center justify-end border-t border-gray-200 px-4 text-[11px] text-gray-400 dark:border-gray-800 dark:text-gray-500"
+      class="flex h-6 shrink-0 items-center justify-end border-t border-border px-4 text-[11px] text-gray-400 dark:text-gray-500"
     >
       <span v-if="appInfo"
         >droid.or v{{ appInfo.appVersion }} · Electron {{ appInfo.electronVersion }}</span

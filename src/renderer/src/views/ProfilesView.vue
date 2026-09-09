@@ -139,8 +139,8 @@ async function confirmApply(): Promise<void> {
     v-if="!selectedDevice"
     class="flex h-full flex-col items-center justify-center gap-2 text-center"
   >
-    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">No device selected</h2>
-    <p class="max-w-md text-sm text-gray-500 dark:text-gray-400">
+    <h2 class="text-lg font-medium text-text">No device selected</h2>
+    <p class="max-w-md text-sm text-text-muted">
       Select a device from the sidebar to apply a debloat profile to it.
     </p>
   </div>
@@ -149,10 +149,10 @@ async function confirmApply(): Promise<void> {
     v-else-if="selectedDevice.connectionState !== 'device'"
     class="flex h-full flex-col items-center justify-center gap-2 text-center"
   >
-    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+    <h2 class="text-lg font-medium text-text">
       {{ getDeviceStateMeta(selectedDevice.connectionState).label }}
     </h2>
-    <p class="max-w-md text-sm text-gray-500 dark:text-gray-400">
+    <p class="max-w-md text-sm text-text-muted">
       {{
         getDeviceStateMeta(selectedDevice.connectionState).guidance ??
         'Debloat profiles require an authorized, connected device.'
@@ -162,8 +162,8 @@ async function confirmApply(): Promise<void> {
 
   <div v-else class="flex h-full flex-col gap-3">
     <div class="flex shrink-0 items-center justify-between">
-      <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Debloat Profiles</h2>
-      <NButton size="small" quaternary :loading="analyzerStore.loading" @click="runAnalysis">
+      <h2 class="text-lg font-medium text-text">Debloat Profiles</h2>
+      <NButton type="primary" :loading="analyzerStore.loading" @click="runAnalysis">
         {{ analysisIsCurrent ? 'Re-analyze' : 'Analyze Device' }}
       </NButton>
     </div>
@@ -176,10 +176,8 @@ async function confirmApply(): Promise<void> {
       v-else-if="!analysisIsCurrent && !analyzerStore.loading"
       class="flex flex-1 flex-col items-center justify-center gap-2 text-center"
     >
-      <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-        Analyze this device first
-      </h2>
-      <p class="max-w-md text-sm text-gray-500 dark:text-gray-400">
+      <h2 class="text-lg font-medium text-text">Analyze this device first</h2>
+      <p class="max-w-md text-sm text-text-muted">
         Debloat profiles are built from the same per-package review the Analyzer uses. Run an
         analysis to see how many packages each profile would apply to.
       </p>
@@ -196,22 +194,22 @@ async function confirmApply(): Promise<void> {
             :class="
               selectedProfileId === profile.id
                 ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30'
-                : 'border-gray-200 dark:border-gray-800'
+                : 'border-border'
             "
             @click="selectProfile(profile)"
           >
-            <div class="font-medium text-gray-900 dark:text-gray-100">{{ profile.name }}</div>
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ profile.description }}</p>
-            <div class="mt-2 text-xs text-gray-600 dark:text-gray-400">
+            <div class="font-medium text-text">{{ profile.name }}</div>
+            <p class="mt-1 text-xs text-text-muted">{{ profile.description }}</p>
+            <div class="mt-2 text-xs text-text-muted">
               {{ countsFor(profile).safe }} safe · {{ countsFor(profile).caution }} caution
             </div>
           </div>
         </div>
 
         <template v-if="selectedProfile">
-          <div class="rounded border border-gray-200 p-3 dark:border-gray-800">
-            <h3 class="font-medium text-gray-900 dark:text-gray-100">{{ selectedProfile.name }}</h3>
-            <ul class="mt-1 list-inside list-disc text-sm text-gray-700 dark:text-gray-300">
+          <div class="rounded border border-border p-3">
+            <h3 class="font-medium text-text">{{ selectedProfile.name }}</h3>
+            <ul class="mt-1 list-inside list-disc text-sm text-text-secondary">
               <li>{{ countsFor(selectedProfile).safe }} package(s) recommended</li>
               <li>{{ countsFor(selectedProfile).caution }} package(s) caution</li>
               <li>
@@ -243,7 +241,7 @@ async function confirmApply(): Promise<void> {
             <div
               v-for="candidate in candidates"
               :key="candidate.packageName"
-              class="flex items-start gap-3 rounded border border-gray-200 p-2 text-sm dark:border-gray-800"
+              class="flex items-start gap-3 rounded border border-border p-2 text-sm"
             >
               <NCheckbox
                 :checked="checkedPackages.has(candidate.packageName)"
@@ -251,15 +249,13 @@ async function confirmApply(): Promise<void> {
               />
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2">
-                  <span class="font-medium text-gray-900 dark:text-gray-100">{{
-                    displayLabel(candidate)
-                  }}</span>
+                  <span class="font-medium text-text">{{ displayLabel(candidate) }}</span>
                   <NTag size="small" :type="getRiskMeta(candidate.risk).tagType">
                     {{ getRiskMeta(candidate.risk).emoji }} {{ getRiskMeta(candidate.risk).label }}
                   </NTag>
                   <NTag v-if="candidate.isDisabled" size="small">Already disabled</NTag>
                 </div>
-                <div class="text-xs text-gray-500 dark:text-gray-400">
+                <div class="text-xs text-text-muted">
                   {{ candidate.packageName }}
                 </div>
                 <p

@@ -175,17 +175,17 @@ const columns: DataTableColumns<AdbCommandLogEntry> = [
 <template>
   <div class="flex h-full flex-col gap-3">
     <div class="flex shrink-0 flex-wrap items-center justify-between gap-2">
-      <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Logs</h2>
+      <h2 class="text-lg font-medium text-text">Logs</h2>
       <div class="flex items-center gap-2">
-        <NButton size="small" quaternary :loading="logsStore.loading" @click="logsStore.load">
+        <NButton size="small" :loading="logsStore.loading" @click="logsStore.load">
           Refresh
         </NButton>
-        <NButton size="small" quaternary @click="handleExport">Export Logs</NButton>
-        <NButton size="small" quaternary type="error" @click="handleClear">Clear</NButton>
+        <NButton size="small" @click="handleExport">Export Logs</NButton>
+        <NButton size="small" type="error" @click="handleClear">Clear</NButton>
       </div>
     </div>
 
-    <p class="shrink-0 text-xs text-gray-500 dark:text-gray-400">
+    <p class="shrink-0 text-xs text-text-muted">
       Every ADB command this app has run this session, across all devices. Cleared on restart —
       export first if you need to keep a copy for troubleshooting.
     </p>
@@ -200,7 +200,7 @@ const columns: DataTableColumns<AdbCommandLogEntry> = [
       <NSelect v-model:value="deviceFilter" :options="deviceFilterOptions" class="w-48" />
       <NSelect v-model:value="categoryFilter" :options="categoryFilterOptions" class="w-44" />
       <NSelect v-model:value="resultFilter" :options="resultFilterOptions" class="w-36" />
-      <span class="text-xs text-gray-500 dark:text-gray-400">
+      <span class="text-xs text-text-muted">
         {{ filteredEntries.length }} / {{ logsStore.entries.length }} entries
       </span>
     </div>
@@ -229,14 +229,14 @@ const columns: DataTableColumns<AdbCommandLogEntry> = [
       style="width: 600px"
     >
       <template v-if="detailEntry">
-        <p class="text-sm text-gray-700 dark:text-gray-300">
+        <p class="text-sm text-text-secondary">
           <span class="font-medium">{{ CATEGORY_LABELS[detailEntry.category] }}</span> on
           {{ deviceLabel(detailEntry.deviceId) }} at
           {{ formatTimestamp(detailEntry.timestamp) }} ({{ detailEntry.durationMs }}
           ms)
         </p>
         <pre
-          class="mt-3 max-h-40 overflow-auto rounded bg-gray-100 p-3 text-xs whitespace-pre-wrap text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+          class="mt-3 max-h-40 overflow-auto rounded bg-surface-code p-3 text-xs whitespace-pre-wrap text-text-code"
           >{{ detailEntry.command }}</pre>
         <p
           v-if="detailEntry.errorMessage"
@@ -246,7 +246,7 @@ const columns: DataTableColumns<AdbCommandLogEntry> = [
         </p>
         <pre
           v-if="detailEntry.errorMessage"
-          class="mt-1 max-h-40 overflow-auto rounded bg-gray-100 p-3 text-xs whitespace-pre-wrap text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+          class="mt-1 max-h-40 overflow-auto rounded bg-surface-code p-3 text-xs whitespace-pre-wrap text-text-code"
           >{{ detailEntry.errorMessage }}</pre>
       </template>
     </NModal>

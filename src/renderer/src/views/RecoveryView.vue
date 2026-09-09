@@ -173,8 +173,8 @@ async function confirmBulkRestore(): Promise<void> {
     v-if="!selectedDevice"
     class="flex h-full flex-col items-center justify-center gap-2 text-center"
   >
-    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">No device selected</h2>
-    <p class="max-w-md text-sm text-gray-500 dark:text-gray-400">
+    <h2 class="text-lg font-medium text-text">No device selected</h2>
+    <p class="max-w-md text-sm text-text-muted">
       Select a device from the sidebar to review and restore changes made to it.
     </p>
   </div>
@@ -183,10 +183,10 @@ async function confirmBulkRestore(): Promise<void> {
     v-else-if="selectedDevice.connectionState !== 'device'"
     class="flex h-full flex-col items-center justify-center gap-2 text-center"
   >
-    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+    <h2 class="text-lg font-medium text-text">
       {{ getDeviceStateMeta(selectedDevice.connectionState).label }}
     </h2>
-    <p class="max-w-md text-sm text-gray-500 dark:text-gray-400">
+    <p class="max-w-md text-sm text-text-muted">
       {{
         getDeviceStateMeta(selectedDevice.connectionState).guidance ??
         'Device recovery requires an authorized, connected device.'
@@ -206,7 +206,7 @@ async function confirmBulkRestore(): Promise<void> {
         class="flex-1 items-center justify-center"
       >
         <template #extra>
-          <p class="max-w-md text-center text-xs text-gray-500 dark:text-gray-400">
+          <p class="max-w-md text-center text-xs text-text-muted">
             droid.or hasn't modified this device, or every change already made has since been
             restored.
           </p>
@@ -215,15 +215,13 @@ async function confirmBulkRestore(): Promise<void> {
 
       <template v-else-if="recoveryStore.changes">
         <div>
-          <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Device Recovery</h2>
-          <p class="text-sm text-gray-600 dark:text-gray-400">
-            This device has been modified by droid.or.
-          </p>
+          <h2 class="text-lg font-medium text-text">Device Recovery</h2>
+          <p class="text-sm text-text-muted">This device has been modified by droid.or.</p>
         </div>
 
-        <div class="rounded border border-gray-200 p-3 text-sm dark:border-gray-800">
-          <span class="font-medium text-gray-900 dark:text-gray-100">Changes detected:</span>
-          <ul class="mt-1 list-inside list-disc text-gray-700 dark:text-gray-300">
+        <div class="rounded border border-border p-3 text-sm">
+          <span class="font-medium text-text">Changes detected:</span>
+          <ul class="mt-1 list-inside list-disc text-text-secondary">
             <li>{{ recoveryStore.changes.uninstalled.length }} package(s) uninstalled</li>
             <li>{{ recoveryStore.changes.disabled.length }} package(s) disabled</li>
             <li>{{ recoveryStore.changes.cleared.length }} package(s) cleared</li>
@@ -254,22 +252,22 @@ async function confirmBulkRestore(): Promise<void> {
 
         <div v-if="reviewOpen" class="flex flex-col gap-4">
           <div v-if="recoveryStore.changes.disabled.length > 0">
-            <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">Disabled</h3>
+            <h3 class="text-sm font-medium text-text">Disabled</h3>
             <div class="mt-2 flex flex-col gap-2">
               <div
                 v-for="entry in recoveryStore.changes.disabled"
                 :key="`disabled-${entry.packageName}`"
-                class="flex items-center gap-3 rounded border border-gray-200 p-2 text-sm dark:border-gray-800"
+                class="flex items-center gap-3 rounded border border-border p-2 text-sm"
               >
                 <NCheckbox
                   :checked="selected.has(entry.packageName)"
                   @update:checked="(v: boolean) => toggleSelected(entry.packageName, v)"
                 />
                 <div class="min-w-0 flex-1">
-                  <div class="truncate font-medium text-gray-900 dark:text-gray-100">
+                  <div class="truncate font-medium text-text">
                     {{ displayName(entry.packageName) }}
                   </div>
-                  <div class="truncate text-xs text-gray-500 dark:text-gray-400">
+                  <div class="truncate text-xs text-text-muted">
                     {{ entry.packageName }} · disabled {{ formatTimestamp(entry.performedAt) }}
                   </div>
                 </div>
@@ -285,12 +283,12 @@ async function confirmBulkRestore(): Promise<void> {
           </div>
 
           <div v-if="recoveryStore.changes.uninstalled.length > 0">
-            <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">Uninstalled</h3>
+            <h3 class="text-sm font-medium text-text">Uninstalled</h3>
             <div class="mt-2 flex flex-col gap-2">
               <div
                 v-for="entry in [...restorableUninstalled, ...blockedUninstalled]"
                 :key="`uninstalled-${entry.packageName}`"
-                class="flex flex-col gap-1 rounded border border-gray-200 p-2 text-sm dark:border-gray-800"
+                class="flex flex-col gap-1 rounded border border-border p-2 text-sm"
               >
                 <div class="flex items-center gap-3">
                   <NCheckbox
@@ -300,10 +298,10 @@ async function confirmBulkRestore(): Promise<void> {
                   />
                   <NTag v-else size="small" type="warning">Not restorable</NTag>
                   <div class="min-w-0 flex-1">
-                    <div class="truncate font-medium text-gray-900 dark:text-gray-100">
+                    <div class="truncate font-medium text-text">
                       {{ displayName(entry.packageName) }}
                     </div>
-                    <div class="truncate text-xs text-gray-500 dark:text-gray-400">
+                    <div class="truncate text-xs text-text-muted">
                       {{ entry.packageName }} · uninstalled {{ formatTimestamp(entry.performedAt) }}
                     </div>
                   </div>
@@ -316,7 +314,7 @@ async function confirmBulkRestore(): Promise<void> {
                     Restore
                   </NButton>
                 </div>
-                <p v-if="!entry.restorable" class="pl-1 text-xs text-gray-500 dark:text-gray-400">
+                <p v-if="!entry.restorable" class="pl-1 text-xs text-text-muted">
                   {{ entry.blockedReason }}
                 </p>
               </div>
@@ -324,21 +322,21 @@ async function confirmBulkRestore(): Promise<void> {
           </div>
 
           <div v-if="recoveryStore.changes.cleared.length > 0">
-            <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">Cleared</h3>
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <h3 class="text-sm font-medium text-text">Cleared</h3>
+            <p class="mt-1 text-xs text-text-muted">
               Clearing app data cannot be undone — these are listed for reference only.
             </p>
             <div class="mt-2 flex flex-col gap-2">
               <div
                 v-for="entry in recoveryStore.changes.cleared"
                 :key="`cleared-${entry.packageName}`"
-                class="flex items-center gap-3 rounded border border-gray-200 p-2 text-sm dark:border-gray-800"
+                class="flex items-center gap-3 rounded border border-border p-2 text-sm"
               >
                 <div class="min-w-0 flex-1">
-                  <div class="truncate font-medium text-gray-900 dark:text-gray-100">
+                  <div class="truncate font-medium text-text">
                     {{ displayName(entry.packageName) }}
                   </div>
-                  <div class="truncate text-xs text-gray-500 dark:text-gray-400">
+                  <div class="truncate text-xs text-text-muted">
                     {{ entry.packageName }} · cleared {{ formatTimestamp(entry.performedAt) }}
                   </div>
                 </div>
@@ -368,7 +366,7 @@ async function confirmBulkRestore(): Promise<void> {
     title="Restore these changes?"
     type="warning"
   >
-    <div class="flex flex-col gap-2 text-sm text-gray-700 dark:text-gray-300">
+    <div class="flex flex-col gap-2 text-sm text-text-secondary">
       <p>This will attempt to restore {{ bulkTargets.length }} package(s):</p>
       <ul class="list-inside list-disc">
         <li v-if="bulkEnableCount > 0">Enable {{ bulkEnableCount }} disabled package(s)</li>
@@ -376,7 +374,7 @@ async function confirmBulkRestore(): Promise<void> {
           Reinstall {{ bulkReinstallCount }} uninstalled package(s) for this user
         </li>
       </ul>
-      <p class="text-xs text-gray-500 dark:text-gray-400">
+      <p class="text-xs text-text-muted">
         This restores changes made by droid.or only — it is not a factory reset and does not touch
         firmware or system partitions.
       </p>

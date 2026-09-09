@@ -19,7 +19,7 @@ async function handleAccept(): Promise<void> {
     title="Before you start"
     style="width: 640px"
   >
-    <div class="flex flex-col gap-3 text-sm text-gray-700 dark:text-gray-300">
+    <div class="flex flex-col gap-3 text-sm text-text-secondary">
       <p>
         droid.or lets you disable, uninstall for the current user, and otherwise modify apps on your
         Android device — including apps preinstalled by the manufacturer or required by Android

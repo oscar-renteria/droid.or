@@ -76,8 +76,8 @@ const recentlyChangedApps = computed(() => {
     v-if="!selectedDevice"
     class="flex h-full flex-col items-center justify-center gap-2 text-center"
   >
-    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">No device selected</h2>
-    <p class="max-w-md text-sm text-gray-500 dark:text-gray-400">
+    <h2 class="text-lg font-medium text-text">No device selected</h2>
+    <p class="max-w-md text-sm text-text-muted">
       Select a device from the sidebar to run a security review on it.
     </p>
   </div>
@@ -86,10 +86,10 @@ const recentlyChangedApps = computed(() => {
     v-else-if="selectedDevice.connectionState !== 'device'"
     class="flex h-full flex-col items-center justify-center gap-2 text-center"
   >
-    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+    <h2 class="text-lg font-medium text-text">
       {{ getDeviceStateMeta(selectedDevice.connectionState).label }}
     </h2>
-    <p class="max-w-md text-sm text-gray-500 dark:text-gray-400">
+    <p class="max-w-md text-sm text-text-muted">
       {{
         getDeviceStateMeta(selectedDevice.connectionState).guidance ??
         'A security review requires an authorized, connected device.'
@@ -99,7 +99,7 @@ const recentlyChangedApps = computed(() => {
 
   <div v-else class="flex h-full flex-col gap-3">
     <div class="flex shrink-0 items-center justify-between">
-      <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Security Review</h2>
+      <h2 class="text-lg font-medium text-text">Security Review</h2>
       <NButton
         type="primary"
         :loading="securityReviewStore.loading || packagesStore.loading"
@@ -134,10 +134,10 @@ const recentlyChangedApps = computed(() => {
     >
       <div class="flex h-full flex-col gap-4 overflow-y-auto pr-1">
         <section>
-          <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">
+          <h3 class="text-sm font-medium text-text">
             Device Admin apps ({{ deviceAdminApps.length }})
           </h3>
-          <p class="text-xs text-gray-500 dark:text-gray-400">
+          <p class="text-xs text-text-muted">
             Can make itself hard to remove normally. Real examples: MDM/work-profile tools,
             "hibernate background apps" utilities, Find My Device.
           </p>
@@ -145,24 +145,20 @@ const recentlyChangedApps = computed(() => {
             <div
               v-for="pkg in deviceAdminApps"
               :key="pkg"
-              class="rounded border border-gray-200 p-2 text-sm dark:border-gray-800"
+              class="rounded border border-border p-2 text-sm"
             >
-              <span class="font-medium text-gray-900 dark:text-gray-100">{{
-                displayLabel(pkg)
-              }}</span>
-              <span class="ml-2 text-xs text-gray-500 dark:text-gray-400">{{ pkg }}</span>
+              <span class="font-medium text-text">{{ displayLabel(pkg) }}</span>
+              <span class="ml-2 text-xs text-text-muted">{{ pkg }}</span>
             </div>
-            <p v-if="deviceAdminApps.length === 0" class="text-xs text-gray-500 dark:text-gray-400">
-              None.
-            </p>
+            <p v-if="deviceAdminApps.length === 0" class="text-xs text-text-muted">None.</p>
           </div>
         </section>
 
         <section>
-          <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">
+          <h3 class="text-sm font-medium text-text">
             Accessibility services ({{ accessibilityApps.length }})
           </h3>
-          <p class="text-xs text-gray-500 dark:text-gray-400">
+          <p class="text-xs text-text-muted">
             Can observe and interact with the screen. Real examples: screen readers, launchers,
             automation tools.
           </p>
@@ -170,27 +166,20 @@ const recentlyChangedApps = computed(() => {
             <div
               v-for="pkg in accessibilityApps"
               :key="pkg"
-              class="rounded border border-gray-200 p-2 text-sm dark:border-gray-800"
+              class="rounded border border-border p-2 text-sm"
             >
-              <span class="font-medium text-gray-900 dark:text-gray-100">{{
-                displayLabel(pkg)
-              }}</span>
-              <span class="ml-2 text-xs text-gray-500 dark:text-gray-400">{{ pkg }}</span>
+              <span class="font-medium text-text">{{ displayLabel(pkg) }}</span>
+              <span class="ml-2 text-xs text-text-muted">{{ pkg }}</span>
             </div>
-            <p
-              v-if="accessibilityApps.length === 0"
-              class="text-xs text-gray-500 dark:text-gray-400"
-            >
-              None.
-            </p>
+            <p v-if="accessibilityApps.length === 0" class="text-xs text-text-muted">None.</p>
           </div>
         </section>
 
         <section>
-          <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">
+          <h3 class="text-sm font-medium text-text">
             Apps not installed from the Play Store ({{ nonPlayStoreApps.length }})
           </h3>
-          <p class="text-xs text-gray-500 dark:text-gray-400">
+          <p class="text-xs text-text-muted">
             User-installed apps only — a system app with no recorded installer is normal (preloaded
             by the manufacturer) and not included here.
           </p>
@@ -198,30 +187,21 @@ const recentlyChangedApps = computed(() => {
             <div
               v-for="pkg in nonPlayStoreApps"
               :key="pkg.packageName"
-              class="rounded border border-gray-200 p-2 text-sm dark:border-gray-800"
+              class="rounded border border-border p-2 text-sm"
             >
               <div class="flex flex-wrap items-center gap-2">
-                <span class="font-medium text-gray-900 dark:text-gray-100">{{
-                  displayLabel(pkg.packageName)
-                }}</span>
+                <span class="font-medium text-text">{{ displayLabel(pkg.packageName) }}</span>
                 <NTag size="small">{{ formatInstallSource(pkg.installerPackage) }}</NTag>
               </div>
-              <span class="text-xs text-gray-500 dark:text-gray-400">{{ pkg.packageName }}</span>
+              <span class="text-xs text-text-muted">{{ pkg.packageName }}</span>
             </div>
-            <p
-              v-if="nonPlayStoreApps.length === 0"
-              class="text-xs text-gray-500 dark:text-gray-400"
-            >
-              None.
-            </p>
+            <p v-if="nonPlayStoreApps.length === 0" class="text-xs text-text-muted">None.</p>
           </div>
         </section>
 
         <section>
-          <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">
-            Most recently installed or updated
-          </h3>
-          <p class="text-xs text-gray-500 dark:text-gray-400">
+          <h3 class="text-sm font-medium text-text">Most recently installed or updated</h3>
+          <p class="text-xs text-text-muted">
             The 15 most recent, across all apps — useful for cross-checking against a specific date
             you're concerned about.
           </p>
@@ -229,17 +209,13 @@ const recentlyChangedApps = computed(() => {
             <div
               v-for="pkg in recentlyChangedApps"
               :key="pkg.packageName"
-              class="flex items-center justify-between rounded border border-gray-200 p-2 text-sm dark:border-gray-800"
+              class="flex items-center justify-between rounded border border-border p-2 text-sm"
             >
               <div>
-                <span class="font-medium text-gray-900 dark:text-gray-100">{{
-                  displayLabel(pkg.packageName)
-                }}</span>
-                <span class="ml-2 text-xs text-gray-500 dark:text-gray-400">{{
-                  pkg.packageName
-                }}</span>
+                <span class="font-medium text-text">{{ displayLabel(pkg.packageName) }}</span>
+                <span class="ml-2 text-xs text-text-muted">{{ pkg.packageName }}</span>
               </div>
-              <span class="text-xs text-gray-500 dark:text-gray-400">
+              <span class="text-xs text-text-muted">
                 installed {{ formatInstalledDate(pkg.firstInstallTimeMs) }} · updated
                 {{ formatInstalledDate(pkg.lastUpdateTimeMs) }}
               </span>

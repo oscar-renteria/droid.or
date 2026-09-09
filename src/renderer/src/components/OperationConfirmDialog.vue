@@ -124,12 +124,10 @@ function handleClose(): void {
   >
     <div class="flex flex-col gap-3">
       <div>
-        <span class="font-medium text-gray-900 dark:text-gray-100">{{
-          displayName ?? packageName
-        }}</span>
-        <span class="ml-1 text-xs text-gray-500 dark:text-gray-400">{{ packageName }}</span>
+        <span class="font-medium text-text">{{ displayName ?? packageName }}</span>
+        <span class="ml-1 text-xs text-text-muted">{{ packageName }}</span>
       </div>
-      <p class="text-sm text-gray-700 dark:text-gray-300">{{ copy.description }}</p>
+      <p class="text-sm text-text-secondary">{{ copy.description }}</p>
 
       <NAlert v-if="isFavorite" type="error" :show-icon="true">
         You marked this app as Important. Double-check that you really want to do this before

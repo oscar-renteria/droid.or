@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { PackageRecommendation } from '@shared/types/analyzer'
 import type { MutatingOperationType } from '@shared/types/operation'
-import { NAlert, NButton, NEmpty, NSelect, NSpin, NTag, useMessage } from 'naive-ui'
+import { NAlert, NButton, NEmpty, NIcon, NSelect, NSpin, NTag, useMessage } from 'naive-ui'
+import { Star } from '@vicons/ionicons5'
 import { computed, ref, watch } from 'vue'
 import OperationConfirmDialog from '@renderer/components/OperationConfirmDialog.vue'
 import { useAnalyzerStore } from '@renderer/stores/analyzer.store'
@@ -136,8 +137,8 @@ async function handleConfirm(): Promise<void> {
     v-if="!selectedDevice"
     class="flex h-full flex-col items-center justify-center gap-2 text-center"
   >
-    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">No device selected</h2>
-    <p class="max-w-md text-sm text-gray-500 dark:text-gray-400">
+    <h2 class="text-lg font-medium text-text">No device selected</h2>
+    <p class="max-w-md text-sm text-text-muted">
       Select a device from the sidebar to analyze it for debloat opportunities.
     </p>
   </div>
@@ -146,10 +147,10 @@ async function handleConfirm(): Promise<void> {
     v-else-if="selectedDevice.connectionState !== 'device'"
     class="flex h-full flex-col items-center justify-center gap-2 text-center"
   >
-    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+    <h2 class="text-lg font-medium text-text">
       {{ getDeviceStateMeta(selectedDevice.connectionState).label }}
     </h2>
-    <p class="max-w-md text-sm text-gray-500 dark:text-gray-400">
+    <p class="max-w-md text-sm text-text-muted">
       {{
         getDeviceStateMeta(selectedDevice.connectionState).guidance ??
         'Analyzing a device requires an authorized, connected device.'
@@ -164,7 +165,7 @@ async function handleConfirm(): Promise<void> {
       </NButton>
       <template v-if="analyzerStore.result">
         <NSelect v-model:value="filterKey" :options="filterOptions" class="w-64" />
-        <span class="text-xs text-gray-500 dark:text-gray-400">
+        <span class="text-xs text-text-muted">
           {{ analyzerStore.result.summary.safe }} safe ·
           {{ analyzerStore.result.summary.caution }} caution ·
           {{ analyzerStore.result.summary.advanced }} advanced (uncertain) ·
@@ -182,8 +183,8 @@ async function handleConfirm(): Promise<void> {
       v-else-if="!analyzerStore.result && !analyzerStore.loading"
       class="flex flex-1 flex-col items-center justify-center gap-2 text-center"
     >
-      <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Analyze this device</h2>
-      <p class="max-w-md text-sm text-gray-500 dark:text-gray-400">
+      <h2 class="text-lg font-medium text-text">Analyze this device</h2>
+      <p class="max-w-md text-sm text-text-muted">
         Reviews every preinstalled system package against a local knowledge base and flags possible
         debloat opportunities. User-installed apps aren't included — you already chose those
         yourself. Nothing on the device changes until you take an action.
@@ -200,7 +201,7 @@ async function handleConfirm(): Promise<void> {
         <div
           v-for="recommendation in filteredRecommendations"
           :key="recommendation.packageName"
-          class="rounded border border-gray-200 p-3 dark:border-gray-800"
+          class="rounded border border-border p-3"
         >
           <div class="flex items-start gap-3">
             <img
@@ -211,16 +212,14 @@ async function handleConfirm(): Promise<void> {
             />
             <div
               v-else
-              class="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-gray-200 text-xs font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+              class="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-surface-elevated text-xs font-medium text-text-muted"
             >
               {{ displayLabel(recommendation).charAt(0).toUpperCase() }}
             </div>
 
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2">
-                <span class="font-medium text-gray-900 dark:text-gray-100">{{
-                  displayLabel(recommendation)
-                }}</span>
+                <span class="font-medium text-text">{{ displayLabel(recommendation) }}</span>
                 <NTag size="small" :type="getRiskMeta(recommendation.risk).tagType">
                   {{ getRiskMeta(recommendation.risk).emoji }}
                   {{ getRiskMeta(recommendation.risk).label }}
@@ -229,17 +228,20 @@ async function handleConfirm(): Promise<void> {
                 <NTag v-if="recommendation.isRunning" size="small" type="info">Running now</NTag>
                 <NTag v-if="!recommendation.isKnownPackage" size="small">Not yet reviewed</NTag>
                 <NTag v-if="recommendation.isFavorite" size="small" type="warning">
-                  ★ Important
+                  <template #icon>
+                    <NIcon :component="Star" />
+                  </template>
+                  Important
                 </NTag>
               </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">
+              <div class="text-xs text-text-muted">
                 {{ recommendation.packageName }}
               </div>
 
-              <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">
+              <p class="mt-2 text-sm text-text-secondary">
                 {{ recommendation.reason }}
               </p>
-              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              <p class="mt-1 text-sm text-text-muted">
                 <span class="font-medium">Potential impact:</span>
                 {{ recommendation.potentialImpact }}
               </p>

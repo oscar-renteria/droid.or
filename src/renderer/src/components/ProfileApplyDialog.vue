@@ -74,7 +74,7 @@ function handleClose(): void {
     @update:show="(value: boolean) => !value && handleClose()"
   >
     <div class="flex flex-col gap-3">
-      <p class="text-sm text-gray-700 dark:text-gray-300">
+      <p class="text-sm text-text-secondary">
         This will apply to <span class="font-medium">{{ packageCount }}</span> selected package(s).
         {{ copy.description }}
       </p>

@@ -4,3 +4,53 @@
    composables/useResolvedTheme.ts), not solely by the OS media query, so an
    explicit light/dark choice can override the system setting. */
 @custom-variant dark (&:where(.dark, .dark *));
+
+/**
+ * Semantic design tokens. Every view already used the same handful of
+ * gray-scale pairings consistently (verified across all 17 renderer
+ * components before introducing this) — this just names what was already
+ * there instead of repeating `text-gray-900 dark:text-gray-100` etc. in
+ * every template, so future screens inherit consistency instead of having
+ * to copy-paste it. Values reference Tailwind's own default gray scale
+ * rather than hardcoding hex/oklch, so they track it if that palette ever
+ * changes. Light values live in :root (Tailwind's default @theme scope);
+ * dark values override them under the same `.dark` class the app's own
+ * `dark:` variant above already keys off.
+ */
+@theme {
+  /* Matches useResolvedTheme.ts's brandThemeOverrides.common.primaryColor
+   *  (#10B981) exactly — that's Tailwind's own emerald-500, so this
+   *  references it instead of repeating the hex value in a second place.
+   *  Same value in both themes, matching that override. */
+  --color-primary: var(--color-emerald-500);
+  --color-background: var(--color-white);
+  --color-surface: var(--color-gray-50);
+  --color-surface-code: var(--color-gray-100);
+  --color-surface-elevated: var(--color-gray-200);
+  --color-text: var(--color-gray-900);
+  --color-text-secondary: var(--color-gray-700);
+  --color-text-muted: var(--color-gray-500);
+  --color-text-code: var(--color-gray-800);
+  --color-border: var(--color-gray-200);
+  --color-border-strong: var(--color-gray-300);
+  /* Lighter than --color-border, for a subtle separator inside a card/panel
+   *  (e.g. between stacked sub-sections in Settings) rather than a
+   *  standalone panel edge. Standardizes two near-identical existing
+   *  patterns that had drifted slightly (100/800 vs 100/900 dark values
+   *  for the same visual role) onto one value. */
+  --color-divider: var(--color-gray-100);
+}
+
+.dark {
+  --color-background: var(--color-gray-950);
+  --color-surface: var(--color-gray-900);
+  --color-surface-code: var(--color-gray-900);
+  --color-surface-elevated: var(--color-gray-800);
+  --color-text: var(--color-gray-100);
+  --color-text-secondary: var(--color-gray-300);
+  --color-text-muted: var(--color-gray-400);
+  --color-text-code: var(--color-gray-200);
+  --color-border: var(--color-gray-800);
+  --color-border-strong: var(--color-gray-700);
+  --color-divider: var(--color-gray-800);
+}

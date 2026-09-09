@@ -10,6 +10,7 @@ import {
   NDrawer,
   NDrawerContent,
   NEmpty,
+  NIcon,
   NInput,
   NSelect,
   NSpin,
@@ -17,6 +18,7 @@ import {
   useMessage,
   type DataTableColumns
 } from 'naive-ui'
+import { Star, StarOutline } from '@vicons/ionicons5'
 import { computed, h, onMounted, ref, watch } from 'vue'
 import BackupDialog from '@renderer/components/BackupDialog.vue'
 import OperationConfirmDialog from '@renderer/components/OperationConfirmDialog.vue'
@@ -232,14 +234,14 @@ function renderAppCell(row: AppPackageInfo) {
           'div',
           {
             class:
-              'flex h-6 w-6 shrink-0 items-center justify-center rounded bg-gray-200 text-[10px] font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+              'flex h-6 w-6 shrink-0 items-center justify-center rounded bg-surface-elevated text-[10px] font-medium text-text-muted  '
           },
           label.charAt(0).toUpperCase()
         ),
     h('div', { class: 'min-w-0' }, [
-      h('div', { class: 'truncate font-medium text-gray-900 dark:text-gray-100' }, label),
+      h('div', { class: 'truncate font-medium text-text' }, label),
       label !== row.packageName
-        ? h('div', { class: 'truncate text-xs text-gray-500 dark:text-gray-400' }, row.packageName)
+        ? h('div', { class: 'truncate text-xs text-text-muted' }, row.packageName)
         : null
     ])
   ])
@@ -268,7 +270,10 @@ const columns: DataTableColumns<AppPackageInfo> = [
           title: row.isFavorite ? 'Marked Important' : 'Mark as Important',
           onClick: (event: MouseEvent) => toggleFavorite(row, event)
         },
-        { default: () => (row.isFavorite ? '★' : '☆') }
+        {
+          default: () =>
+            h(NIcon, { size: 16 }, { default: () => h(row.isFavorite ? Star : StarOutline) })
+        }
       )
   },
   {
@@ -343,8 +348,8 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
     v-if="!selectedDevice"
     class="flex h-full flex-col items-center justify-center gap-2 text-center"
   >
-    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">No device selected</h2>
-    <p class="max-w-md text-sm text-gray-500 dark:text-gray-400">
+    <h2 class="text-lg font-medium text-text">No device selected</h2>
+    <p class="max-w-md text-sm text-text-muted">
       Select a device from the sidebar to browse its installed applications.
     </p>
   </div>
@@ -353,10 +358,10 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
     v-else-if="selectedDevice.connectionState !== 'device'"
     class="flex h-full flex-col items-center justify-center gap-2 text-center"
   >
-    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+    <h2 class="text-lg font-medium text-text">
       {{ getDeviceStateMeta(selectedDevice.connectionState).label }}
     </h2>
-    <p class="max-w-md text-sm text-gray-500 dark:text-gray-400">
+    <p class="max-w-md text-sm text-text-muted">
       {{
         getDeviceStateMeta(selectedDevice.connectionState).guidance ??
         'Browsing applications requires an authorized, connected device.'
@@ -373,14 +378,14 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
         class="max-w-xs"
       />
       <NSelect v-model:value="filterKey" :options="filterOptions" class="w-48" />
-      <span class="text-xs text-gray-500 dark:text-gray-400">
+      <span class="text-xs text-text-muted">
         {{ filteredPackages.length }} / {{ packagesStore.packages.length }} packages
       </span>
       <div class="flex-1" />
       <NButton v-if="checkedKeys.length > 0" size="small" @click="backupDialogVisible = true">
         Backup Selected ({{ checkedKeys.length }})
       </NButton>
-      <NButton size="small" quaternary :loading="packagesStore.loading" @click="loadPackages">
+      <NButton size="small" :loading="packagesStore.loading" @click="loadPackages">
         Refresh
       </NButton>
     </div>
@@ -456,7 +461,10 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
               packagesStore.setFavorite(selectedPackage.packageName, !selectedPackage.isFavorite)
             "
           >
-            {{ selectedPackage.isFavorite ? '★ Marked Important' : '☆ Mark as Important' }}
+            <template #icon>
+              <NIcon :component="selectedPackage.isFavorite ? Star : StarOutline" />
+            </template>
+            {{ selectedPackage.isFavorite ? 'Marked Important' : 'Mark as Important' }}
           </NButton>
           <NButton
             size="small"
@@ -497,17 +505,17 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
           "
           class="mt-4"
         >
-          <h4 class="text-xs font-medium text-gray-700 dark:text-gray-300">AI opinion</h4>
+          <h4 class="text-xs font-medium text-text-secondary">AI opinion</h4>
           <NSpin :show="selectedPackageAiState.loading" class="mt-1 w-full">
             <NAlert v-if="selectedPackageAiState.errorMessage" type="error" :show-icon="true">
               {{ selectedPackageAiState.errorMessage }}
             </NAlert>
             <div
               v-else-if="selectedPackageAiState.result"
-              class="rounded border border-gray-200 p-3 text-sm text-gray-700 dark:border-gray-800 dark:text-gray-300"
+              class="rounded border border-border p-3 text-sm text-text-secondary"
             >
               <p class="whitespace-pre-wrap">{{ selectedPackageAiState.result.text }}</p>
-              <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              <p class="mt-2 text-xs text-text-muted">
                 {{ selectedPackageAiState.result.model }} — advisory only, not droid.or's own
                 classification.
               </p>

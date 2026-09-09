@@ -104,8 +104,8 @@ const columns: DataTableColumns<OperationHistoryEntry> = [
     v-if="!selectedDevice"
     class="flex h-full flex-col items-center justify-center gap-2 text-center"
   >
-    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">No device selected</h2>
-    <p class="max-w-md text-sm text-gray-500 dark:text-gray-400">
+    <h2 class="text-lg font-medium text-text">No device selected</h2>
+    <p class="max-w-md text-sm text-text-muted">
       Select a device from the sidebar to see the changes this app has made to it.
     </p>
   </div>
@@ -114,10 +114,10 @@ const columns: DataTableColumns<OperationHistoryEntry> = [
     v-else-if="selectedDevice.connectionState !== 'device'"
     class="flex h-full flex-col items-center justify-center gap-2 text-center"
   >
-    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+    <h2 class="text-lg font-medium text-text">
       {{ getDeviceStateMeta(selectedDevice.connectionState).label }}
     </h2>
-    <p class="max-w-md text-sm text-gray-500 dark:text-gray-400">
+    <p class="max-w-md text-sm text-text-muted">
       {{
         getDeviceStateMeta(selectedDevice.connectionState).guidance ??
         'Viewing history requires an authorized, connected device.'
@@ -127,13 +127,8 @@ const columns: DataTableColumns<OperationHistoryEntry> = [
 
   <div v-else class="flex h-full flex-col gap-3">
     <div class="flex shrink-0 items-center justify-between">
-      <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Operation History</h2>
-      <NButton
-        size="small"
-        quaternary
-        :loading="operationsStore.historyLoading"
-        @click="loadHistory"
-      >
+      <h2 class="text-lg font-medium text-text">Operation History</h2>
+      <NButton size="small" :loading="operationsStore.historyLoading" @click="loadHistory">
         Refresh
       </NButton>
     </div>
@@ -162,13 +157,13 @@ const columns: DataTableColumns<OperationHistoryEntry> = [
       style="width: 600px"
     >
       <template v-if="detailEntry">
-        <p class="text-sm text-gray-700 dark:text-gray-300">
+        <p class="text-sm text-text-secondary">
           <span class="font-medium">{{ detailEntry.packageName }}</span> —
           {{ OPERATION_LABELS[detailEntry.operation] ?? detailEntry.operation }}
           at {{ formatTimestamp(detailEntry.performedAt) }}
         </p>
         <pre
-          class="mt-3 max-h-80 overflow-auto rounded bg-gray-100 p-3 text-xs whitespace-pre-wrap text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+          class="mt-3 max-h-80 overflow-auto rounded bg-surface-code p-3 text-xs whitespace-pre-wrap text-text-code"
           >{{ detailEntry.rawOutput }}</pre>
       </template>
     </NModal>

@@ -65,7 +65,7 @@ const failedCount = computed(
     @update:show="(value: boolean) => !value && close()"
   >
     <div v-if="!backupStore.results" class="flex flex-col gap-3">
-      <p class="text-sm text-gray-700 dark:text-gray-300">
+      <p class="text-sm text-text-secondary">
         Copies the APK file(s) for {{ packageNames.length }} selected app(s) to a folder you choose
         — each app gets its own subfolder, including every split file for apps installed as a
         bundle.
@@ -81,9 +81,7 @@ const failedCount = computed(
         <NButton :disabled="backupStore.busy" @click="chooseDirectory">
           Choose destination folder…
         </NButton>
-        <span v-if="destDir" class="truncate text-xs text-gray-500 dark:text-gray-400">{{
-          destDir
-        }}</span>
+        <span v-if="destDir" class="truncate text-xs text-text-muted">{{ destDir }}</span>
       </div>
 
       <NAlert v-if="backupStore.errorMessage" type="error">
@@ -92,7 +90,7 @@ const failedCount = computed(
     </div>
 
     <div v-else class="flex max-h-96 flex-col gap-2 overflow-y-auto">
-      <p class="text-sm text-gray-700 dark:text-gray-300">
+      <p class="text-sm text-text-secondary">
         Backed up {{ succeededCount }} of {{ backupStore.results.length }} app(s){{
           failedCount > 0 ? ` — ${failedCount} failed` : ''
         }}.
@@ -100,12 +98,10 @@ const failedCount = computed(
       <div
         v-for="result in backupStore.results"
         :key="result.packageName"
-        class="rounded border border-gray-200 p-2 text-sm dark:border-gray-800"
+        class="rounded border border-border p-2 text-sm"
       >
         <div class="flex items-center gap-2">
-          <span class="truncate font-medium text-gray-900 dark:text-gray-100">{{
-            result.packageName
-          }}</span>
+          <span class="truncate font-medium text-text">{{ result.packageName }}</span>
           <NTag size="small" :type="result.success ? 'success' : 'error'">
             {{ result.success ? `${result.files.length} file(s)` : 'Failed' }}
           </NTag>
