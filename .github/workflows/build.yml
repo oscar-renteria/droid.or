@@ -1,0 +1,67 @@
+name: Build
+
+# Builds and packages droid.or for all three platforms on every push to
+# master. Each OS builds on its own native GitHub-hosted runner, so the
+# problems that make cross-building Windows/macOS from this project's own
+# (Linux) dev machine impractical don't apply here: better-sqlite3's
+# prebuilt native binary for that exact platform is used directly, and
+# electron-builder never needs Wine to touch a Windows/macOS artifact it's
+# building on that same OS.
+#
+# Every artifact here is unsigned by design (see DEVELOPMENT.md) - no
+# code-signing certificate exists for this project. Windows SmartScreen and
+# macOS Gatekeeper will warn on first run; that's an accepted trade-off,
+# not a bug in this workflow. Signing later needs no workflow change: add
+# CSC_LINK/CSC_KEY_PASSWORD (and, for macOS notarization,
+# APPLE_ID/APPLE_APP_SPECIFIC_PASSWORD/APPLE_TEAM_ID) as repository
+# secrets, then reference them via `env:` on the build step below -
+# electron-builder picks them up automatically.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            build_script: build:linux
+            artifact_name: linux-appimage
+            artifact_path: release/*.AppImage
+          - os: windows-latest
+            build_script: build:win
+            artifact_name: windows
+            artifact_path: |
+              release/*.exe
+          - os: macos-latest
+            build_script: build:mac
+            artifact_name: macos
+            artifact_path: |
+              release/*.dmg
+              release/*.zip
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test
+
+      - run: npm run ${{ matrix.build_script }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: droid-or-${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_path }}
+          if-no-files-found: error

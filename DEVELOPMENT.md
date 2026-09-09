@@ -117,40 +117,56 @@ tests/          # Mirrors src/
 ```bash
 npm run build         # type-check + bundle (out/)
 npm run build:linux   # + electron-builder --linux  (AppImage)
-npm run build:win     # + electron-builder --win    (NSIS installer)
+npm run build:win     # + electron-builder --win    (NSIS installer + portable .exe)
 npm run build:mac     # + electron-builder --mac    (dmg + zip)
 ```
 
 All three platforms have real settings configured in `electron-builder.yml`
-(installer behavior, categories, entitlements) — but **only the Linux
-target has actually been built and run** from this project's own (Linux)
-dev environment. The other two have real, hard platform constraints, not
-just "untested":
+(installer behavior, categories, entitlements). **Only the Linux target has
+actually been built and run from this project's own (Linux) dev
+environment** — the other two are built by CI instead (see below), not
+locally, for reasons specific to this dev machine rather than the config:
 
-- **Windows**: `npm run build:win` currently **fails** even on Linux CI,
-  for a reason unrelated to the electron-builder config itself —
-  `better-sqlite3` is a native module that `@electron/rebuild` recompiles
-  against Electron's own ABI for the target platform, and `node-gyp`
-  cannot cross-compile a native module for Windows from Linux. Building a
-  real Windows installer requires running `build:win` on Windows itself
-  (or a Windows CI runner) — there is no config change that fixes this
-  from Linux.
+- **Windows**: native modules aren't actually the blocker they first
+  appear to be — `better-sqlite3` ships prebuilt binaries for every
+  platform (`node_modules/better-sqlite3/prebuilds/`), so `@electron/rebuild`
+  doesn't need to compile anything from source, and a genuine
+  `droid.or.exe` (verified: a real PE32+ Windows binary) was produced from
+  this Linux machine. What actually blocks a _complete_ Windows build here
+  is Wine, which electron-builder needs on non-Windows hosts to embed the
+  icon/version resources into the `.exe` — not installed on this project's
+  dev machine, and not worth installing just for this when CI already
+  builds on a real Windows runner anyway.
 - **macOS**: electron-builder can only produce a macOS build (`.app`,
-  `dmg`, `zip`) on macOS itself — this is a hard restriction of
-  electron-builder, independent of the native-module issue above. Building
-  a real macOS release requires an actual Mac (or macOS CI runner).
+  `dmg`, `zip`) on macOS itself — a hard restriction of electron-builder,
+  unrelated to the native-module point above.
+
+### CI builds (`.github/workflows/build.yml`)
+
+Every push to `master` builds all three platforms on their own native
+GitHub-hosted runner (`ubuntu-latest`/`windows-latest`/`macos-latest`), so
+neither limitation above applies there — each OS uses its own prebuilt
+native binary and its own real toolchain, no Wine or cross-compilation
+involved. Artifacts (the AppImage, the NSIS installer + portable `.exe`,
+the dmg + zip) are uploaded as workflow artifacts, downloadable from that
+run's Actions page. Can also be triggered manually (`workflow_dispatch`)
+without a push. This requires the repository to actually be on GitHub with
+Actions enabled — pushing to a purely local `master` does nothing.
 
 ### Code signing and notarization
 
-Nothing above produces a _signed_ build — an unsigned Windows installer
-triggers a Windows SmartScreen warning, and an unsigned/unnotarized macOS
-app is blocked outright by Gatekeeper. Neither can be fixed by
-configuration alone; both require credentials this project does not have:
+Every artifact this project produces — locally or via CI — is deliberately
+**unsigned**. That's an accepted trade-off, not an oversight: an unsigned
+Windows installer/portable `.exe` triggers a Windows SmartScreen warning
+("Run anyway" bypasses it), and an unsigned/unnotarized macOS app is
+blocked by Gatekeeper (right-click → Open bypasses it) — packaging format
+doesn't change either of those, only real signing credentials do, and this
+project doesn't have any. If that changes:
 
 - **Windows**: a code-signing certificate (a paid Authenticode certificate
-  from a CA). Once you have one, electron-builder picks it up
-  automatically from the `CSC_LINK` (path or base64-encoded `.pfx`) and
-  `CSC_KEY_PASSWORD` environment variables — no config change needed.
+  from a CA). electron-builder picks it up automatically from the
+  `CSC_LINK` (path or base64-encoded `.pfx`) and `CSC_KEY_PASSWORD`
+  environment variables — no config change needed.
 - **macOS**: a "Developer ID Application" certificate from a paid Apple
   Developer Program membership, for signing (`CSC_LINK`/`CSC_KEY_PASSWORD`
   again), **plus** notarization credentials for Gatekeeper to trust the
@@ -162,6 +178,13 @@ configuration alone; both require credentials this project does not have:
   `APPLE_API_ISSUER`), are set as environment variables. With none of
   these set, electron-builder just logs a warning and skips signing/
   notarization — it does not fail the build.
+
+To actually turn this on in CI: add the relevant values above as encrypted
+repository secrets (Settings → Secrets and variables → Actions on GitHub),
+then map each one to an environment variable on the `build` step in
+`.github/workflows/build.yml` (e.g. `CSC_LINK: ${{ secrets.CSC_LINK }}`) —
+the workflow file doesn't reference any of them today, matching the
+decision to ship unsigned for now.
 
 ### App icon
 

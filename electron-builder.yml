@@ -28,22 +28,31 @@ linux:
 # a native module that needs recompiling against Electron's own ABI for
 # each target platform, and node-gyp cannot cross-compile native modules
 # for Windows from Linux. This config is correct per electron-builder's own
-# docs but has NOT been verified to produce a working installer — that
+# docs but has NOT been verified to produce a working artifact — that
 # needs an actual Windows machine or CI runner. See DEVELOPMENT.md.
-# `oneClick: false` is deliberate regardless: a silent one-click install is
-# the wrong default for a tool with real ADB capabilities on the machine it
-# installs to, matching the rest of this app's confirm-before-acting
-# philosophy.
+#
+# Two targets, both unsigned by design (see DEVELOPMENT.md — a single-file
+# build doesn't avoid the SmartScreen/Gatekeeper warning either, only a
+# real code-signing certificate does, and this project doesn't have one):
+# a proper installer for most users, and a portable single .exe for anyone
+# who'd rather not install anything at all. `oneClick: false` on the
+# installer is deliberate regardless of signing: a silent one-click install
+# is the wrong default for a tool with real ADB capabilities on the
+# machine it installs to, matching the rest of this app's
+# confirm-before-acting philosophy.
 win:
   target:
     - target: nsis
-  artifactName: ${productName}-${version}-${arch}-setup.${ext}
+    - target: portable
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: droid.or
+  artifactName: ${productName}-${version}-${arch}-setup.${ext}
+portable:
+  artifactName: ${productName}-${version}-${arch}-portable.${ext}
 
 # Cannot be built or verified from this project's (Linux) dev environment —
 # electron-builder can only produce a macOS build on macOS itself. Config
