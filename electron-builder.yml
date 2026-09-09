@@ -6,12 +6,12 @@ directories:
 files:
   - out/**/*
   - package.json
-# No custom app icon exists yet (nothing under build/) — every target below
-# falls back to electron-builder's own default Electron icon rather than
-# failing. Once a real icon exists, add a single high-resolution source
-# (build/icon.png, at least 1024x1024) and reference it as `icon:
-# build/icon.png` under each platform section below; electron-builder
-# derives the .ico/.icns itself from that one file.
+# A single 1024x1024 source (build/icon.png) — electron-builder derives
+# the platform-specific .ico/.icns from it itself for every target below.
+# Verified for Linux (the AppImage embeds and displays it correctly); the
+# Windows .ico and macOS .icns conversion steps only run on their own
+# platform (see the win/mac notes below) so haven't been verified here.
+icon: build/icon.png
 
 linux:
   target: AppImage

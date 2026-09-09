@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { OperationHistoryEntry } from '@shared/types/operation'
-import { NButton, NDataTable, NEmpty, NModal, NTag, type DataTableColumns } from 'naive-ui'
+import { NButton, NDataTable, NEmpty, NIcon, NModal, NTag, type DataTableColumns } from 'naive-ui'
+import { RefreshOutline } from '@vicons/ionicons5'
 import { computed, h, ref, watch } from 'vue'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { useOperationsStore } from '@renderer/stores/operations.store'
@@ -129,6 +130,9 @@ const columns: DataTableColumns<OperationHistoryEntry> = [
     <div class="flex shrink-0 items-center justify-between">
       <h2 class="text-lg font-medium text-text">Operation History</h2>
       <NButton size="small" :loading="operationsStore.historyLoading" @click="loadHistory">
+        <template #icon>
+          <NIcon :component="RefreshOutline" />
+        </template>
         Refresh
       </NButton>
     </div>
@@ -148,6 +152,7 @@ const columns: DataTableColumns<OperationHistoryEntry> = [
       :data="operationsStore.history"
       :row-key="(row: OperationHistoryEntry) => row.id"
       size="small"
+      striped
     />
 
     <NModal

@@ -4,6 +4,7 @@ import {
   NButton,
   NEmpty,
   NDataTable,
+  NIcon,
   NInput,
   NModal,
   NSelect,
@@ -11,6 +12,7 @@ import {
   useMessage,
   type DataTableColumns
 } from 'naive-ui'
+import { RefreshOutline, SaveOutline, TrashOutline } from '@vicons/ionicons5'
 import { computed, h, onMounted, ref } from 'vue'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { useLogsStore } from '@renderer/stores/logs.store'
@@ -178,10 +180,23 @@ const columns: DataTableColumns<AdbCommandLogEntry> = [
       <h2 class="text-lg font-medium text-text">Logs</h2>
       <div class="flex items-center gap-2">
         <NButton size="small" :loading="logsStore.loading" @click="logsStore.load">
+          <template #icon>
+            <NIcon :component="RefreshOutline" />
+          </template>
           Refresh
         </NButton>
-        <NButton size="small" @click="handleExport">Export Logs</NButton>
-        <NButton size="small" type="error" @click="handleClear">Clear</NButton>
+        <NButton size="small" @click="handleExport">
+          <template #icon>
+            <NIcon :component="SaveOutline" />
+          </template>
+          Export Logs
+        </NButton>
+        <NButton size="small" type="error" @click="handleClear">
+          <template #icon>
+            <NIcon :component="TrashOutline" />
+          </template>
+          Clear
+        </NButton>
       </div>
     </div>
 
@@ -220,6 +235,7 @@ const columns: DataTableColumns<AdbCommandLogEntry> = [
       :data="filteredEntries"
       :row-key="(row: AdbCommandLogEntry) => row.id"
       size="small"
+      striped
     />
 
     <NModal

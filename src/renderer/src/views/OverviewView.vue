@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { DeviceDashboardInfo } from '@shared/types/device-dashboard'
-import { NAlert, NButton, NDescriptions, NDescriptionsItem, NSpin } from 'naive-ui'
+import { NAlert, NButton, NDescriptions, NDescriptionsItem, NIcon, NSpin } from 'naive-ui'
+import { RefreshOutline } from '@vicons/ionicons5'
 import { computed, ref, watch } from 'vue'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { getDeviceStateMeta } from '@renderer/utils/device-state-meta'
@@ -84,7 +85,12 @@ watch(
         <h2 class="text-lg font-medium text-text">
           {{ selectedDevice.nickname ?? selectedDevice.model ?? selectedDevice.id }}
         </h2>
-        <NButton size="small" :loading="loading" @click="fetchDashboard">Refresh</NButton>
+        <NButton size="small" :loading="loading" @click="fetchDashboard">
+          <template #icon>
+            <NIcon :component="RefreshOutline" />
+          </template>
+          Refresh
+        </NButton>
       </div>
 
       <NAlert v-if="errorMessage" type="error" title="Couldn't load device information">

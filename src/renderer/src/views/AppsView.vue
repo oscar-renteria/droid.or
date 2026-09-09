@@ -18,7 +18,7 @@ import {
   useMessage,
   type DataTableColumns
 } from 'naive-ui'
-import { Star, StarOutline } from '@vicons/ionicons5'
+import { RefreshOutline, Star, StarOutline } from '@vicons/ionicons5'
 import { computed, h, onMounted, ref, watch } from 'vue'
 import BackupDialog from '@renderer/components/BackupDialog.vue'
 import OperationConfirmDialog from '@renderer/components/OperationConfirmDialog.vue'
@@ -386,6 +386,9 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
         Backup Selected ({{ checkedKeys.length }})
       </NButton>
       <NButton size="small" :loading="packagesStore.loading" @click="loadPackages">
+        <template #icon>
+          <NIcon :component="RefreshOutline" />
+        </template>
         Refresh
       </NButton>
     </div>
@@ -408,6 +411,7 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
       :row-key="(row: AppPackageInfo) => row.packageName"
       virtual-scroll
       size="small"
+      striped
     />
 
     <NDrawer v-model:show="drawerVisible" :width="420" placement="right">

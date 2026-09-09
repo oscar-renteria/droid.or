@@ -1,6 +1,19 @@
 <script setup lang="ts">
-import { NAlert, NButton, NTabPane, NTabs } from 'naive-ui'
+import { NAlert, NButton, NIcon, NTabPane, NTabs } from 'naive-ui'
+import {
+  AnalyticsOutline,
+  AppsOutline,
+  ArrowUndoOutline,
+  DocumentTextOutline,
+  DownloadOutline,
+  HomeOutline,
+  LayersOutline,
+  SettingsOutline,
+  ShieldCheckmarkOutline,
+  TimeOutline
+} from '@vicons/ionicons5'
 import { onMounted, onUnmounted } from 'vue'
+import type { Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAdbAvailability } from '@renderer/composables/useAdbAvailability'
 import { useAppInfo } from '@renderer/composables/useAppInfo'
@@ -21,17 +34,17 @@ onUnmounted(() => {
   devicesStore.dispose()
 })
 
-const tabs: Array<{ name: string; label: string }> = [
-  { name: 'overview', label: 'Overview' },
-  { name: 'apps', label: 'Apps' },
-  { name: 'analyzer', label: 'Analyzer' },
-  { name: 'profiles', label: 'Profiles' },
-  { name: 'install', label: 'Install' },
-  { name: 'history', label: 'History' },
-  { name: 'recovery', label: 'Recovery' },
-  { name: 'security', label: 'Security Review' },
-  { name: 'settings', label: 'Settings' },
-  { name: 'logs', label: 'Logs' }
+const tabs: Array<{ name: string; label: string; icon: Component }> = [
+  { name: 'overview', label: 'Overview', icon: HomeOutline },
+  { name: 'apps', label: 'Apps', icon: AppsOutline },
+  { name: 'analyzer', label: 'Analyzer', icon: AnalyticsOutline },
+  { name: 'profiles', label: 'Profiles', icon: LayersOutline },
+  { name: 'install', label: 'Install', icon: DownloadOutline },
+  { name: 'history', label: 'History', icon: TimeOutline },
+  { name: 'recovery', label: 'Recovery', icon: ArrowUndoOutline },
+  { name: 'security', label: 'Security Review', icon: ShieldCheckmarkOutline },
+  { name: 'settings', label: 'Settings', icon: SettingsOutline },
+  { name: 'logs', label: 'Logs', icon: DocumentTextOutline }
 ]
 
 function onTabUpdate(name: string): void {
@@ -75,11 +88,17 @@ function onTabUpdate(name: string): void {
         <NTabs
           :value="String(route.name ?? 'overview')"
           type="line"
+          size="small"
           class="shrink-0 px-4 pt-2"
           @update:value="onTabUpdate"
         >
           <NTabPane v-for="tab in tabs" :key="tab.name" :name="tab.name">
-            <template #tab>{{ tab.label }}</template>
+            <template #tab>
+              <span class="flex items-center gap-1">
+                <NIcon :component="tab.icon" />
+                {{ tab.label }}
+              </span>
+            </template>
           </NTabPane>
         </NTabs>
 

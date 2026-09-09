@@ -15,12 +15,19 @@ let mainWindow: BrowserWindow | null = null
 
 function createMainWindow(): void {
   mainWindow = new BrowserWindow({
-    width: 1280,
+    width: 1360,
     height: 800,
     minWidth: 960,
     minHeight: 640,
     show: false,
     autoHideMenuBar: true,
+    // Only resolves in dev (build/ isn't part of the packaged files list —
+    // see electron-builder.yml — so this path doesn't exist in a packaged
+    // build). That's fine: a packaged app's window/taskbar icon already
+    // comes from the icon electron-builder itself embedded into the
+    // exe/app bundle. This only fixes the generic Electron icon otherwise
+    // shown in the taskbar while running from source.
+    icon: join(__dirname, '../../build/icon.png'),
     webPreferences: {
       preload: join(__dirname, '../preload/index.cjs'),
       contextIsolation: true,
