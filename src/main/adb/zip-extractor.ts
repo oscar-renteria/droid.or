@@ -7,6 +7,31 @@ import yauzl from 'yauzl'
 const UNIX_MODE_MASK = 0xf000
 const UNIX_MODE_SYMLINK = 0xa000
 
+/** No real archive this app extracts (platform-tools, a split APK/app
+ *  bundle) is anywhere close to this size uncompressed — a generous cap
+ *  against a zip-bomb-style archive claiming a much larger uncompressed
+ *  size than is plausible, not a precise resource budget. */
+const DEFAULT_MAX_TOTAL_UNCOMPRESSED_BYTES = 4 * 1024 * 1024 * 1024
+
+export interface ExtractZipOptions {
+  /** When given, only entries this returns true for are written to disk;
+   *  everything else is skipped (directories are still created as needed
+   *  for the entries that are kept). Defaults to extracting everything,
+   *  preserving the original behavior for existing callers. */
+  shouldExtract?: (entryFileName: string) => boolean
+  /** Rejects once the cumulative uncompressed size of extracted entries
+   *  would exceed this, as a coarse zip-bomb guard. */
+  maxTotalUncompressedBytes?: number
+}
+
+export interface ExtractZipResult {
+  /** Names of entries that existed in the archive but were not extracted
+   *  because `shouldExtract` returned false for them — empty when no
+   *  filter was given. Directory entries are never included here even
+   *  when skipped, since they carry no content of their own. */
+  skippedEntries: string[]
+}
+
 /**
  * Resolves one zip entry's name against destDir and throws if the result
  * would land outside it — the "zip-slip" check, isolated as its own pure
@@ -34,14 +59,39 @@ export function resolveSafeEntryPath(destDir: string, entryFileName: string): st
  *  - Symlink entries are refused outright rather than followed or
  *    recreated, since Google's platform-tools archive is a flat set of
  *    regular files and has no legitimate reason to contain one.
+ *  - Two entries that would resolve to the same on-disk path are refused
+ *    rather than letting the second silently overwrite the first.
+ *  - The cumulative uncompressed size of everything actually written is
+ *    capped, as a coarse guard against a zip-bomb-style archive (see
+ *    ExtractZipOptions.maxTotalUncompressedBytes).
  *
  * (This is the exact vulnerability class an unpatched advisory exists for
  * in the popular `extract-zip` package — GHSA-jmr9-qjv8-65gv, no fix
  * available at the time this was written — which is why this uses `yauzl`
  * directly with these checks instead.)
+ *
+ * `shouldExtract` optionally limits which entries are actually written to
+ * disk (everything else is skipped, its name reported back in
+ * `skippedEntries`) — used by the split-install feature to extract only
+ * the `.apk` entries out of an .apks/.xapk/.apkm archive rather than also
+ * writing out icons, JSON metadata, or OBB expansion files it has no use
+ * for. Omitting it (every existing caller before this option existed)
+ * extracts everything, unchanged from the original behavior.
  */
-export function extractZip(zipPath: string, destDir: string): Promise<void> {
+export function extractZip(
+  zipPath: string,
+  destDir: string,
+  options: ExtractZipOptions = {}
+): Promise<ExtractZipResult> {
+  const shouldExtract = options.shouldExtract ?? (() => true)
+  const maxTotalUncompressedBytes =
+    options.maxTotalUncompressedBytes ?? DEFAULT_MAX_TOTAL_UNCOMPRESSED_BYTES
+
   return new Promise((resolvePromise, reject) => {
+    const seenTargetPaths = new Set<string>()
+    const skippedEntries: string[] = []
+    let totalUncompressedBytes = 0
+
     yauzl.open(zipPath, { lazyEntries: true }, (openError, zipfile) => {
       if (openError || !zipfile) {
         reject(openError ?? new Error('Failed to open the downloaded archive.'))
@@ -58,6 +108,12 @@ export function extractZip(zipPath: string, destDir: string): Promise<void> {
           return
         }
 
+        if (!isDirectory && !shouldExtract(entry.fileName)) {
+          skippedEntries.push(entry.fileName)
+          zipfile.readEntry()
+          return
+        }
+
         let targetPath: string
         try {
           targetPath = resolveSafeEntryPath(destDir, entry.fileName)
@@ -70,6 +126,22 @@ export function extractZip(zipPath: string, destDir: string): Promise<void> {
           mkdir(targetPath, { recursive: true })
             .then(() => zipfile.readEntry())
             .catch(reject)
+          return
+        }
+
+        if (seenTargetPaths.has(targetPath)) {
+          reject(
+            new Error(
+              `Refusing to extract a duplicate entry: two entries resolve to "${targetPath}"`
+            )
+          )
+          return
+        }
+        seenTargetPaths.add(targetPath)
+
+        totalUncompressedBytes += entry.uncompressedSize
+        if (totalUncompressedBytes > maxTotalUncompressedBytes) {
+          reject(new Error('Refusing to extract: this archive is larger than expected.'))
           return
         }
 
@@ -94,7 +166,7 @@ export function extractZip(zipPath: string, destDir: string): Promise<void> {
         })
       })
 
-      zipfile.on('end', () => resolvePromise())
+      zipfile.on('end', () => resolvePromise({ skippedEntries }))
       zipfile.readEntry()
     })
   })

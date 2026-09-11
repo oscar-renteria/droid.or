@@ -95,6 +95,13 @@ export class FakeAdbClient implements AdbClient {
     return this.runMutationCommand(serial, ['install', '-r', localApkPath])
   }
 
+  /** Reuses the same mutationResponses/mutationCalls map, keyed by the
+   *  equivalent argv — install-multiple is just another mutating adb
+   *  command from this fake's point of view. */
+  installMultipleApks(serial: string, apkPaths: string[]): Promise<MutationCommandResult> {
+    return this.runMutationCommand(serial, ['install-multiple', '-r', ...apkPaths])
+  }
+
   watchDevices(
     onUpdate: (devices: RawAdbDevice[]) => void,
     onError: (error: Error) => void

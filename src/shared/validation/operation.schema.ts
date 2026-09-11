@@ -18,7 +18,12 @@ export const operationTypeSchema = z.enum([
   'restore-install',
   // Installing a local .apk file from the host computer (the APK
   // Installer feature) — a fresh install or an update to an existing one.
-  'install'
+  'install',
+  // Installing a split/bundle set (.apks/.xapk/.apkm, a folder of split
+  // APKs, or several .apk files at once) via `adb install-multiple` — the
+  // Split Install feature. Kept distinct from 'install' since it always
+  // involves more than one file and its own history/raw-output shape.
+  'split-install'
 ])
 export type OperationType = z.infer<typeof operationTypeSchema>
 

@@ -81,6 +81,16 @@ export class LoggingAdbClient implements AdbClient {
     )
   }
 
+  installMultipleApks(serial: string, apkPaths: string[]): Promise<MutationCommandResult> {
+    return this.record(
+      serial,
+      'install-multiple-apk',
+      `install-multiple -r ${apkPaths.join(' ')}`,
+      () => this.inner.installMultipleApks(serial, apkPaths),
+      mutationOutcome
+    )
+  }
+
   watchDevices(
     onUpdate: (devices: RawAdbDevice[]) => void,
     onError: (error: Error) => void

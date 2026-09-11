@@ -9,8 +9,11 @@ import { recordOperation } from '../persistence/operation-history.repository'
 import type { LocalApkInfo } from './local-apk-inspector'
 
 /** Exact-match against the same substring-matching pitfall every other
- *  `pm list packages <filter>` call in this app already accounts for. */
-async function getInstalledVersionCode(
+ *  `pm list packages <filter>` call in this app already accounts for.
+ *  Exported for reuse by the split-APK install flow, which needs the exact
+ *  same "what's on the device right now" query before and after its own
+ *  `install-multiple` call. */
+export async function getInstalledVersionCode(
   adbClient: AdbClient,
   serial: string,
   packageName: string
@@ -52,7 +55,9 @@ export async function getInstallPlan(
   return { operation: 'downgrade-attempt', currentVersionCode }
 }
 
-function describeInstallSuccess(operation: InstallPlan['operation']): string {
+/** Exported for reuse by the split-APK install flow — the wording is
+ *  identical regardless of whether one file or several were installed. */
+export function describeInstallSuccess(operation: InstallPlan['operation']): string {
   switch (operation) {
     case 'fresh-install':
       return 'App installed.'

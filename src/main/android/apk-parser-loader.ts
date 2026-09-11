@@ -33,6 +33,21 @@ export interface RawApkInfo {
    *  array-handling; verified against real APKs that this one is not an
    *  array). Undefined when the APK has no icon. */
   icon?: string
+  /** The root `<manifest>` element's `split` attribute — present only on
+   *  a split APK (a base APK has none at all), and, per bundletool's
+   *  documented output, equal to "config.<abi|density|language>" for a
+   *  configuration split or the feature module's own name for a dynamic
+   *  feature split. Not part of app-info-parser's documented/typed API:
+   *  its manifest parser (xml-parser/manifest.js) collapses every
+   *  attribute of the root element into the result object before
+   *  overwriting the specific ones it explicitly recognizes — the same
+   *  mechanism that already surfaces `package`/`versionName` above — so
+   *  this comes through for free rather than requiring a bespoke binary
+   *  XML parser. Not verified against a real bundletool-generated split
+   *  this session (none was available); split-apk-classifier.ts treats
+   *  this as best-effort and falls back to the file name when it's
+   *  missing or unrecognized. */
+  split?: string
 }
 
 interface ApkParserConstructor {

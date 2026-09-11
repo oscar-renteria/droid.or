@@ -58,6 +58,14 @@ export interface AdbClient {
    *  a non-zero exit" behavior as runMutationCommand, for the same
    *  reason: adb's own failure text is the diagnostic a user needs. */
   installApk(serial: string, localApkPath: string): Promise<MutationCommandResult>
+  /** Installs a split/bundle set (a base APK plus config splits) in one
+   *  atomic `adb install-multiple -r <apk...>` call — Android rejects a
+   *  base and its splits installed one at a time via plain `install`. The
+   *  caller is responsible for ordering `apkPaths` (base first) and for
+   *  every path being a real file on disk; this never builds the list
+   *  itself. Same "never discard stdout/stderr on a non-zero exit"
+   *  behavior as installApk. */
+  installMultipleApks(serial: string, apkPaths: string[]): Promise<MutationCommandResult>
   /** Starts a persistent `adb track-devices` watch. Returns a function that
    *  stops it; safe to call more than once. */
   watchDevices(
@@ -176,6 +184,23 @@ export class RealAdbClient implements AdbClient {
       execFile(
         this.adbCommand,
         ['-s', serial, 'install', '-r', localApkPath],
+        { timeout: INSTALL_TIMEOUT_MS, maxBuffer: 4 * 1024 * 1024 },
+        (error, stdout, stderr) => {
+          if (error && typeof error.code !== 'number') {
+            reject(error)
+            return
+          }
+          resolve({ exitCode: typeof error?.code === 'number' ? error.code : 0, stdout, stderr })
+        }
+      )
+    })
+  }
+
+  installMultipleApks(serial: string, apkPaths: string[]): Promise<MutationCommandResult> {
+    return new Promise((resolve, reject) => {
+      execFile(
+        this.adbCommand,
+        ['-s', serial, 'install-multiple', '-r', ...apkPaths],
         { timeout: INSTALL_TIMEOUT_MS, maxBuffer: 4 * 1024 * 1024 },
         (error, stdout, stderr) => {
           if (error && typeof error.code !== 'number') {

@@ -41,7 +41,10 @@ const OPERATION_LABELS: Record<string, string> = {
   disable: 'Disable',
   enable: 'Enable',
   'uninstall-for-user': 'Uninstall for User',
-  'clear-data': 'Clear Data'
+  'clear-data': 'Clear Data',
+  install: 'Install APK',
+  'restore-install': 'Restore Install',
+  'split-install': 'Install Split/Bundle'
 }
 
 function formatTimestamp(iso: string): string {

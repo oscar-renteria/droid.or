@@ -47,7 +47,8 @@ const CATEGORY_LABELS: Record<AdbCommandLogCategory, string> = {
   shell: 'Shell',
   mutation: 'Mutation',
   'pull-file': 'Pull file',
-  'install-apk': 'Install APK'
+  'install-apk': 'Install APK',
+  'install-multiple-apk': 'Install split/bundle'
 }
 
 function deviceLabel(deviceId: string | null): string {

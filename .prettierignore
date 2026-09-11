@@ -3,3 +3,4 @@ out
 dist
 package-lock.json
 docs/specification.md
+features

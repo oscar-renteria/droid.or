@@ -7,6 +7,7 @@ import type { AppMetadataResult, AppPackageInfo } from './package'
 import type { MutatingOperationType, OperationHistoryEntry, OperationResult } from './operation'
 import type { DeviceChanges } from './recovery'
 import type { ApkInspectionResult } from './apk-install'
+import type { SplitInstallAnalysis, SplitSourceKind } from './split-install'
 import type { PackageBackupResult } from './apk-backup'
 import type { SecurityReviewResult } from './security-review'
 import type { AdbCommandLogEntry } from './logs'
@@ -95,6 +96,35 @@ export interface DroidorApi {
    *  isn't currently connected and authorized, or if this exact file is
    *  already being installed. */
   installApk: (deviceId: string, filePath: string) => Promise<OperationResult>
+  /** Opens a native file picker filtered to .apks/.xapk/.apkm archives.
+   *  Resolves to null if the user cancels. */
+  browseForSplitArchiveFile: () => Promise<string | null>
+  /** Opens a native folder picker for choosing a directory of already-
+   *  extracted split APK files. Resolves to null if the user cancels. */
+  browseForSplitDirectory: () => Promise<string | null>
+  /** Inspects a split/bundle install source — an .apks/.xapk/.apkm archive,
+   *  a folder of split APKs, or a set of individually-picked .apk files —
+   *  and reports what installing it on this device would do, including
+   *  per-file device compatibility and any consistency issues found.
+   *  Rejects if the source can't be read at all, or if the device isn't
+   *  currently connected and authorized. */
+  analyzeSplitInstallSource: (
+    deviceId: string,
+    sourceKind: SplitSourceKind,
+    sourcePaths: string[]
+  ) => Promise<SplitInstallAnalysis>
+  /** Installs a split/bundle set via a single `adb install-multiple` call.
+   *  Re-resolves the source fresh rather than trusting a previously
+   *  returned analysis. `selectedFileNames` is which non-base parts to
+   *  include — the base part is always installed regardless. Rejects if
+   *  the device isn't currently connected and authorized, or if this exact
+   *  source is already being installed. */
+  installSplitApks: (
+    deviceId: string,
+    sourceKind: SplitSourceKind,
+    sourcePaths: string[],
+    selectedFileNames: string[]
+  ) => Promise<OperationResult>
   /** Opens a native directory picker for choosing a backup destination.
    *  Resolves to null if the user cancels. */
   browseForBackupDirectory: () => Promise<string | null>

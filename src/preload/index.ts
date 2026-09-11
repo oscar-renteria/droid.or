@@ -16,6 +16,7 @@ import {
 import { deviceChangesSchema } from '@shared/validation/recovery.schema'
 import { adbStatusSchema } from '@shared/validation/adb-settings.schema'
 import { apkInspectionResultSchema } from '@shared/validation/apk-install.schema'
+import { splitInstallAnalysisSchema } from '@shared/validation/split-install.schema'
 import { z } from 'zod'
 import { packageBackupResultSchema } from '@shared/validation/apk-backup.schema'
 import { securityReviewResultSchema } from '@shared/validation/security-review.schema'
@@ -149,6 +150,35 @@ const droidorApi: DroidorApi = {
 
   installApk: async (deviceId, filePath) => {
     const result = await ipcRenderer.invoke(IpcChannel.InstallApk, { deviceId, filePath })
+    return operationResultSchema.parse(result)
+  },
+
+  browseForSplitArchiveFile: async () => {
+    const result: unknown = await ipcRenderer.invoke(IpcChannel.BrowseForSplitArchiveFile)
+    return typeof result === 'string' ? result : null
+  },
+
+  browseForSplitDirectory: async () => {
+    const result: unknown = await ipcRenderer.invoke(IpcChannel.BrowseForSplitDirectory)
+    return typeof result === 'string' ? result : null
+  },
+
+  analyzeSplitInstallSource: async (deviceId, sourceKind, sourcePaths) => {
+    const result = await ipcRenderer.invoke(IpcChannel.AnalyzeSplitInstallSource, {
+      deviceId,
+      sourceKind,
+      sourcePaths
+    })
+    return splitInstallAnalysisSchema.parse(result)
+  },
+
+  installSplitApks: async (deviceId, sourceKind, sourcePaths, selectedFileNames) => {
+    const result = await ipcRenderer.invoke(IpcChannel.InstallSplitApks, {
+      deviceId,
+      sourceKind,
+      sourcePaths,
+      selectedFileNames
+    })
     return operationResultSchema.parse(result)
   },
 

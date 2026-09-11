@@ -2,6 +2,7 @@ import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
 import { createAppContext } from './app-context'
 import { registerIpcHandlers } from './ipc/register-ipc-handlers'
+import { cleanupStaleSplitInstallTempDirs } from './android/split-install-temp-cleanup'
 
 // A second launch (e.g. double-clicking the app while it's already running)
 // should focus the existing window rather than spawn a second ADB-owning
@@ -69,6 +70,11 @@ app.whenReady().then(() => {
   registerIpcHandlers(context)
   context.deviceRegistry.start()
   createMainWindow()
+  // Fire-and-forget: sweeps up any split-install temp directory a prior
+  // run left behind after crashing before its own cleanup ran. Never
+  // awaited — this must not delay window creation, and a stale directory
+  // surviving one more session if this is slow is harmless.
+  void cleanupStaleSplitInstallTempDirs()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

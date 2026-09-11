@@ -91,6 +91,26 @@ describe('LoggingAdbClient', () => {
     expect(entry).toMatchObject({ deviceId: null, category: 'list-devices' })
   })
 
+  it('logs installMultipleApks under its own category', async () => {
+    const inner = new FakeAdbClient()
+    inner.mutationResponses.set(`${SERIAL}\ninstall-multiple -r base.apk split.apk`, {
+      exitCode: 0,
+      stdout: 'Success\n',
+      stderr: ''
+    })
+    const log = new AdbCommandLog()
+    const client = new LoggingAdbClient(inner, log)
+
+    await client.installMultipleApks(SERIAL, ['base.apk', 'split.apk'])
+
+    const [entry] = log.getAll()
+    expect(entry).toMatchObject({
+      deviceId: SERIAL,
+      category: 'install-multiple-apk',
+      success: true
+    })
+  })
+
   it('does not log watchDevices, since it is a persistent stream rather than a one-shot command', () => {
     const inner = new FakeAdbClient()
     const log = new AdbCommandLog()

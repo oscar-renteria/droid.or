@@ -78,4 +78,62 @@ describe('extractZip', () => {
     const { mode } = await stat(join(destDir, 'platform-tools', 'adb'))
     expect(mode & 0o777).toBe(0o755)
   })
+
+  it('refuses an archive with two entries resolving to the same destination path', async () => {
+    const zipPath = join(workDir, 'test.zip')
+    const destDir = join(workDir, 'out')
+
+    await writeZip(zipPath, (zipfile) => {
+      zipfile.addBuffer(Buffer.from('first'), 'app.apk')
+      zipfile.addBuffer(Buffer.from('second'), 'app.apk')
+    })
+
+    await expect(extractZip(zipPath, destDir)).rejects.toThrow(/duplicate entry/)
+  })
+
+  it('only extracts entries shouldExtract accepts, reporting the rest as skipped', async () => {
+    const zipPath = join(workDir, 'test.zip')
+    const destDir = join(workDir, 'out')
+
+    await writeZip(zipPath, (zipfile) => {
+      zipfile.addBuffer(Buffer.from('apk bytes'), 'base.apk')
+      zipfile.addBuffer(Buffer.from('icon bytes'), 'icon.png')
+      zipfile.addBuffer(Buffer.from('{}'), 'manifest.json')
+    })
+
+    const result = await extractZip(zipPath, destDir, {
+      shouldExtract: (entryFileName) => entryFileName.endsWith('.apk')
+    })
+
+    expect((await readFile(join(destDir, 'base.apk'))).toString()).toBe('apk bytes')
+    await expect(stat(join(destDir, 'icon.png'))).rejects.toThrow()
+    expect(result.skippedEntries.sort()).toEqual(['icon.png', 'manifest.json'])
+  })
+
+  it('extracts everything and reports no skipped entries when shouldExtract is omitted', async () => {
+    const zipPath = join(workDir, 'test.zip')
+    const destDir = join(workDir, 'out')
+
+    await writeZip(zipPath, (zipfile) => {
+      zipfile.addBuffer(Buffer.from('apk bytes'), 'base.apk')
+    })
+
+    const result = await extractZip(zipPath, destDir)
+
+    expect(result.skippedEntries).toEqual([])
+  })
+
+  it('refuses to extract once the cumulative uncompressed size exceeds the configured cap', async () => {
+    const zipPath = join(workDir, 'test.zip')
+    const destDir = join(workDir, 'out')
+
+    await writeZip(zipPath, (zipfile) => {
+      zipfile.addBuffer(Buffer.from('x'.repeat(1000)), 'first.apk')
+      zipfile.addBuffer(Buffer.from('x'.repeat(1000)), 'second.apk')
+    })
+
+    await expect(extractZip(zipPath, destDir, { maxTotalUncompressedBytes: 1500 })).rejects.toThrow(
+      /larger than expected/
+    )
+  })
 })

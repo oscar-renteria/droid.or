@@ -1,5 +1,11 @@
 export type AdbCommandLogCategory =
-  'list-devices' | 'get-properties' | 'shell' | 'mutation' | 'pull-file' | 'install-apk'
+  | 'list-devices'
+  | 'get-properties'
+  | 'shell'
+  | 'mutation'
+  | 'pull-file'
+  | 'install-apk'
+  | 'install-multiple-apk'
 
 export interface AdbCommandLogEntry {
   id: number

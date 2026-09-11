@@ -6,7 +6,8 @@ export const adbCommandLogCategorySchema = z.enum([
   'shell',
   'mutation',
   'pull-file',
-  'install-apk'
+  'install-apk',
+  'install-multiple-apk'
 ])
 export type AdbCommandLogCategory = z.infer<typeof adbCommandLogCategorySchema>
 
