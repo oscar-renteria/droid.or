@@ -29,5 +29,7 @@ const body = computed(() =>
   <div v-if="canProceed" class="h-full min-h-0 w-full">
     <slot />
   </div>
-  <EmptyState v-else :title="title" :description="body" class="h-full" />
+  <!-- The gate replaces the whole view, PageHeader included, so its title is
+       the page's h1. -->
+  <EmptyState v-else :title="title" :description="body" :heading-level="1" class="h-full" />
 </template>

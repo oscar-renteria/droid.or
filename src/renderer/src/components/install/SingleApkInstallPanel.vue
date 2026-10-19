@@ -89,10 +89,11 @@ async function confirmInstallAll(): Promise<void> {
 <template>
   <div class="flex h-full flex-col gap-3">
     <div class="flex shrink-0 items-center justify-between">
-      <h2 class="text-lg font-medium text-text">Install APK</h2>
+      <h2 class="text-sm font-semibold text-text">Install APK</h2>
       <NButton
         v-if="readyItems.length > 0"
         type="primary"
+        size="small"
         :loading="apkInstallStore.installingAll"
         @click="openBulkConfirm"
       >
