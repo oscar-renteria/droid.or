@@ -18,11 +18,26 @@
  * `dark:` variant above already keys off.
  */
 @theme {
-  /* Matches useResolvedTheme.ts's brandThemeOverrides.common.primaryColor
-   *  (#10B981) exactly — that's Tailwind's own emerald-500, so this
-   *  references it instead of repeating the hex value in a second place.
-   *  Same value in both themes, matching that override. */
-  --color-primary: var(--color-emerald-500);
+  /* §6.1 — brand / primary (kept emerald; light shade darkened for AA contrast) */
+  --color-brand: var(--color-emerald-500);
+  --color-primary: #007a55;
+  --color-primary-hover: #006045;
+  --color-primary-pressed: #064e3b;
+  --color-on-primary: var(--color-white);
+  /* §6.1 — status / risk tokens */
+  --color-success: #007a55;
+  --color-success-subtle: var(--color-emerald-50);
+  --color-warning: #bb4d00;
+  --color-warning-subtle: var(--color-amber-50);
+  --color-danger: #c10007;
+  --color-danger-subtle: var(--color-red-50);
+  --color-info: #0069a8;
+  --color-info-subtle: var(--color-sky-50);
+  --color-risk-safe: #007a55;
+  --color-risk-caution: var(--color-yellow-700);
+  --color-risk-advanced: var(--color-orange-700);
+  --color-risk-critical: #c10007;
+  /* Existing grayscale surface / text tokens */
   --color-background: var(--color-white);
   --color-surface: var(--color-gray-50);
   --color-surface-code: var(--color-gray-100);
@@ -42,7 +57,26 @@
 }
 
 .dark {
-  --color-background: var(--color-gray-950);
+  /* §6.1 — brand / primary (emerald-500 == #10b981, unchanged hue) */
+  --color-brand: var(--color-emerald-500);
+  --color-primary: var(--color-emerald-500);
+  --color-primary-hover: #00d492;
+  --color-primary-pressed: #009966;
+  --color-on-primary: var(--color-gray-950);
+  /* §6.1 — status / risk tokens */
+  --color-success: var(--color-emerald-400);
+  --color-success-subtle: var(--color-emerald-950);
+  --color-warning: var(--color-amber-400);
+  --color-warning-subtle: var(--color-amber-950);
+  --color-danger: var(--color-red-400);
+  --color-danger-subtle: var(--color-red-950);
+  --color-info: var(--color-sky-400);
+  --color-info-subtle: var(--color-sky-950);
+  --color-risk-safe: var(--color-emerald-400);
+  --color-risk-caution: var(--color-yellow-400);
+  --color-risk-advanced: var(--color-orange-400);
+  --color-risk-critical: var(--color-red-400);
+  /* Existing grayscale surface / text tokens */
   --color-surface: var(--color-gray-900);
   --color-surface-code: var(--color-gray-900);
   --color-surface-elevated: var(--color-gray-800);
@@ -53,4 +87,14 @@
   --color-border: var(--color-gray-800);
   --color-border-strong: var(--color-gray-700);
   --color-divider: var(--color-gray-800);
+}
+
+/* §6.4 — respect reduced motion (no new animations beyond Naive defaults) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
