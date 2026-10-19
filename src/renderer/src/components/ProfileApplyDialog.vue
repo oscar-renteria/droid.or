@@ -46,6 +46,14 @@ const copy = computed(() => {
 const requiresTypedConfirmation = computed(() => props.operation === 'uninstall-for-user')
 const confirmationWord = 'UNINSTALL'
 
+/** Dialog + confirm-button severity: uninstall is destructive (error), disable
+ *  is the primary action (primary). */
+const dialogType = computed(() => (props.operation === 'uninstall-for-user' ? 'error' : 'warning'))
+
+const confirmButtonType = computed(() =>
+  props.operation === 'uninstall-for-user' ? 'error' : 'primary'
+)
+
 const canConfirm = computed(() => {
   if (!requiresTypedConfirmation.value) {
     return true
@@ -70,7 +78,7 @@ function handleClose(): void {
     :show="show"
     preset="dialog"
     :title="copy.title"
-    type="warning"
+    :type="dialogType"
     @update:show="(value: boolean) => !value && handleClose()"
   >
     <div class="flex flex-col gap-3">
@@ -92,7 +100,7 @@ function handleClose(): void {
 
     <template #action>
       <NButton @click="handleClose">Cancel</NButton>
-      <NButton type="warning" :disabled="!canConfirm" @click="handleConfirm">
+      <NButton :type="confirmButtonType" :disabled="!canConfirm" @click="handleConfirm">
         Apply to {{ packageCount }} package(s)
       </NButton>
     </template>

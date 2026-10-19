@@ -236,7 +236,7 @@ async function confirmInstallAll(): Promise<void> {
       </div>
       <template #action>
         <NButton @click="bulkConfirmVisible = false">Cancel</NButton>
-        <NButton type="warning" @click="confirmInstallAll">Confirm</NButton>
+        <NButton type="primary" @click="confirmInstallAll">Install {{ readyItems.length }} app(s)</NButton>
       </template>
     </NModal>
   </div>

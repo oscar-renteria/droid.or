@@ -291,6 +291,7 @@ async function handleConfirm(): Promise<void> {
       :is-system-app="confirmTarget.isSystemApp"
       :risk="confirmTarget.risk"
       :is-favorite="confirmTarget.isFavorite"
+      :potential-impact="confirmTarget.potentialImpact"
       @confirm="handleConfirm"
     />
   </div>

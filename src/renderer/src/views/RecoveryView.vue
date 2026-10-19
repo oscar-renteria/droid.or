@@ -364,7 +364,7 @@ async function confirmBulkRestore(): Promise<void> {
     v-model:show="bulkConfirmVisible"
     preset="dialog"
     title="Restore these changes?"
-    type="warning"
+    type="info"
   >
     <div class="flex flex-col gap-2 text-sm text-text-secondary">
       <p>This will attempt to restore {{ bulkTargets.length }} package(s):</p>
@@ -381,7 +381,7 @@ async function confirmBulkRestore(): Promise<void> {
     </div>
     <template #action>
       <NButton @click="bulkConfirmVisible = false">Cancel</NButton>
-      <NButton type="warning" @click="confirmBulkRestore">Confirm</NButton>
+      <NButton type="primary" @click="confirmBulkRestore">Restore {{ bulkTargets.length }} package(s)</NButton>
     </template>
   </NModal>
 </template>

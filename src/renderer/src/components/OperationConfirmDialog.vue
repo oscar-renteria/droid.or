@@ -2,6 +2,7 @@
 import type { OperationType } from '@shared/types/operation'
 import type { RiskLevel } from '@shared/types/analyzer'
 import { NAlert, NButton, NInput, NModal } from 'naive-ui'
+import AppIdentity from '@renderer/components/ui/AppIdentity.vue'
 import { computed, ref, watch } from 'vue'
 
 const props = defineProps<{
@@ -17,6 +18,9 @@ const props = defineProps<{
   /** User-marked "Important" (spec §16) — always requires typed
    *  confirmation, regardless of risk classification. */
   isFavorite: boolean
+  /** Optional human-readable impact, passed from the Analyzer's
+   *  recommendation.potentialImpact. Other call sites pass nothing. */
+  potentialImpact?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -77,6 +81,55 @@ const copy = computed(() => {
   }
 })
 
+/** Dialog and confirm-button severity by operation, so destructive actions
+ *  are visually ranked above safe ones. */
+const dialogType = computed(() => {
+  switch (props.operation) {
+    case 'enable':
+    case 'restore-install':
+      return 'info'
+    case 'disable':
+      return 'warning'
+    case 'uninstall-for-user':
+    case 'clear-data':
+      return 'error'
+    default:
+      return 'warning'
+  }
+})
+
+const confirmButtonType = computed(() => {
+  switch (props.operation) {
+    case 'enable':
+    case 'restore-install':
+    case 'disable':
+      return 'primary'
+    case 'uninstall-for-user':
+    case 'clear-data':
+      return 'error'
+    default:
+      return 'warning'
+  }
+})
+
+/** Verb used for the confirm button label, matching the operation. */
+const actionVerb = computed(() => {
+  switch (props.operation) {
+    case 'disable':
+      return 'Disable'
+    case 'enable':
+      return 'Enable'
+    case 'uninstall-for-user':
+      return 'Uninstall'
+    case 'clear-data':
+      return 'Clear data'
+    case 'restore-install':
+      return 'Restore'
+    default:
+      return 'Confirm'
+  }
+})
+
 /** Extra typed confirmation for the combinations most likely to surprise or
  *  be hard to reverse: an uncertain/critical-classified package, uninstalling
  *  a system app specifically (the spec singles out "particularly dangerous"
@@ -119,15 +172,18 @@ function handleClose(): void {
     :show="show"
     preset="dialog"
     :title="copy.title"
-    type="warning"
+    :type="dialogType"
     @update:show="(value: boolean) => !value && handleClose()"
   >
     <div class="flex flex-col gap-3">
       <div>
-        <span class="font-medium text-text">{{ displayName ?? packageName }}</span>
-        <span class="ml-1 text-xs text-text-muted">{{ packageName }}</span>
+        <AppIdentity :label="displayName ?? packageName" :package-name="packageName" size="md" />
       </div>
       <p class="text-sm text-text-secondary">{{ copy.description }}</p>
+      <div v-if="props.potentialImpact" class="mt-2 rounded-lg border border-divider bg-surface p-2">
+        <div class="text-[10px] font-semibold uppercase tracking-wide text-text-muted">Potential impact</div>
+        <p class="mt-0.5 text-sm text-text-secondary break-words">{{ props.potentialImpact }}</p>
+      </div>
 
       <NAlert v-if="isFavorite" type="error" :show-icon="true">
         You marked this app as Important. Double-check that you really want to do this before
@@ -138,16 +194,20 @@ function handleClose(): void {
         This action needs extra confirmation. Type
         <span class="font-mono font-semibold">{{ confirmationWord }}</span> below to continue.
       </NAlert>
-      <NInput
-        v-if="requiresTypedConfirmation"
-        v-model:value="typedConfirmation"
-        :placeholder="confirmationWord"
-      />
+      <div v-if="requiresTypedConfirmation" class="mt-2 flex flex-col gap-1">
+        <label class="text-xs font-medium text-text-secondary">Type {{ confirmationWord }} to confirm</label>
+        <NInput
+          v-model:value="typedConfirmation"
+          :placeholder="confirmationWord"
+          :input-props="{ autofocus: true }"
+          @keydown.enter="handleConfirm"
+        />
+      </div>
     </div>
 
     <template #action>
       <NButton @click="handleClose">Cancel</NButton>
-      <NButton type="warning" :disabled="!canConfirm" @click="handleConfirm">Confirm</NButton>
+      <NButton :type="confirmButtonType" :disabled="!canConfirm" @click="handleConfirm">{{ actionVerb }}</NButton>
     </template>
   </NModal>
 </template>
