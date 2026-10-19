@@ -95,21 +95,25 @@ describe('downloadAndInstallPlatformTools', () => {
     }
   })
 
-  it('installs a valid downloaded archive as the managed adb', async () => {
-    fixtureZip = join(await mkdtemp(join(tmpdir(), 'droid-or-fixture-')), 'platform-tools.zip')
-    await buildFakeAdbZip(fixtureZip, true)
+  // The archived adb is a shell script, which Windows cannot execute.
+  it.skipIf(process.platform === 'win32')(
+    'installs a valid downloaded archive as the managed adb',
+    async () => {
+      fixtureZip = join(await mkdtemp(join(tmpdir(), 'droid-or-fixture-')), 'platform-tools.zip')
+      await buildFakeAdbZip(fixtureZip, true)
 
-    const fakeDownload = async (_url: string, destPath: string): Promise<void> => {
-      await copyFile(fixtureZip, destPath)
+      const fakeDownload = async (_url: string, destPath: string): Promise<void> => {
+        await copyFile(fixtureZip, destPath)
+      }
+
+      const result = await downloadAndInstallPlatformTools(userDataDir, LINUX_TARGET, fakeDownload)
+
+      expect(result.version).toBe('1.0.41')
+      expect(result.adbPath).toBe(getManagedAdbPath(userDataDir, LINUX_TARGET))
+      expect(isManagedAdbInstalled(userDataDir, LINUX_TARGET)).toBe(true)
+      expect(existsSync(join(getManagedAdbRoot(userDataDir), 'NOTICE.txt'))).toBe(true)
     }
-
-    const result = await downloadAndInstallPlatformTools(userDataDir, LINUX_TARGET, fakeDownload)
-
-    expect(result.version).toBe('1.0.41')
-    expect(result.adbPath).toBe(getManagedAdbPath(userDataDir, LINUX_TARGET))
-    expect(isManagedAdbInstalled(userDataDir, LINUX_TARGET)).toBe(true)
-    expect(existsSync(join(getManagedAdbRoot(userDataDir), 'NOTICE.txt'))).toBe(true)
-  })
+  )
 
   it('rejects an archive whose adb binary fails verification, and installs nothing', async () => {
     fixtureZip = join(await mkdtemp(join(tmpdir(), 'droid-or-fixture-')), 'platform-tools.zip')
@@ -148,27 +152,30 @@ describe('downloadAndInstallPlatformTools', () => {
     ).rejects.toThrow(/did not contain an adb executable/)
   })
 
-  it('keeps the previous managed install if a later re-download fails verification', async () => {
-    const goodZipDir = await mkdtemp(join(tmpdir(), 'droid-or-fixture-good-'))
-    const goodZip = join(goodZipDir, 'good.zip')
-    await buildFakeAdbZip(goodZip, true)
-    await downloadAndInstallPlatformTools(userDataDir, LINUX_TARGET, async (_url, destPath) => {
-      await copyFile(goodZip, destPath)
-    })
-    await rm(goodZipDir, { recursive: true, force: true })
-
-    const badZipDir = await mkdtemp(join(tmpdir(), 'droid-or-fixture-bad-'))
-    fixtureZip = join(badZipDir, 'bad.zip')
-    await buildFakeAdbZip(fixtureZip, false)
-
-    await expect(
-      downloadAndInstallPlatformTools(userDataDir, LINUX_TARGET, async (_url, destPath) => {
-        await copyFile(fixtureZip, destPath)
+  it.skipIf(process.platform === 'win32')(
+    'keeps the previous managed install if a later re-download fails verification',
+    async () => {
+      const goodZipDir = await mkdtemp(join(tmpdir(), 'droid-or-fixture-good-'))
+      const goodZip = join(goodZipDir, 'good.zip')
+      await buildFakeAdbZip(goodZip, true)
+      await downloadAndInstallPlatformTools(userDataDir, LINUX_TARGET, async (_url, destPath) => {
+        await copyFile(goodZip, destPath)
       })
-    ).rejects.toThrow(/failed verification/)
+      await rm(goodZipDir, { recursive: true, force: true })
 
-    // The good install from before is still there — a failed update never
-    // tears down a working one.
-    expect(isManagedAdbInstalled(userDataDir, LINUX_TARGET)).toBe(true)
-  })
+      const badZipDir = await mkdtemp(join(tmpdir(), 'droid-or-fixture-bad-'))
+      fixtureZip = join(badZipDir, 'bad.zip')
+      await buildFakeAdbZip(fixtureZip, false)
+
+      await expect(
+        downloadAndInstallPlatformTools(userDataDir, LINUX_TARGET, async (_url, destPath) => {
+          await copyFile(fixtureZip, destPath)
+        })
+      ).rejects.toThrow(/failed verification/)
+
+      // The good install from before is still there — a failed update never
+      // tears down a working one.
+      expect(isManagedAdbInstalled(userDataDir, LINUX_TARGET)).toBe(true)
+    }
+  )
 })

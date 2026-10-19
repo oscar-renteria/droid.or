@@ -50,24 +50,28 @@ describe('AdbSettingsService', () => {
     expect(status.managedInstalled).toBe(false)
   })
 
-  it('accepts and persists a valid custom path, switching the live AdbClient over to it', async () => {
-    const scriptPath = join(userDataDir, 'my-adb')
-    await writeFakeAdbScript(scriptPath, true)
+  // The fake adb is a shell script, which Windows cannot execute.
+  it.skipIf(process.platform === 'win32')(
+    'accepts and persists a valid custom path, switching the live AdbClient over to it',
+    async () => {
+      const scriptPath = join(userDataDir, 'my-adb')
+      await writeFakeAdbScript(scriptPath, true)
 
-    const watchCallsBefore = adb.watchCallCount
-    const status = await service.setCustomPath(scriptPath)
+      const watchCallsBefore = adb.watchCallCount
+      const status = await service.setCustomPath(scriptPath)
 
-    expect(status.source).toBe('custom')
-    expect(status.customPath).toBe(scriptPath)
-    expect(status.resolvedPath).toBe(scriptPath)
-    expect(adb.adbCommandHistory).toContain(scriptPath)
-    // The device watch was restarted to pick up the new binary.
-    expect(adb.watchCallCount).toBeGreaterThan(watchCallsBefore)
+      expect(status.source).toBe('custom')
+      expect(status.customPath).toBe(scriptPath)
+      expect(status.resolvedPath).toBe(scriptPath)
+      expect(adb.adbCommandHistory).toContain(scriptPath)
+      // The device watch was restarted to pick up the new binary.
+      expect(adb.watchCallCount).toBeGreaterThan(watchCallsBefore)
 
-    // Persisted, not just applied in memory: a fresh status read agrees.
-    const reread = await service.getStatus()
-    expect(reread.customPath).toBe(scriptPath)
-  })
+      // Persisted, not just applied in memory: a fresh status read agrees.
+      const reread = await service.getStatus()
+      expect(reread.customPath).toBe(scriptPath)
+    }
+  )
 
   it('rejects a custom path that fails verification, without persisting it', async () => {
     const scriptPath = join(userDataDir, 'broken-adb')
@@ -82,14 +86,17 @@ describe('AdbSettingsService', () => {
     expect(status.source).toBe('system')
   })
 
-  it('clears a previously set custom path when passed null', async () => {
-    const scriptPath = join(userDataDir, 'my-adb')
-    await writeFakeAdbScript(scriptPath, true)
-    await service.setCustomPath(scriptPath)
+  it.skipIf(process.platform === 'win32')(
+    'clears a previously set custom path when passed null',
+    async () => {
+      const scriptPath = join(userDataDir, 'my-adb')
+      await writeFakeAdbScript(scriptPath, true)
+      await service.setCustomPath(scriptPath)
 
-    const status = await service.setCustomPath(null)
+      const status = await service.setCustomPath(null)
 
-    expect(status.customPath).toBeNull()
-    expect(status.source).toBe('system')
-  })
+      expect(status.customPath).toBeNull()
+      expect(status.source).toBe('system')
+    }
+  )
 })

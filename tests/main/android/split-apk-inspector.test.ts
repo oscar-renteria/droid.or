@@ -1,7 +1,7 @@
 import { createWriteStream } from 'node:fs'
 import { access, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { ZipFile } from 'yazl'
 import type { RawApkInfo } from '@main/android/apk-parser-loader'
@@ -43,7 +43,7 @@ function fakeParser(
   responses: Record<string, RawApkInfo | Error>
 ): (path: string) => Promise<RawApkInfo> {
   return async (path: string) => {
-    const fileName = path.split('/').pop() ?? path
+    const fileName = basename(path)
     const response = responses[fileName]
     if (response instanceof Error) {
       throw response

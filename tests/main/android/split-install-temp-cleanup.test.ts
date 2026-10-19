@@ -1,6 +1,6 @@
 import { mkdir, mkdtemp, readdir, rm, stat, utimes, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanupStaleSplitInstallTempDirs } from '@main/android/split-install-temp-cleanup'
 import { SPLIT_INSTALL_TEMP_DIR_PREFIX } from '@main/android/split-apk-inspector'
@@ -72,6 +72,6 @@ describe('cleanupStaleSplitInstallTempDirs', () => {
 
     await cleanupStaleSplitInstallTempDirs()
 
-    await expect(readdir(tmpdir())).resolves.not.toContain(dir.split('/').pop())
+    await expect(readdir(tmpdir())).resolves.not.toContain(basename(dir))
   })
 })

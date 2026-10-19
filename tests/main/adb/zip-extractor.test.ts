@@ -1,7 +1,7 @@
 import { createWriteStream } from 'node:fs'
 import { mkdtemp, readFile, stat, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { ZipFile } from 'yazl'
 import { extractZip, resolveSafeEntryPath } from '@main/adb/zip-extractor'
@@ -21,7 +21,7 @@ async function writeZip(destPath: string, build: (zipfile: ZipFile) => void): Pr
 describe('resolveSafeEntryPath', () => {
   it('resolves a normal nested entry inside destDir', () => {
     const result = resolveSafeEntryPath('/tmp/dest', 'platform-tools/adb')
-    expect(result).toBe('/tmp/dest/platform-tools/adb')
+    expect(result).toBe(resolve('/tmp/dest', 'platform-tools', 'adb'))
   })
 
   it('refuses an entry that traverses above destDir', () => {
@@ -65,19 +65,23 @@ describe('extractZip', () => {
     )
   })
 
-  it('restores the executable bit recorded in the archive', async () => {
-    const zipPath = join(workDir, 'test.zip')
-    const destDir = join(workDir, 'out')
+  // Windows has no POSIX permission bits to restore.
+  it.skipIf(process.platform === 'win32')(
+    'restores the executable bit recorded in the archive',
+    async () => {
+      const zipPath = join(workDir, 'test.zip')
+      const destDir = join(workDir, 'out')
 
-    await writeZip(zipPath, (zipfile) => {
-      zipfile.addBuffer(Buffer.from('#!/bin/sh\n'), 'platform-tools/adb', { mode: 0o100755 })
-    })
+      await writeZip(zipPath, (zipfile) => {
+        zipfile.addBuffer(Buffer.from('#!/bin/sh\n'), 'platform-tools/adb', { mode: 0o100755 })
+      })
 
-    await extractZip(zipPath, destDir)
+      await extractZip(zipPath, destDir)
 
-    const { mode } = await stat(join(destDir, 'platform-tools', 'adb'))
-    expect(mode & 0o777).toBe(0o755)
-  })
+      const { mode } = await stat(join(destDir, 'platform-tools', 'adb'))
+      expect(mode & 0o777).toBe(0o755)
+    }
+  )
 
   it('refuses an archive with two entries resolving to the same destination path', async () => {
     const zipPath = join(workDir, 'test.zip')

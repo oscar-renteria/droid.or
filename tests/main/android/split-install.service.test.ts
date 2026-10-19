@@ -1,6 +1,6 @@
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import Database from 'better-sqlite3'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { RawApkInfo } from '@main/android/apk-parser-loader'
@@ -25,7 +25,7 @@ function fakeParser(
   responses: Record<string, RawApkInfo | Error>
 ): (path: string) => Promise<RawApkInfo> {
   return async (path: string) => {
-    const fileName = path.split('/').pop() ?? path
+    const fileName = basename(path)
     const response = responses[fileName]
     if (response instanceof Error) {
       throw response
@@ -448,7 +448,7 @@ describe('performSplitInstall', () => {
       SERIAL,
       'files',
       paths,
-      paths.map((p) => p.split('/').pop() as string),
+      paths.map((p) => basename(p)),
       fakeParser({
         'base.apk': baseApk(),
         'split_config.arm64_v8a.apk': configSplit('config.arm64_v8a'),
