@@ -29,9 +29,9 @@ bundling, so a type error never silently ships.
   that talks to `window.droidor`.
 - Keep IPC contracts strongly typed and validate every payload with Zod,
   in both directions (see `ARCHITECTURE.md`).
-- Prefer the reliable, boring implementation over the clever one.
-- Don't invent ADB/Android capabilities. If something can't be verified or
-  isn't actually supported on a non-rooted device, say so rather than
+- Default to the reliable, boring implementation over the clever one.
+- Don't invent ADB / Android capabilities. If something can't be verified
+  or isn't actually supported on a non-rooted device, say so rather than
   quietly assuming it works.
 - Default to no comments; add one only when the _why_ isn't obvious from
   the code itself — a non-obvious constraint, a workaround for a specific
@@ -50,12 +50,12 @@ Formatting is enforced by Prettier (`npm run format`) and linting by ESLint
   reads the store through Vue's reactivity system, not just assert on the
   store object directly — see any existing `*.store.test.ts` for the
   pattern, and `ARCHITECTURE.md` for why this matters.
-- Before writing a parser for new `adb shell`/`dumpsys`/`settings` output,
-  run the actual command against a real connected device first if you can.
-  Documented behavior has genuinely differed from real device output more
-  than once in this project (see `ANDROID_COMPATIBILITY.md`) — verifying
-  against real hardware, not just assuming a documented format, is an
-  established practice here, not an optional nicety.
+- Before writing a parser for new `adb shell` / `dumpsys` / `settings`
+  output, run the actual command against a real connected device first if
+  you can. Documented behavior has genuinely differed from real device
+  output more than once in this project (see `ANDROID_COMPATIBILITY.md`)
+  — verifying against real hardware, not just assuming a documented format,
+  is an established practice here, not an optional nicety.
 
 ## Commit messages
 

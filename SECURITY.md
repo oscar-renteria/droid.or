@@ -21,6 +21,19 @@ The renderer has no Node.js, no `require`, and no filesystem access of its
 own. Its only capability beyond standard web APIs is whatever the preload
 script explicitly exposes.
 
+## What state this app keeps locally
+
+All configuration and records live in a local SQLite database inside
+Electron's `userData` directory: device history, operation history, the
+favorites / ignore list, and settings. Nothing is synced to any remote
+service. `userData` is OS-managed (for example, `~/Library/Application
+Support/*.app/Contents/Resources/app.asar` or the platform `userData`
+folder) and `npm run build` doesn't ship it by default — it's created
+fresh on first run. So future screenshots should show, in this order:
+install the app (`npm run dev` or the packaged binary), open Settings,
+download platform-tools on first use, and check ~3 or more devices in the
+sidebar to get the full picture.
+
 ## The preload boundary
 
 `src/preload/index.ts` exposes exactly one object, `window.droidor`, via
