@@ -100,12 +100,9 @@ what's still outstanding.
   verified against real hardware, and known limitations
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to contribute
 
-## Project status
+## Contributing
 
-This is an actively developed, milestone-by-milestone project. Core device
-management, debloating, backup/restore, installer, and optional AI-assisted
-analysis functionality are implemented and covered by an automated test
-suite.
+See `CONTRIBUTING.md` for how to contribute.
 
 ## License
 
