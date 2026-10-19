@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import type { OperationType } from '@shared/types/operation'
-import { NAlert, NButton, NCheckbox, NEmpty, NModal, NSpin, NTag, useMessage } from 'naive-ui'
+import { NAlert, NButton, NCheckbox, NIcon, NModal, NSpin, NTag, useMessage } from 'naive-ui'
+import { WarningOutline } from '@vicons/ionicons5'
 import { computed, ref, watch } from 'vue'
 import OperationConfirmDialog from '@renderer/components/OperationConfirmDialog.vue'
+import AppIdentity from '@renderer/components/ui/AppIdentity.vue'
+import DeviceGate from '@renderer/components/ui/DeviceGate.vue'
+import EmptyState from '@renderer/components/ui/EmptyState.vue'
+import PageHeader from '@renderer/components/ui/PageHeader.vue'
+import StatTile from '@renderer/components/ui/StatTile.vue'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { useOperationsStore } from '@renderer/stores/operations.store'
 import { usePackagesStore } from '@renderer/stores/packages.store'
 import { useRecoveryStore } from '@renderer/stores/recovery.store'
-import { getDeviceStateMeta } from '@renderer/utils/device-state-meta'
 
 const devicesStore = useDevicesStore()
 const packagesStore = usePackagesStore()
@@ -169,219 +174,213 @@ async function confirmBulkRestore(): Promise<void> {
 </script>
 
 <template>
-  <div
-    v-if="!selectedDevice"
-    class="flex h-full flex-col items-center justify-center gap-2 text-center"
+  <DeviceGate
+    requirement="Device recovery requires an authorized, connected device."
+    no-device-text="Select a device from the sidebar to review and restore changes made to it."
   >
-    <h2 class="text-lg font-medium text-text">No device selected</h2>
-    <p class="max-w-md text-sm text-text-muted">
-      Select a device from the sidebar to review and restore changes made to it.
-    </p>
-  </div>
+    <div class="flex h-full flex-col gap-3">
+      <PageHeader
+        title="Recovery"
+        :description="
+          recoveryStore.changes ? 'This device has been modified by droid.or.' : undefined
+        "
+      />
 
-  <div
-    v-else-if="selectedDevice.connectionState !== 'device'"
-    class="flex h-full flex-col items-center justify-center gap-2 text-center"
-  >
-    <h2 class="text-lg font-medium text-text">
-      {{ getDeviceStateMeta(selectedDevice.connectionState).label }}
-    </h2>
-    <p class="max-w-md text-sm text-text-muted">
-      {{
-        getDeviceStateMeta(selectedDevice.connectionState).guidance ??
-        'Device recovery requires an authorized, connected device.'
-      }}
-    </p>
-  </div>
-
-  <NSpin v-else :show="recoveryStore.loading" class="h-full">
-    <div class="flex h-full flex-col gap-3 overflow-y-auto pr-1">
-      <NAlert v-if="recoveryStore.errorMessage" type="error" title="Failed to load device changes">
-        {{ recoveryStore.errorMessage }}
-      </NAlert>
-
-      <NEmpty
-        v-else-if="!recoveryStore.loading && totalChanges === 0"
-        description="No changes detected on this device"
-        class="flex-1 items-center justify-center"
-      >
-        <template #extra>
-          <p class="max-w-md text-center text-xs text-text-muted">
-            droid.or hasn't modified this device, or every change already made has since been
-            restored.
-          </p>
-        </template>
-      </NEmpty>
-
-      <template v-else-if="recoveryStore.changes">
-        <div>
-          <h2 class="text-lg font-medium text-text">Device Recovery</h2>
-          <p class="text-sm text-text-muted">This device has been modified by droid.or.</p>
-        </div>
-
-        <div class="rounded border border-border p-3 text-sm">
-          <span class="font-medium text-text">Changes detected:</span>
-          <ul class="mt-1 list-inside list-disc text-text-secondary">
-            <li>{{ recoveryStore.changes.uninstalled.length }} package(s) uninstalled</li>
-            <li>{{ recoveryStore.changes.disabled.length }} package(s) disabled</li>
-            <li>{{ recoveryStore.changes.cleared.length }} package(s) cleared</li>
-          </ul>
-        </div>
-
-        <div class="flex shrink-0 items-center gap-2">
-          <NButton
-            type="primary"
-            :disabled="restorableTargets.length === 0"
-            :loading="recoveryStore.bulkRestoring"
-            @click="openBulkConfirm(restorableTargets)"
+      <NSpin :show="recoveryStore.loading" class="min-h-0 flex-1">
+        <div class="flex h-full flex-col gap-3 overflow-y-auto pr-1">
+          <NAlert
+            v-if="recoveryStore.errorMessage"
+            type="error"
+            title="Failed to load device changes"
           >
-            Restore All Changes
-          </NButton>
-          <NButton @click="reviewOpen = !reviewOpen">
-            {{ reviewOpen ? 'Hide Changes' : 'Review Changes' }}
-          </NButton>
-          <NButton
-            v-if="reviewOpen"
-            :disabled="selectedTargets.length === 0"
-            :loading="recoveryStore.bulkRestoring"
-            @click="openBulkConfirm(selectedTargets)"
-          >
-            Restore Selected ({{ selectedTargets.length }})
-          </NButton>
-        </div>
+            {{ recoveryStore.errorMessage }}
+          </NAlert>
 
-        <div v-if="reviewOpen" class="flex flex-col gap-4">
-          <div v-if="recoveryStore.changes.disabled.length > 0">
-            <h3 class="text-sm font-medium text-text">Disabled</h3>
-            <div class="mt-2 flex flex-col gap-2">
-              <div
-                v-for="entry in recoveryStore.changes.disabled"
-                :key="`disabled-${entry.packageName}`"
-                class="flex items-center gap-3 rounded border border-border p-2 text-sm"
-              >
-                <NCheckbox
-                  :checked="selected.has(entry.packageName)"
-                  @update:checked="(v: boolean) => toggleSelected(entry.packageName, v)"
-                />
-                <div class="min-w-0 flex-1">
-                  <div class="truncate font-medium text-text">
-                    {{ displayName(entry.packageName) }}
-                  </div>
-                  <div class="truncate text-xs text-text-muted">
-                    {{ entry.packageName }} · disabled {{ formatTimestamp(entry.performedAt) }}
-                  </div>
-                </div>
-                <NButton
-                  size="small"
-                  :loading="operationsStore.pending.has(entry.packageName)"
-                  @click="openRestoreConfirm(entry.packageName, 'enable')"
-                >
-                  Restore
-                </NButton>
-              </div>
+          <EmptyState
+            v-else-if="!recoveryStore.loading && totalChanges === 0"
+            title="No changes detected on this device"
+            description="droid.or hasn't modified this device, or every change already made has since been restored."
+            class="flex-1"
+          />
+
+          <template v-else-if="recoveryStore.changes">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <StatTile label="Uninstalled" :value="recoveryStore.changes.uninstalled.length" />
+              <StatTile label="Disabled" :value="recoveryStore.changes.disabled.length" />
+              <StatTile label="Cleared" :value="recoveryStore.changes.cleared.length" />
             </div>
-          </div>
 
-          <div v-if="recoveryStore.changes.uninstalled.length > 0">
-            <h3 class="text-sm font-medium text-text">Uninstalled</h3>
-            <div class="mt-2 flex flex-col gap-2">
-              <div
-                v-for="entry in [...restorableUninstalled, ...blockedUninstalled]"
-                :key="`uninstalled-${entry.packageName}`"
-                class="flex flex-col gap-1 rounded border border-border p-2 text-sm"
+            <div class="flex shrink-0 items-center gap-2">
+              <NButton
+                type="primary"
+                size="small"
+                :disabled="restorableTargets.length === 0"
+                :loading="recoveryStore.bulkRestoring"
+                @click="openBulkConfirm(restorableTargets)"
               >
-                <div class="flex items-center gap-3">
-                  <NCheckbox
-                    v-if="entry.restorable"
-                    :checked="selected.has(entry.packageName)"
-                    @update:checked="(v: boolean) => toggleSelected(entry.packageName, v)"
-                  />
-                  <NTag v-else size="small" type="warning">Not restorable</NTag>
-                  <div class="min-w-0 flex-1">
-                    <div class="truncate font-medium text-text">
-                      {{ displayName(entry.packageName) }}
-                    </div>
-                    <div class="truncate text-xs text-text-muted">
-                      {{ entry.packageName }} · uninstalled {{ formatTimestamp(entry.performedAt) }}
-                    </div>
-                  </div>
-                  <NButton
-                    v-if="entry.restorable"
-                    size="small"
-                    :loading="operationsStore.pending.has(entry.packageName)"
-                    @click="openRestoreConfirm(entry.packageName, 'restore-install')"
+                Restore All Changes
+              </NButton>
+              <NButton size="small" @click="reviewOpen = !reviewOpen">
+                {{ reviewOpen ? 'Hide Changes' : 'Review Changes' }}
+              </NButton>
+              <NButton
+                v-if="reviewOpen"
+                size="small"
+                :disabled="selectedTargets.length === 0"
+                :loading="recoveryStore.bulkRestoring"
+                @click="openBulkConfirm(selectedTargets)"
+              >
+                Restore Selected ({{ selectedTargets.length }})
+              </NButton>
+            </div>
+
+            <div v-if="reviewOpen" class="flex flex-col gap-4">
+              <div v-if="recoveryStore.changes.disabled.length > 0">
+                <h3 class="text-sm font-medium text-text">Disabled</h3>
+                <div class="mt-2 flex flex-col gap-2">
+                  <div
+                    v-for="entry in recoveryStore.changes.disabled"
+                    :key="`disabled-${entry.packageName}`"
+                    class="flex items-center gap-3 rounded-lg border border-border p-2 text-sm"
                   >
-                    Restore
-                  </NButton>
+                    <NCheckbox
+                      :checked="selected.has(entry.packageName)"
+                      @update:checked="(v: boolean) => toggleSelected(entry.packageName, v)"
+                    />
+                    <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <AppIdentity
+                        :label="displayName(entry.packageName)"
+                        :package-name="entry.packageName"
+                        size="sm"
+                      />
+                      <span class="truncate text-xs text-text-muted">
+                        disabled {{ formatTimestamp(entry.performedAt) }}
+                      </span>
+                    </div>
+                    <NButton
+                      size="small"
+                      :loading="operationsStore.pending.has(entry.packageName)"
+                      @click="openRestoreConfirm(entry.packageName, 'enable')"
+                    >
+                      Restore
+                    </NButton>
+                  </div>
                 </div>
-                <p v-if="!entry.restorable" class="pl-1 text-xs text-text-muted">
-                  {{ entry.blockedReason }}
+              </div>
+
+              <div v-if="recoveryStore.changes.uninstalled.length > 0">
+                <h3 class="text-sm font-medium text-text">Uninstalled</h3>
+                <div class="mt-2 flex flex-col gap-2">
+                  <div
+                    v-for="entry in [...restorableUninstalled, ...blockedUninstalled]"
+                    :key="`uninstalled-${entry.packageName}`"
+                    class="flex flex-col gap-1 rounded-lg border border-border p-2 text-sm"
+                  >
+                    <div class="flex items-center gap-3">
+                      <NCheckbox
+                        v-if="entry.restorable"
+                        :checked="selected.has(entry.packageName)"
+                        @update:checked="(v: boolean) => toggleSelected(entry.packageName, v)"
+                      />
+                      <NTag v-else size="small" type="warning">
+                        <template #icon>
+                          <NIcon :component="WarningOutline" :size="14" />
+                        </template>
+                        Not restorable
+                      </NTag>
+                      <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+                        <AppIdentity
+                          :label="displayName(entry.packageName)"
+                          :package-name="entry.packageName"
+                          size="sm"
+                        />
+                        <span class="truncate text-xs text-text-muted">
+                          uninstalled {{ formatTimestamp(entry.performedAt) }}
+                        </span>
+                      </div>
+                      <NButton
+                        v-if="entry.restorable"
+                        size="small"
+                        :loading="operationsStore.pending.has(entry.packageName)"
+                        @click="openRestoreConfirm(entry.packageName, 'restore-install')"
+                      >
+                        Restore
+                      </NButton>
+                    </div>
+                    <p v-if="!entry.restorable" class="pl-1 text-xs text-text-muted">
+                      {{ entry.blockedReason }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="recoveryStore.changes.cleared.length > 0">
+                <h3 class="text-sm font-medium text-text">Cleared</h3>
+                <p class="mt-1 text-xs text-text-muted">
+                  Clearing app data cannot be undone — these are listed for reference only.
                 </p>
-              </div>
-            </div>
-          </div>
-
-          <div v-if="recoveryStore.changes.cleared.length > 0">
-            <h3 class="text-sm font-medium text-text">Cleared</h3>
-            <p class="mt-1 text-xs text-text-muted">
-              Clearing app data cannot be undone — these are listed for reference only.
-            </p>
-            <div class="mt-2 flex flex-col gap-2">
-              <div
-                v-for="entry in recoveryStore.changes.cleared"
-                :key="`cleared-${entry.packageName}`"
-                class="flex items-center gap-3 rounded border border-border p-2 text-sm"
-              >
-                <div class="min-w-0 flex-1">
-                  <div class="truncate font-medium text-text">
-                    {{ displayName(entry.packageName) }}
-                  </div>
-                  <div class="truncate text-xs text-text-muted">
-                    {{ entry.packageName }} · cleared {{ formatTimestamp(entry.performedAt) }}
+                <div class="mt-2 flex flex-col gap-2">
+                  <div
+                    v-for="entry in recoveryStore.changes.cleared"
+                    :key="`cleared-${entry.packageName}`"
+                    class="flex items-center gap-3 rounded-lg border border-border p-2 text-sm"
+                  >
+                    <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <AppIdentity
+                        :label="displayName(entry.packageName)"
+                        :package-name="entry.packageName"
+                        size="sm"
+                      />
+                      <span class="truncate text-xs text-text-muted">
+                        cleared {{ formatTimestamp(entry.performedAt) }}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </template>
         </div>
+      </NSpin>
+    </div>
+
+    <OperationConfirmDialog
+      v-if="confirmTarget"
+      v-model:show="dialogVisible"
+      :package-name="confirmTarget.packageName"
+      :display-name="displayName(confirmTarget.packageName)"
+      :operation="confirmTarget.operation"
+      :is-system-app="false"
+      :risk="null"
+      :is-favorite="false"
+      @confirm="handleSingleConfirm"
+    />
+
+    <NModal
+      v-model:show="bulkConfirmVisible"
+      preset="dialog"
+      title="Restore these changes?"
+      type="info"
+    >
+      <div class="flex flex-col gap-2 text-sm text-text-secondary">
+        <p>This will attempt to restore {{ bulkTargets.length }} package(s):</p>
+        <ul class="list-inside list-disc">
+          <li v-if="bulkEnableCount > 0">Enable {{ bulkEnableCount }} disabled package(s)</li>
+          <li v-if="bulkReinstallCount > 0">
+            Reinstall {{ bulkReinstallCount }} uninstalled package(s) for this user
+          </li>
+        </ul>
+        <p class="text-xs text-text-muted">
+          This restores changes made by droid.or only — it is not a factory reset and does not touch
+          firmware or system partitions.
+        </p>
+      </div>
+      <template #action>
+        <NButton @click="bulkConfirmVisible = false">Cancel</NButton>
+        <NButton type="primary" @click="confirmBulkRestore"
+          >Restore {{ bulkTargets.length }} package(s)</NButton
+        >
       </template>
-    </div>
-  </NSpin>
-
-  <OperationConfirmDialog
-    v-if="confirmTarget"
-    v-model:show="dialogVisible"
-    :package-name="confirmTarget.packageName"
-    :display-name="displayName(confirmTarget.packageName)"
-    :operation="confirmTarget.operation"
-    :is-system-app="false"
-    :risk="null"
-    :is-favorite="false"
-    @confirm="handleSingleConfirm"
-  />
-
-  <NModal
-    v-model:show="bulkConfirmVisible"
-    preset="dialog"
-    title="Restore these changes?"
-    type="info"
-  >
-    <div class="flex flex-col gap-2 text-sm text-text-secondary">
-      <p>This will attempt to restore {{ bulkTargets.length }} package(s):</p>
-      <ul class="list-inside list-disc">
-        <li v-if="bulkEnableCount > 0">Enable {{ bulkEnableCount }} disabled package(s)</li>
-        <li v-if="bulkReinstallCount > 0">
-          Reinstall {{ bulkReinstallCount }} uninstalled package(s) for this user
-        </li>
-      </ul>
-      <p class="text-xs text-text-muted">
-        This restores changes made by droid.or only — it is not a factory reset and does not touch
-        firmware or system partitions.
-      </p>
-    </div>
-    <template #action>
-      <NButton @click="bulkConfirmVisible = false">Cancel</NButton>
-      <NButton type="primary" @click="confirmBulkRestore">Restore {{ bulkTargets.length }} package(s)</NButton>
-    </template>
-  </NModal>
+    </NModal>
+  </DeviceGate>
 </template>

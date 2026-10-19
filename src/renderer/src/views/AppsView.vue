@@ -9,7 +9,6 @@ import {
   NDescriptionsItem,
   NDrawer,
   NDrawerContent,
-  NEmpty,
   NIcon,
   NInput,
   NSelect,
@@ -22,12 +21,15 @@ import { RefreshOutline, Star, StarOutline } from '@vicons/ionicons5'
 import { computed, h, onMounted, ref, watch } from 'vue'
 import BackupDialog from '@renderer/components/BackupDialog.vue'
 import OperationConfirmDialog from '@renderer/components/OperationConfirmDialog.vue'
+import AppIdentity from '@renderer/components/ui/AppIdentity.vue'
+import DeviceGate from '@renderer/components/ui/DeviceGate.vue'
+import EmptyState from '@renderer/components/ui/EmptyState.vue'
+import PageHeader from '@renderer/components/ui/PageHeader.vue'
 import { useAiAnalysisStore } from '@renderer/stores/ai-analysis.store'
 import { useAiSettingsStore } from '@renderer/stores/ai-settings.store'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { useOperationsStore } from '@renderer/stores/operations.store'
 import { usePackagesStore } from '@renderer/stores/packages.store'
-import { getDeviceStateMeta } from '@renderer/utils/device-state-meta'
 import {
   formatInstallSource,
   formatInstalledDate,
@@ -118,6 +120,15 @@ const filteredPackages = computed(() => {
     }
   })
 })
+
+const hasActiveFilters = computed(
+  () => searchText.value.trim().length > 0 || filterKey.value !== 'all'
+)
+
+function clearFilters(): void {
+  searchText.value = ''
+  filterKey.value = 'all'
+}
 
 function openDetail(pkg: AppPackageInfo): void {
   selectedPackage.value = pkg
@@ -227,24 +238,27 @@ function renderAppCell(row: AppPackageInfo) {
   const metadata = cached && cached !== 'loading' ? cached : null
   const label = metadata?.label ?? row.displayName ?? row.packageName
 
-  return h('div', { class: 'flex min-w-0 items-center gap-2' }, [
-    metadata?.iconDataUrl
-      ? h('img', { src: metadata.iconDataUrl, class: 'h-6 w-6 shrink-0 rounded', alt: '' })
-      : h(
-          'div',
-          {
-            class:
-              'flex h-6 w-6 shrink-0 items-center justify-center rounded bg-surface-elevated text-[10px] font-medium text-text-muted  '
-          },
-          label.charAt(0).toUpperCase()
-        ),
-    h('div', { class: 'min-w-0' }, [
-      h('div', { class: 'truncate font-medium text-text' }, label),
-      label !== row.packageName
-        ? h('div', { class: 'truncate text-xs text-text-muted' }, row.packageName)
-        : null
-    ])
-  ])
+  return h(
+    'button',
+    {
+      type: 'button',
+      class:
+        'flex w-full min-w-0 rounded-md text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
+      title: 'Open package details',
+      onClick: (event: MouseEvent) => {
+        event.stopPropagation()
+        openDetail(row)
+      }
+    },
+    [
+      h(AppIdentity, {
+        label,
+        packageName: row.packageName,
+        iconDataUrl: metadata?.iconDataUrl ?? null,
+        size: 'sm'
+      })
+    ]
+  )
 }
 
 async function toggleFavorite(pkg: AppPackageInfo, event: MouseEvent): Promise<void> {
@@ -266,13 +280,19 @@ const columns: DataTableColumns<AppPackageInfo> = [
         NButton,
         {
           text: true,
-          class: row.isFavorite ? 'text-amber-500' : 'text-gray-300 dark:text-gray-700',
+          'aria-label': row.isFavorite ? 'Marked Important' : 'Mark as Important',
           title: row.isFavorite ? 'Marked Important' : 'Mark as Important',
           onClick: (event: MouseEvent) => toggleFavorite(row, event)
         },
         {
+          // The color class sits on the icon, not the button: Naive's own
+          // (unlayered) button color would override a Tailwind utility there.
           default: () =>
-            h(NIcon, { size: 16 }, { default: () => h(row.isFavorite ? Star : StarOutline) })
+            h(
+              NIcon,
+              { size: 16, class: row.isFavorite ? 'text-amber-500' : 'text-text-muted' },
+              { default: () => h(row.isFavorite ? Star : StarOutline) }
+            )
         }
       )
   },
@@ -294,22 +314,18 @@ const columns: DataTableColumns<AppPackageInfo> = [
     key: 'isSystemApp',
     width: 90,
     render: (row) =>
-      h(
-        NTag,
-        { size: 'small', type: row.isSystemApp ? 'default' : 'info' },
-        { default: () => (row.isSystemApp ? 'System' : 'User') }
-      )
+      h('span', { class: 'text-xs text-text-muted' }, row.isSystemApp ? 'System' : 'User')
   },
   {
     title: 'State',
     key: 'isDisabled',
     width: 100,
-    render: (row) =>
-      h(
-        NTag,
-        { size: 'small', type: row.isDisabled ? 'warning' : 'success' },
-        { default: () => (row.isDisabled ? 'Disabled' : 'Enabled') }
-      )
+    render: (row) => {
+      if (row.isDisabled) {
+        return h(NTag, { size: 'small', type: 'warning' }, { default: () => 'Disabled' })
+      }
+      return h('span', { class: 'text-xs text-text-muted' }, 'Enabled')
+    }
   },
   {
     title: 'Source',
@@ -344,210 +360,238 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
 </script>
 
 <template>
-  <div
-    v-if="!selectedDevice"
-    class="flex h-full flex-col items-center justify-center gap-2 text-center"
+  <DeviceGate
+    requirement="Browsing applications requires an authorized, connected device."
+    no-device-text="Select a device from the sidebar to browse its installed applications."
   >
-    <h2 class="text-lg font-medium text-text">No device selected</h2>
-    <p class="max-w-md text-sm text-text-muted">
-      Select a device from the sidebar to browse its installed applications.
-    </p>
-  </div>
-
-  <div
-    v-else-if="selectedDevice.connectionState !== 'device'"
-    class="flex h-full flex-col items-center justify-center gap-2 text-center"
-  >
-    <h2 class="text-lg font-medium text-text">
-      {{ getDeviceStateMeta(selectedDevice.connectionState).label }}
-    </h2>
-    <p class="max-w-md text-sm text-text-muted">
-      {{
-        getDeviceStateMeta(selectedDevice.connectionState).guidance ??
-        'Browsing applications requires an authorized, connected device.'
-      }}
-    </p>
-  </div>
-
-  <div v-else class="flex h-full flex-col gap-3">
-    <div class="flex shrink-0 items-center gap-2">
-      <NInput
-        v-model:value="searchText"
-        placeholder="Search by app or package name..."
-        clearable
-        class="max-w-xs"
-      />
-      <NSelect v-model:value="filterKey" :options="filterOptions" class="w-48" />
-      <span class="text-xs text-text-muted">
-        {{ filteredPackages.length }} / {{ packagesStore.packages.length }} packages
-      </span>
-      <div class="flex-1" />
-      <NButton v-if="checkedKeys.length > 0" size="small" @click="backupDialogVisible = true">
-        Backup Selected ({{ checkedKeys.length }})
-      </NButton>
-      <NButton size="small" :loading="packagesStore.loading" @click="loadPackages">
-        <template #icon>
-          <NIcon :component="RefreshOutline" />
-        </template>
-        Refresh
-      </NButton>
-    </div>
-
-    <NEmpty
-      v-if="!packagesStore.loading && packagesStore.errorMessage"
-      :description="packagesStore.errorMessage"
-      class="flex-1 items-center justify-center"
-    />
-
-    <NDataTable
-      v-else
-      v-model:checked-row-keys="checkedKeys"
-      class="min-h-0 flex-1"
-      flex-height
-      :loading="packagesStore.loading"
-      :columns="columns"
-      :data="filteredPackages"
-      :row-props="rowProps"
-      :row-key="(row: AppPackageInfo) => row.packageName"
-      virtual-scroll
-      size="small"
-      striped
-    />
-
-    <NDrawer v-model:show="drawerVisible" :width="420" placement="right">
-      <NDrawerContent
-        v-if="selectedPackage"
-        :title="
-          selectedPackageMetadata?.label ??
-          selectedPackage.displayName ??
-          selectedPackage.packageName
+    <div class="flex h-full flex-col gap-3">
+      <PageHeader
+        title="Apps"
+        :description="
+          packagesStore.loading
+            ? undefined
+            : `${filteredPackages.length} of ${packagesStore.packages.length} packages`
         "
-        closable
+      />
+
+      <div class="flex shrink-0 items-center gap-2">
+        <NInput
+          v-model:value="searchText"
+          size="small"
+          placeholder="Search by app or package name..."
+          aria-label="Search apps"
+          clearable
+          style="width: 18rem"
+        />
+        <NSelect
+          v-model:value="filterKey"
+          :options="filterOptions"
+          size="small"
+          style="width: 12rem"
+        />
+        <div class="flex-1" />
+        <NButton v-if="checkedKeys.length > 0" size="small" @click="backupDialogVisible = true">
+          Back up {{ checkedKeys.length }} selected
+        </NButton>
+        <NButton size="small" :loading="packagesStore.loading" @click="loadPackages">
+          <template #icon>
+            <NIcon :component="RefreshOutline" />
+          </template>
+          Refresh
+        </NButton>
+      </div>
+
+      <NAlert
+        v-if="!packagesStore.loading && packagesStore.errorMessage"
+        type="error"
+        class="shrink-0"
       >
-        <div v-if="selectedPackageMetadata?.iconDataUrl" class="mb-4 flex justify-center">
-          <img :src="selectedPackageMetadata.iconDataUrl" alt="" class="h-16 w-16 rounded-lg" />
-        </div>
-        <NDescriptions :column="1" label-placement="top" bordered size="small">
-          <NDescriptionsItem label="App name">{{
-            selectedPackageMetadata?.label ?? selectedPackage.displayName ?? 'Not available'
-          }}</NDescriptionsItem>
-          <NDescriptionsItem label="Package name">{{
-            selectedPackage.packageName
-          }}</NDescriptionsItem>
-          <NDescriptionsItem label="Version">{{
-            formatVersion(selectedPackage.versionName, selectedPackage.versionCode)
-          }}</NDescriptionsItem>
-          <NDescriptionsItem label="Type">{{
-            selectedPackage.isSystemApp ? 'System app' : 'User app'
-          }}</NDescriptionsItem>
-          <NDescriptionsItem label="State">{{
-            selectedPackage.isDisabled ? 'Disabled' : 'Enabled'
-          }}</NDescriptionsItem>
-          <NDescriptionsItem label="Install source">{{
-            formatInstallSource(selectedPackage.installerPackage)
-          }}</NDescriptionsItem>
-          <NDescriptionsItem label="First installed">{{
-            formatInstalledDate(selectedPackage.firstInstallTimeMs)
-          }}</NDescriptionsItem>
-          <NDescriptionsItem label="Last updated">{{
-            formatInstalledDate(selectedPackage.lastUpdateTimeMs)
-          }}</NDescriptionsItem>
-          <NDescriptionsItem label="APK path">{{
-            selectedPackage.apkPath ?? 'Not available'
-          }}</NDescriptionsItem>
-        </NDescriptions>
+        <div>{{ packagesStore.errorMessage }}</div>
+        <NButton size="small" class="mt-2" @click="loadPackages">Retry</NButton>
+      </NAlert>
 
-        <div class="mt-4 flex flex-wrap items-center gap-2">
-          <NButton
-            size="small"
-            :type="selectedPackage.isFavorite ? 'warning' : 'default'"
-            @click="
-              packagesStore.setFavorite(selectedPackage.packageName, !selectedPackage.isFavorite)
-            "
+      <NDataTable
+        v-else
+        v-model:checked-row-keys="checkedKeys"
+        class="min-h-0 flex-1"
+        flex-height
+        :loading="packagesStore.loading"
+        :columns="columns"
+        :data="filteredPackages"
+        :row-props="rowProps"
+        :row-key="(row: AppPackageInfo) => row.packageName"
+        virtual-scroll
+        size="small"
+        striped
+      >
+        <template #empty>
+          <EmptyState
+            v-if="hasActiveFilters"
+            title="No apps match"
+            description="Try a different search term, or clear the current filters."
           >
-            <template #icon>
-              <NIcon :component="selectedPackage.isFavorite ? Star : StarOutline" />
+            <template #action>
+              <NButton size="small" @click="clearFilters">Clear filters</NButton>
             </template>
-            {{ selectedPackage.isFavorite ? 'Marked Important' : 'Mark as Important' }}
-          </NButton>
-          <NButton
-            size="small"
-            :loading="operationsStore.pending.has(selectedPackage.packageName)"
-            @click="openConfirm('uninstall-for-user')"
-          >
-            Uninstall for User
-          </NButton>
-          <NButton
-            size="small"
-            :loading="operationsStore.pending.has(selectedPackage.packageName)"
-            @click="openConfirm(selectedPackage.isDisabled ? 'enable' : 'disable')"
-          >
-            {{ selectedPackage.isDisabled ? 'Enable' : 'Disable' }}
-          </NButton>
-          <NButton
-            size="small"
-            :loading="operationsStore.pending.has(selectedPackage.packageName)"
-            @click="openConfirm('clear-data')"
-          >
-            Clear Data
-          </NButton>
-          <NButton
-            v-if="aiSettingsStore.settings?.provider"
-            size="small"
-            :loading="selectedPackageAiState?.loading ?? false"
-            @click="askAi"
-          >
-            Ask AI
-          </NButton>
-        </div>
+          </EmptyState>
+          <EmptyState v-else-if="!packagesStore.loading" title="No apps found" />
+        </template>
+      </NDataTable>
 
-        <div
-          v-if="
-            selectedPackageAiState?.loading ||
-            selectedPackageAiState?.result ||
-            selectedPackageAiState?.errorMessage
-          "
-          class="mt-4"
-        >
-          <h4 class="text-xs font-medium text-text-secondary">AI opinion</h4>
-          <NSpin :show="selectedPackageAiState.loading" class="mt-1 w-full">
-            <NAlert v-if="selectedPackageAiState.errorMessage" type="error" :show-icon="true">
-              {{ selectedPackageAiState.errorMessage }}
-            </NAlert>
-            <div
-              v-else-if="selectedPackageAiState.result"
-              class="rounded border border-border p-3 text-sm text-text-secondary"
+      <NDrawer v-model:show="drawerVisible" :width="420" placement="right">
+        <NDrawerContent v-if="selectedPackage" title="App details" closable>
+          <div class="mb-4 flex items-start justify-between gap-3">
+            <AppIdentity
+              :label="
+                selectedPackageMetadata?.label ??
+                selectedPackage.displayName ??
+                selectedPackage.packageName
+              "
+              :package-name="selectedPackage.packageName"
+              :icon-data-url="selectedPackageMetadata?.iconDataUrl ?? null"
+              size="lg"
+            />
+            <NButton
+              size="small"
+              :type="selectedPackage.isFavorite ? 'warning' : 'default'"
+              @click="
+                packagesStore.setFavorite(selectedPackage.packageName, !selectedPackage.isFavorite)
+              "
             >
-              <p class="whitespace-pre-wrap">{{ selectedPackageAiState.result.text }}</p>
-              <p class="mt-2 text-xs text-text-muted">
-                {{ selectedPackageAiState.result.model }} — advisory only, not droid.or's own
-                classification.
-              </p>
+              <template #icon>
+                <NIcon :component="selectedPackage.isFavorite ? Star : StarOutline" />
+              </template>
+              {{ selectedPackage.isFavorite ? 'Marked Important' : 'Mark as Important' }}
+            </NButton>
+          </div>
+          <NDescriptions :column="1" label-placement="top" bordered size="small">
+            <NDescriptionsItem label="App name">{{
+              selectedPackageMetadata?.label ?? selectedPackage.displayName ?? 'Not available'
+            }}</NDescriptionsItem>
+            <NDescriptionsItem label="Package name">{{
+              selectedPackage.packageName
+            }}</NDescriptionsItem>
+            <NDescriptionsItem label="Version">{{
+              formatVersion(selectedPackage.versionName, selectedPackage.versionCode)
+            }}</NDescriptionsItem>
+            <NDescriptionsItem label="Type">{{
+              selectedPackage.isSystemApp ? 'System app' : 'User app'
+            }}</NDescriptionsItem>
+            <NDescriptionsItem label="State">{{
+              selectedPackage.isDisabled ? 'Disabled' : 'Enabled'
+            }}</NDescriptionsItem>
+            <NDescriptionsItem label="Install source">{{
+              formatInstallSource(selectedPackage.installerPackage)
+            }}</NDescriptionsItem>
+            <NDescriptionsItem label="First installed">{{
+              formatInstalledDate(selectedPackage.firstInstallTimeMs)
+            }}</NDescriptionsItem>
+            <NDescriptionsItem label="Last updated">{{
+              formatInstalledDate(selectedPackage.lastUpdateTimeMs)
+            }}</NDescriptionsItem>
+            <NDescriptionsItem label="APK path">{{
+              selectedPackage.apkPath ?? 'Not available'
+            }}</NDescriptionsItem>
+          </NDescriptions>
+
+          <div class="mt-4">
+            <h4 class="text-xs font-medium text-text-secondary">Actions</h4>
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+              <NButton
+                size="small"
+                :loading="operationsStore.pending.has(selectedPackage.packageName)"
+                @click="openConfirm(selectedPackage.isDisabled ? 'enable' : 'disable')"
+              >
+                {{ selectedPackage.isDisabled ? 'Enable' : 'Disable' }}
+              </NButton>
+              <NButton
+                size="small"
+                type="error"
+                secondary
+                :loading="operationsStore.pending.has(selectedPackage.packageName)"
+                @click="openConfirm('uninstall-for-user')"
+              >
+                Uninstall for User
+              </NButton>
+              <NButton
+                size="small"
+                type="error"
+                secondary
+                :loading="operationsStore.pending.has(selectedPackage.packageName)"
+                @click="openConfirm('clear-data')"
+              >
+                Clear Data
+              </NButton>
             </div>
-            <div v-else class="h-16" />
-          </NSpin>
-        </div>
-      </NDrawerContent>
-    </NDrawer>
+          </div>
 
-    <OperationConfirmDialog
-      v-if="selectedPackage && confirmOperation"
-      v-model:show="confirmDialogVisible"
-      :package-name="selectedPackage.packageName"
-      :display-name="selectedPackageMetadata?.label ?? selectedPackage.displayName"
-      :operation="confirmOperation"
-      :is-system-app="selectedPackage.isSystemApp"
-      :risk="null"
-      :is-favorite="selectedPackage.isFavorite"
-      @confirm="handleConfirm"
-    />
+          <div
+            v-if="
+              aiSettingsStore.settings?.provider ||
+              selectedPackageAiState?.result ||
+              selectedPackageAiState?.errorMessage
+            "
+            class="mt-4"
+          >
+            <h4 class="text-xs font-medium text-text-secondary">AI opinion</h4>
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+              <NButton
+                v-if="aiSettingsStore.settings?.provider"
+                size="small"
+                :loading="selectedPackageAiState?.loading ?? false"
+                @click="askAi"
+              >
+                Ask AI
+              </NButton>
+            </div>
+            <div
+              v-if="
+                selectedPackageAiState?.loading ||
+                selectedPackageAiState?.result ||
+                selectedPackageAiState?.errorMessage
+              "
+              class="mt-3"
+            >
+              <NSpin :show="selectedPackageAiState.loading" class="w-full">
+                <NAlert v-if="selectedPackageAiState.errorMessage" type="error" :show-icon="true">
+                  {{ selectedPackageAiState.errorMessage }}
+                </NAlert>
+                <div
+                  v-else-if="selectedPackageAiState.result"
+                  class="rounded border border-border p-3 text-sm text-text-secondary"
+                >
+                  <p class="whitespace-pre-wrap">{{ selectedPackageAiState.result.text }}</p>
+                  <p class="mt-2 text-xs text-text-muted">
+                    {{ selectedPackageAiState.result.model }} — advisory only, not droid.or's own
+                    classification.
+                  </p>
+                </div>
+                <div v-else class="h-16" />
+              </NSpin>
+            </div>
+          </div>
+        </NDrawerContent>
+      </NDrawer>
 
-    <BackupDialog
-      v-if="selectedDevice"
-      v-model:show="backupDialogVisible"
-      :device-id="selectedDevice.id"
-      :package-names="checkedKeys"
-      @done="onBackupDone"
-    />
-  </div>
+      <OperationConfirmDialog
+        v-if="selectedPackage && confirmOperation"
+        v-model:show="confirmDialogVisible"
+        :package-name="selectedPackage.packageName"
+        :display-name="selectedPackageMetadata?.label ?? selectedPackage.displayName"
+        :operation="confirmOperation"
+        :is-system-app="selectedPackage.isSystemApp"
+        :risk="null"
+        :is-favorite="selectedPackage.isFavorite"
+        @confirm="handleConfirm"
+      />
+
+      <BackupDialog
+        v-if="selectedDevice"
+        v-model:show="backupDialogVisible"
+        :device-id="selectedDevice.id"
+        :package-names="checkedKeys"
+        @done="onBackupDone"
+      />
+    </div>
+  </DeviceGate>
 </template>

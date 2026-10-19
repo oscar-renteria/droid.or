@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import { NAlert, NButton, NEmpty, NSpin, NTag } from 'naive-ui'
+import { NAlert, NButton, NCollapse, NCollapseItem, NSpin, NTag } from 'naive-ui'
 import { computed, watch } from 'vue'
+import AppIdentity from '@renderer/components/ui/AppIdentity.vue'
+import DeviceGate from '@renderer/components/ui/DeviceGate.vue'
+import EmptyState from '@renderer/components/ui/EmptyState.vue'
+import PageHeader from '@renderer/components/ui/PageHeader.vue'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { usePackagesStore } from '@renderer/stores/packages.store'
 import { useSecurityReviewStore } from '@renderer/stores/security-review.store'
@@ -9,7 +13,6 @@ import {
   formatInstalledDate,
   isFromPlayStore
 } from '@renderer/utils/format-package-value'
-import { getDeviceStateMeta } from '@renderer/utils/device-state-meta'
 
 const devicesStore = useDevicesStore()
 const packagesStore = usePackagesStore()
@@ -72,157 +75,167 @@ const recentlyChangedApps = computed(() => {
 </script>
 
 <template>
-  <div
-    v-if="!selectedDevice"
-    class="flex h-full flex-col items-center justify-center gap-2 text-center"
+  <DeviceGate
+    requirement="A security review requires an authorized, connected device."
+    no-device-text="Select a device from the sidebar to run a security review on it."
   >
-    <h2 class="text-lg font-medium text-text">No device selected</h2>
-    <p class="max-w-md text-sm text-text-muted">
-      Select a device from the sidebar to run a security review on it.
-    </p>
-  </div>
+    <div class="flex h-full flex-col gap-3">
+      <PageHeader title="Security">
+        <template #actions>
+          <NButton
+            type="primary"
+            size="small"
+            :loading="securityReviewStore.loading || packagesStore.loading"
+            @click="runReview"
+          >
+            {{ securityReviewStore.result ? 'Re-run Review' : 'Run Review' }}
+          </NButton>
+        </template>
+      </PageHeader>
 
-  <div
-    v-else-if="selectedDevice.connectionState !== 'device'"
-    class="flex h-full flex-col items-center justify-center gap-2 text-center"
-  >
-    <h2 class="text-lg font-medium text-text">
-      {{ getDeviceStateMeta(selectedDevice.connectionState).label }}
-    </h2>
-    <p class="max-w-md text-sm text-text-muted">
-      {{
-        getDeviceStateMeta(selectedDevice.connectionState).guidance ??
-        'A security review requires an authorized, connected device.'
-      }}
-    </p>
-  </div>
+      <NCollapse :default-expanded-names="['scope']" class="shrink-0 border border-border">
+        <NCollapseItem title="This is not a virus scanner" name="scope">
+          <p class="text-sm text-text-secondary">
+            This surfaces a few things a non-rooted ADB connection can actually see — it cannot
+            inspect your router, network traffic, firmware, or the kernel. Holding Device Admin or
+            an Accessibility Service is normal for many legitimate apps (device managers, launchers,
+            screen readers). Nothing below is a verdict — it's raw material for you to recognize or
+            not recognize.
+          </p>
+        </NCollapseItem>
+      </NCollapse>
 
-  <div v-else class="flex h-full flex-col gap-3">
-    <div class="flex shrink-0 items-center justify-between">
-      <h2 class="text-lg font-medium text-text">Security Review</h2>
-      <NButton
-        type="primary"
-        :loading="securityReviewStore.loading || packagesStore.loading"
-        @click="runReview"
+      <NAlert v-if="securityReviewStore.errorMessage" type="error" title="Review failed">
+        {{ securityReviewStore.errorMessage }}
+      </NAlert>
+
+      <EmptyState
+        v-else-if="!securityReviewStore.result && !securityReviewStore.loading"
+        title="No review yet"
+        description="Run a review to see device admin apps, accessibility services and app install sources."
+        class="flex-1"
+      />
+
+      <NSpin
+        v-else
+        :show="securityReviewStore.loading || packagesStore.loading"
+        class="min-h-0 flex-1"
       >
-        {{ securityReviewStore.result ? 'Re-run Review' : 'Run Review' }}
-      </NButton>
-    </div>
-
-    <NAlert type="warning" title="This is not a virus scanner" :show-icon="true" class="shrink-0">
-      This surfaces a few things a non-rooted ADB connection can actually see — it cannot inspect
-      your router, network traffic, firmware, or the kernel. Holding Device Admin or an
-      Accessibility Service is normal for many legitimate apps (device managers, launchers, screen
-      readers). Nothing below is a verdict — it's raw material for you to recognize or not
-      recognize.
-    </NAlert>
-
-    <NAlert v-if="securityReviewStore.errorMessage" type="error" title="Review failed">
-      {{ securityReviewStore.errorMessage }}
-    </NAlert>
-
-    <NEmpty
-      v-else-if="!securityReviewStore.result && !securityReviewStore.loading"
-      description="Run a review to see what's below"
-      class="flex-1 items-center justify-center"
-    />
-
-    <NSpin
-      v-else
-      :show="securityReviewStore.loading || packagesStore.loading"
-      class="min-h-0 flex-1"
-    >
-      <div class="flex h-full flex-col gap-4 overflow-y-auto pr-1">
-        <section>
-          <h3 class="text-sm font-medium text-text">
-            Device Admin apps ({{ deviceAdminApps.length }})
-          </h3>
-          <p class="text-xs text-text-muted">
-            Can make itself hard to remove normally. Real examples: MDM/work-profile tools,
-            "hibernate background apps" utilities, Find My Device.
-          </p>
-          <div class="mt-2 flex flex-col gap-2">
-            <div
-              v-for="pkg in deviceAdminApps"
-              :key="pkg"
-              class="rounded border border-border p-2 text-sm"
-            >
-              <span class="font-medium text-text">{{ displayLabel(pkg) }}</span>
-              <span class="ml-2 text-xs text-text-muted">{{ pkg }}</span>
+        <div class="flex h-full flex-col gap-4 overflow-y-auto pr-1">
+          <section class="rounded-lg border border-border bg-surface p-3">
+            <h3 class="flex items-center gap-2 text-sm font-medium text-text">
+              Device Admin apps
+              <span
+                class="rounded-full bg-surface-elevated px-2 py-0.5 text-xs font-medium text-text-muted"
+              >
+                {{ deviceAdminApps.length }}
+              </span>
+            </h3>
+            <p class="mt-1 text-xs text-text-muted">
+              Can make itself hard to remove normally. Real examples: MDM/work-profile tools,
+              "hibernate background apps" utilities, Find My Device.
+            </p>
+            <div class="mt-2 flex flex-col gap-2">
+              <div
+                v-for="pkg in deviceAdminApps"
+                :key="pkg"
+                class="rounded-md border border-border p-2 text-sm"
+              >
+                <AppIdentity :label="displayLabel(pkg)" :package-name="pkg" size="sm" />
+              </div>
+              <p v-if="deviceAdminApps.length === 0" class="text-xs text-text-muted">None.</p>
             </div>
-            <p v-if="deviceAdminApps.length === 0" class="text-xs text-text-muted">None.</p>
-          </div>
-        </section>
+          </section>
 
-        <section>
-          <h3 class="text-sm font-medium text-text">
-            Accessibility services ({{ accessibilityApps.length }})
-          </h3>
-          <p class="text-xs text-text-muted">
-            Can observe and interact with the screen. Real examples: screen readers, launchers,
-            automation tools.
-          </p>
-          <div class="mt-2 flex flex-col gap-2">
-            <div
-              v-for="pkg in accessibilityApps"
-              :key="pkg"
-              class="rounded border border-border p-2 text-sm"
-            >
-              <span class="font-medium text-text">{{ displayLabel(pkg) }}</span>
-              <span class="ml-2 text-xs text-text-muted">{{ pkg }}</span>
+          <section class="rounded-lg border border-border bg-surface p-3">
+            <h3 class="flex items-center gap-2 text-sm font-medium text-text">
+              Accessibility services
+              <span
+                class="rounded-full bg-surface-elevated px-2 py-0.5 text-xs font-medium text-text-muted"
+              >
+                {{ accessibilityApps.length }}
+              </span>
+            </h3>
+            <p class="mt-1 text-xs text-text-muted">
+              Can observe and interact with the screen. Real examples: screen readers, launchers,
+              automation tools.
+            </p>
+            <div class="mt-2 flex flex-col gap-2">
+              <div
+                v-for="pkg in accessibilityApps"
+                :key="pkg"
+                class="rounded-md border border-border p-2 text-sm"
+              >
+                <AppIdentity :label="displayLabel(pkg)" :package-name="pkg" size="sm" />
+              </div>
+              <p v-if="accessibilityApps.length === 0" class="text-xs text-text-muted">None.</p>
             </div>
-            <p v-if="accessibilityApps.length === 0" class="text-xs text-text-muted">None.</p>
-          </div>
-        </section>
+          </section>
 
-        <section>
-          <h3 class="text-sm font-medium text-text">
-            Apps not installed from the Play Store ({{ nonPlayStoreApps.length }})
-          </h3>
-          <p class="text-xs text-text-muted">
-            User-installed apps only — a system app with no recorded installer is normal (preloaded
-            by the manufacturer) and not included here.
-          </p>
-          <div class="mt-2 flex flex-col gap-2">
-            <div
-              v-for="pkg in nonPlayStoreApps"
-              :key="pkg.packageName"
-              class="rounded border border-border p-2 text-sm"
-            >
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="font-medium text-text">{{ displayLabel(pkg.packageName) }}</span>
+          <section class="rounded-lg border border-border bg-surface p-3">
+            <h3 class="flex items-center gap-2 text-sm font-medium text-text">
+              Apps not installed from the Play Store
+              <span
+                class="rounded-full bg-surface-elevated px-2 py-0.5 text-xs font-medium text-text-muted"
+              >
+                {{ nonPlayStoreApps.length }}
+              </span>
+            </h3>
+            <p class="mt-1 text-xs text-text-muted">
+              User-installed apps only — a system app with no recorded installer is normal
+              (preloaded by the manufacturer) and not included here.
+            </p>
+            <div class="mt-2 flex flex-col gap-2">
+              <div
+                v-for="pkg in nonPlayStoreApps"
+                :key="pkg.packageName"
+                class="flex flex-wrap items-center gap-2 rounded-md border border-border p-2 text-sm"
+              >
+                <AppIdentity
+                  :label="displayLabel(pkg.packageName)"
+                  :package-name="pkg.packageName"
+                  size="sm"
+                />
                 <NTag size="small">{{ formatInstallSource(pkg.installerPackage) }}</NTag>
               </div>
-              <span class="text-xs text-text-muted">{{ pkg.packageName }}</span>
+              <p v-if="nonPlayStoreApps.length === 0" class="text-xs text-text-muted">None.</p>
             </div>
-            <p v-if="nonPlayStoreApps.length === 0" class="text-xs text-text-muted">None.</p>
-          </div>
-        </section>
+          </section>
 
-        <section>
-          <h3 class="text-sm font-medium text-text">Most recently installed or updated</h3>
-          <p class="text-xs text-text-muted">
-            The 15 most recent, across all apps — useful for cross-checking against a specific date
-            you're concerned about.
-          </p>
-          <div class="mt-2 flex flex-col gap-2">
-            <div
-              v-for="pkg in recentlyChangedApps"
-              :key="pkg.packageName"
-              class="flex items-center justify-between rounded border border-border p-2 text-sm"
-            >
-              <div>
-                <span class="font-medium text-text">{{ displayLabel(pkg.packageName) }}</span>
-                <span class="ml-2 text-xs text-text-muted">{{ pkg.packageName }}</span>
-              </div>
-              <span class="text-xs text-text-muted">
-                installed {{ formatInstalledDate(pkg.firstInstallTimeMs) }} · updated
-                {{ formatInstalledDate(pkg.lastUpdateTimeMs) }}
+          <section class="rounded-lg border border-border bg-surface p-3">
+            <h3 class="flex items-center gap-2 text-sm font-medium text-text">
+              Most recently installed or updated
+              <span
+                class="rounded-full bg-surface-elevated px-2 py-0.5 text-xs font-medium text-text-muted"
+              >
+                {{ recentlyChangedApps.length }}
               </span>
+            </h3>
+            <p class="mt-1 text-xs text-text-muted">
+              The 15 most recent, across all apps — useful for cross-checking against a specific
+              date you're concerned about.
+            </p>
+            <div class="mt-2 flex flex-col gap-2">
+              <div
+                v-for="pkg in recentlyChangedApps"
+                :key="pkg.packageName"
+                class="flex items-center justify-between gap-3 rounded-md border border-border p-2 text-sm"
+              >
+                <AppIdentity
+                  :label="displayLabel(pkg.packageName)"
+                  :package-name="pkg.packageName"
+                  size="sm"
+                  class="min-w-0"
+                />
+                <span class="shrink-0 text-xs text-text-muted">
+                  installed {{ formatInstalledDate(pkg.firstInstallTimeMs) }} · updated
+                  {{ formatInstalledDate(pkg.lastUpdateTimeMs) }}
+                </span>
+              </div>
             </div>
-          </div>
-        </section>
-      </div>
-    </NSpin>
-  </div>
+          </section>
+        </div>
+      </NSpin>
+    </div>
+  </DeviceGate>
 </template>

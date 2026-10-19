@@ -1,8 +1,14 @@
 <script setup lang="ts">
 import type { PackageRecommendation } from '@shared/types/analyzer'
-import { NAlert, NButton, NCheckbox, NEmpty, NIcon, NSpin, NTag, useMessage } from 'naive-ui'
+import { NAlert, NButton, NCheckbox, NIcon, NSpin, NTag, useMessage } from 'naive-ui'
+import { CheckmarkCircleOutline, CloseCircleOutline } from '@vicons/ionicons5'
 import { computed, ref, watch } from 'vue'
 import ProfileApplyDialog from '@renderer/components/ProfileApplyDialog.vue'
+import AppIdentity from '@renderer/components/ui/AppIdentity.vue'
+import DeviceGate from '@renderer/components/ui/DeviceGate.vue'
+import EmptyState from '@renderer/components/ui/EmptyState.vue'
+import PageHeader from '@renderer/components/ui/PageHeader.vue'
+import RiskBadge from '@renderer/components/ui/RiskBadge.vue'
 import { useAnalyzerStore } from '@renderer/stores/analyzer.store'
 import { useDebloatProfilesStore } from '@renderer/stores/debloat-profiles.store'
 import { useDevicesStore } from '@renderer/stores/devices.store'
@@ -13,8 +19,6 @@ import {
   getProfileCounts,
   type DebloatProfile
 } from '@renderer/utils/debloat-profiles'
-import { getDeviceStateMeta } from '@renderer/utils/device-state-meta'
-import { getRiskMeta, riskNaiveType } from '@renderer/utils/risk-meta'
 
 const devicesStore = useDevicesStore()
 const analyzerStore = useAnalyzerStore()
@@ -135,156 +139,146 @@ async function confirmApply(): Promise<void> {
 </script>
 
 <template>
-  <div
-    v-if="!selectedDevice"
-    class="flex h-full flex-col items-center justify-center gap-2 text-center"
+  <DeviceGate
+    requirement="Debloat profiles require an authorized, connected device."
+    no-device-text="Select a device from the sidebar to apply a debloat profile to it."
   >
-    <h2 class="text-lg font-medium text-text">No device selected</h2>
-    <p class="max-w-md text-sm text-text-muted">
-      Select a device from the sidebar to apply a debloat profile to it.
-    </p>
-  </div>
-
-  <div
-    v-else-if="selectedDevice.connectionState !== 'device'"
-    class="flex h-full flex-col items-center justify-center gap-2 text-center"
-  >
-    <h2 class="text-lg font-medium text-text">
-      {{ getDeviceStateMeta(selectedDevice.connectionState).label }}
-    </h2>
-    <p class="max-w-md text-sm text-text-muted">
-      {{
-        getDeviceStateMeta(selectedDevice.connectionState).guidance ??
-        'Debloat profiles require an authorized, connected device.'
-      }}
-    </p>
-  </div>
-
-  <div v-else class="flex h-full flex-col gap-3">
-    <div class="flex shrink-0 items-center justify-between">
-      <h2 class="text-lg font-medium text-text">Debloat Profiles</h2>
-      <NButton type="primary" :loading="analyzerStore.loading" @click="runAnalysis">
-        {{ analysisIsCurrent ? 'Re-analyze' : 'Analyze Device' }}
-      </NButton>
-    </div>
-
-    <NAlert v-if="analyzerStore.errorMessage" type="error" title="Analysis failed">
-      {{ analyzerStore.errorMessage }}
-    </NAlert>
-
-    <div
-      v-else-if="!analysisIsCurrent && !analyzerStore.loading"
-      class="flex flex-1 flex-col items-center justify-center gap-2 text-center"
-    >
-      <h2 class="text-lg font-medium text-text">Analyze this device first</h2>
-      <p class="max-w-md text-sm text-text-muted">
-        Debloat profiles are built from the same per-package review the Analyzer uses. Run an
-        analysis to see how many packages each profile would apply to.
-      </p>
-      <NButton type="primary" class="mt-2" @click="runAnalysis">Analyze Device</NButton>
-    </div>
-
-    <NSpin v-else :show="analyzerStore.loading" class="min-h-0 flex-1">
-      <div class="flex h-full flex-col gap-3 overflow-y-auto pr-1">
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div
-            v-for="profile in DEBLOAT_PROFILES"
-            :key="profile.id"
-            class="cursor-pointer rounded border p-3 transition-colors"
-            :class="
-              selectedProfileId === profile.id
-                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30'
-                : 'border-border'
-            "
-            @click="selectProfile(profile)"
+    <div class="flex h-full flex-col gap-3">
+      <PageHeader title="Profiles">
+        <template #actions>
+          <NButton
+            type="primary"
+            size="small"
+            :loading="analyzerStore.loading"
+            @click="runAnalysis"
           >
-            <div class="font-medium text-text">{{ profile.name }}</div>
-            <p class="mt-1 text-xs text-text-muted">{{ profile.description }}</p>
-            <div class="mt-2 text-xs text-text-muted">
-              {{ countsFor(profile).safe }} safe · {{ countsFor(profile).caution }} caution
-            </div>
-          </div>
-        </div>
+            {{ analysisIsCurrent ? 'Re-analyze' : 'Analyze Device' }}
+          </NButton>
+        </template>
+      </PageHeader>
 
-        <template v-if="selectedProfile">
-          <div class="rounded border border-border p-3">
-            <h3 class="font-medium text-text">{{ selectedProfile.name }}</h3>
-            <ul class="mt-1 list-inside list-disc text-sm text-text-secondary">
-              <li>{{ countsFor(selectedProfile).safe }} package(s) recommended</li>
-              <li>{{ countsFor(selectedProfile).caution }} package(s) caution</li>
-              <li>
-                {{ analyzerStore.result?.summary.critical ?? 0 }} package(s) excluded as critical
-              </li>
-            </ul>
-            <div class="mt-3 flex items-center gap-2">
-              <NButton size="small" @click="reviewOpen = !reviewOpen">
-                {{ reviewOpen ? 'Hide Review' : 'Review' }}
-              </NButton>
-              <NButton
-                size="small"
-                type="primary"
-                :disabled="checkedPackages.size === 0"
-                :loading="profilesStore.applying"
-                @click="openApplyConfirm"
-              >
-                Apply Selected ({{ checkedPackages.size }})
-              </NButton>
-            </div>
-          </div>
+      <NAlert v-if="analyzerStore.errorMessage" type="error" title="Analysis failed">
+        {{ analyzerStore.errorMessage }}
+      </NAlert>
 
-          <NEmpty
-            v-if="candidates.length === 0"
-            description="Nothing for this profile to do — every matching package is already in its target state, or ignored."
-          />
+      <EmptyState
+        v-else-if="!analysisIsCurrent && !analyzerStore.loading"
+        title="Analyze this device first"
+        description="Debloat profiles are built from the same per-package review the Analyzer uses. Run an analysis to see how many packages each profile would apply to."
+        class="flex-1"
+      >
+        <template #action>
+          <NButton type="primary" size="small" @click="runAnalysis">Analyze Device</NButton>
+        </template>
+      </EmptyState>
 
-          <div v-else-if="reviewOpen" class="flex flex-col gap-2">
-            <div
-              v-for="candidate in candidates"
-              :key="candidate.packageName"
-              class="flex items-start gap-3 rounded border border-border p-2 text-sm"
+      <NSpin v-else :show="analyzerStore.loading" class="min-h-0 flex-1">
+        <div class="flex h-full flex-col gap-3 overflow-y-auto pr-1">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <button
+              v-for="profile in DEBLOAT_PROFILES"
+              :key="profile.id"
+              type="button"
+              :aria-pressed="selectedProfileId === profile.id"
+              class="cursor-pointer rounded-lg border p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              :class="
+                selectedProfileId === profile.id ? 'border-primary bg-primary/10' : 'border-border'
+              "
+              @click="selectProfile(profile)"
             >
-              <NCheckbox
-                :checked="checkedPackages.has(candidate.packageName)"
-                @update:checked="(v: boolean) => toggleChecked(candidate.packageName, v)"
-              />
-              <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-2">
-                  <span class="font-medium text-text">{{ displayLabel(candidate) }}</span>
-                  <NTag size="small" :type="riskNaiveType(getRiskMeta(candidate.risk).tone)">
-                    <template #icon>
-                      <NIcon :component="getRiskMeta(candidate.risk).icon" />
-                    </template>
-                    {{ getRiskMeta(candidate.risk).label }}
-                  </NTag>
-                  <NTag v-if="candidate.isDisabled" size="small">Already disabled</NTag>
-                </div>
-                <div class="text-xs text-text-muted">
-                  {{ candidate.packageName }}
-                </div>
-                <p
-                  v-if="profilesStore.results.has(candidate.packageName)"
-                  class="mt-1 text-xs"
-                  :class="
-                    profilesStore.results.get(candidate.packageName)!.success
-                      ? 'text-emerald-600 dark:text-emerald-400'
-                      : 'text-red-600 dark:text-red-400'
-                  "
+              <div class="font-medium text-text">{{ profile.name }}</div>
+              <p class="mt-1 text-xs text-text-muted">{{ profile.description }}</p>
+              <div class="mt-2 text-xs text-text-muted">
+                {{ countsFor(profile).safe }} safe · {{ countsFor(profile).caution }} caution
+              </div>
+            </button>
+          </div>
+
+          <template v-if="selectedProfile">
+            <div class="rounded-lg border border-border p-3">
+              <h3 class="font-medium text-text">{{ selectedProfile.name }}</h3>
+              <ul class="mt-1 list-inside list-disc text-sm text-text-secondary">
+                <li>{{ countsFor(selectedProfile).safe }} package(s) recommended</li>
+                <li>{{ countsFor(selectedProfile).caution }} package(s) caution</li>
+                <li>
+                  {{ analyzerStore.result?.summary.critical ?? 0 }} package(s) excluded as critical
+                </li>
+              </ul>
+              <div class="mt-3 flex items-center gap-2">
+                <NButton size="small" @click="reviewOpen = !reviewOpen">
+                  {{ reviewOpen ? 'Hide Review' : 'Review' }}
+                </NButton>
+                <NButton
+                  size="small"
+                  type="primary"
+                  :disabled="checkedPackages.size === 0"
+                  :loading="profilesStore.applying"
+                  @click="openApplyConfirm"
                 >
-                  {{ profilesStore.results.get(candidate.packageName)!.message }}
-                </p>
+                  Apply Selected ({{ checkedPackages.size }})
+                </NButton>
               </div>
             </div>
-          </div>
-        </template>
-      </div>
-    </NSpin>
 
-    <ProfileApplyDialog
-      v-if="selectedProfile"
-      v-model:show="bulkConfirmVisible"
-      :package-count="checkedPackages.size"
-      :operation="selectedProfile.operation"
-      @confirm="confirmApply"
-    />
-  </div>
+            <EmptyState
+              v-if="candidates.length === 0"
+              title="Nothing to do for this profile"
+              description="Every matching package is already in its target state, or ignored."
+            />
+
+            <div v-else-if="reviewOpen" class="flex flex-col gap-2">
+              <div
+                v-for="candidate in candidates"
+                :key="candidate.packageName"
+                class="flex items-start gap-3 rounded-lg border border-border p-2 text-sm"
+              >
+                <NCheckbox
+                  :checked="checkedPackages.has(candidate.packageName)"
+                  @update:checked="(v: boolean) => toggleChecked(candidate.packageName, v)"
+                />
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <AppIdentity
+                      :label="displayLabel(candidate)"
+                      :package-name="candidate.packageName"
+                      size="sm"
+                    />
+                    <RiskBadge :risk="candidate.risk" />
+                    <NTag v-if="candidate.isDisabled" size="small">Already disabled</NTag>
+                  </div>
+                  <p
+                    v-if="profilesStore.results.has(candidate.packageName)"
+                    class="mt-1 flex items-center gap-1 text-xs"
+                    :class="
+                      profilesStore.results.get(candidate.packageName)!.success
+                        ? 'text-success'
+                        : 'text-danger'
+                    "
+                  >
+                    <NIcon
+                      :component="
+                        profilesStore.results.get(candidate.packageName)!.success
+                          ? CheckmarkCircleOutline
+                          : CloseCircleOutline
+                      "
+                      :size="14"
+                    />
+                    {{ profilesStore.results.get(candidate.packageName)!.message }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </NSpin>
+
+      <ProfileApplyDialog
+        v-if="selectedProfile"
+        v-model:show="bulkConfirmVisible"
+        :package-count="checkedPackages.size"
+        :operation="selectedProfile.operation"
+        @confirm="confirmApply"
+      />
+    </div>
+  </DeviceGate>
 </template>

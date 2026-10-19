@@ -1,14 +1,19 @@
 <script setup lang="ts">
 import type { OperationHistoryEntry } from '@shared/types/operation'
-import { NButton, NDataTable, NEmpty, NIcon, NModal, NTag, type DataTableColumns } from 'naive-ui'
-import { RefreshOutline } from '@vicons/ionicons5'
+import { NButton, NDataTable, NIcon, NModal, NTag, type DataTableColumns } from 'naive-ui'
+import { CheckmarkCircleOutline, CloseCircleOutline, RefreshOutline } from '@vicons/ionicons5'
 import { computed, h, ref, watch } from 'vue'
+import AppIdentity from '@renderer/components/ui/AppIdentity.vue'
+import DeviceGate from '@renderer/components/ui/DeviceGate.vue'
+import EmptyState from '@renderer/components/ui/EmptyState.vue'
+import PageHeader from '@renderer/components/ui/PageHeader.vue'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { useOperationsStore } from '@renderer/stores/operations.store'
-import { getDeviceStateMeta } from '@renderer/utils/device-state-meta'
+import { usePackagesStore } from '@renderer/stores/packages.store'
 
 const devicesStore = useDevicesStore()
 const operationsStore = useOperationsStore()
+const packagesStore = usePackagesStore()
 
 const selectedDevice = computed(() => devicesStore.selectedDevice)
 
@@ -51,6 +56,13 @@ function formatTimestamp(iso: string): string {
   return new Date(iso).toLocaleString()
 }
 
+/** Same best-effort fallback Recovery uses: the cached label if the Apps tab
+ *  resolved it this session, otherwise the raw package name. */
+function displayName(packageName: string): string {
+  const cached = packagesStore.metadataCache.get(packageName)
+  return cached && cached !== 'loading' && cached.label ? cached.label : packageName
+}
+
 const columns: DataTableColumns<OperationHistoryEntry> = [
   {
     title: 'Time',
@@ -61,7 +73,21 @@ const columns: DataTableColumns<OperationHistoryEntry> = [
   {
     title: 'Package',
     key: 'packageName',
-    ellipsis: true
+    ellipsis: true,
+    render: (row) =>
+      h(
+        'div',
+        { class: 'min-w-0' },
+        {
+          default: () => [
+            h(AppIdentity, {
+              label: displayName(row.packageName),
+              packageName: row.packageName,
+              size: 'sm'
+            })
+          ]
+        }
+      )
   },
   {
     title: 'Operation',
@@ -85,8 +111,18 @@ const columns: DataTableColumns<OperationHistoryEntry> = [
     render: (row) =>
       h(
         NTag,
-        { size: 'small', type: row.success ? 'success' : 'error' },
-        { default: () => (row.success ? 'Success' : 'Failed') }
+        {
+          size: 'small',
+          type: row.success ? 'success' : 'error'
+        },
+        {
+          icon: () =>
+            h(NIcon, {
+              component: row.success ? CheckmarkCircleOutline : CloseCircleOutline,
+              size: 14
+            }),
+          default: () => (row.success ? 'Success' : 'Failed')
+        }
       )
   },
   {
@@ -104,76 +140,58 @@ const columns: DataTableColumns<OperationHistoryEntry> = [
 </script>
 
 <template>
-  <div
-    v-if="!selectedDevice"
-    class="flex h-full flex-col items-center justify-center gap-2 text-center"
+  <DeviceGate
+    requirement="Viewing history requires an authorized, connected device."
+    no-device-text="Select a device from the sidebar to see the changes this app has made to it."
   >
-    <h2 class="text-lg font-medium text-text">No device selected</h2>
-    <p class="max-w-md text-sm text-text-muted">
-      Select a device from the sidebar to see the changes this app has made to it.
-    </p>
-  </div>
-
-  <div
-    v-else-if="selectedDevice.connectionState !== 'device'"
-    class="flex h-full flex-col items-center justify-center gap-2 text-center"
-  >
-    <h2 class="text-lg font-medium text-text">
-      {{ getDeviceStateMeta(selectedDevice.connectionState).label }}
-    </h2>
-    <p class="max-w-md text-sm text-text-muted">
-      {{
-        getDeviceStateMeta(selectedDevice.connectionState).guidance ??
-        'Viewing history requires an authorized, connected device.'
-      }}
-    </p>
-  </div>
-
-  <div v-else class="flex h-full flex-col gap-3">
-    <div class="flex shrink-0 items-center justify-between">
-      <h2 class="text-lg font-medium text-text">Operation History</h2>
-      <NButton size="small" :loading="operationsStore.historyLoading" @click="loadHistory">
-        <template #icon>
-          <NIcon :component="RefreshOutline" />
+    <div class="flex h-full flex-col gap-3">
+      <PageHeader title="History">
+        <template #actions>
+          <NButton size="small" :loading="operationsStore.historyLoading" @click="loadHistory">
+            <template #icon>
+              <NIcon :component="RefreshOutline" />
+            </template>
+            Refresh
+          </NButton>
         </template>
-        Refresh
-      </NButton>
+      </PageHeader>
+
+      <EmptyState
+        v-if="!operationsStore.historyLoading && operationsStore.history.length === 0"
+        title="No changes yet"
+        description="No changes have been made on this device yet."
+        class="flex-1"
+      />
+
+      <NDataTable
+        v-else
+        class="min-h-0 flex-1"
+        flex-height
+        :loading="operationsStore.historyLoading"
+        :columns="columns"
+        :data="operationsStore.history"
+        :row-key="(row: OperationHistoryEntry) => row.id"
+        size="small"
+        striped
+      />
+
+      <NModal
+        v-model:show="detailVisible"
+        preset="card"
+        title="Operation details"
+        style="width: 600px"
+      >
+        <template v-if="detailEntry">
+          <p class="text-sm text-text-secondary">
+            <span class="font-medium">{{ detailEntry.packageName }}</span> —
+            {{ OPERATION_LABELS[detailEntry.operation] ?? detailEntry.operation }}
+            at {{ formatTimestamp(detailEntry.performedAt) }}
+          </p>
+          <pre
+            class="mt-3 max-h-80 overflow-auto rounded bg-surface-code p-3 text-xs whitespace-pre-wrap text-text-code"
+            >{{ detailEntry.rawOutput }}</pre>
+        </template>
+      </NModal>
     </div>
-
-    <NEmpty
-      v-if="!operationsStore.historyLoading && operationsStore.history.length === 0"
-      description="No changes have been made on this device yet"
-      class="flex-1 items-center justify-center"
-    />
-
-    <NDataTable
-      v-else
-      class="min-h-0 flex-1"
-      flex-height
-      :loading="operationsStore.historyLoading"
-      :columns="columns"
-      :data="operationsStore.history"
-      :row-key="(row: OperationHistoryEntry) => row.id"
-      size="small"
-      striped
-    />
-
-    <NModal
-      v-model:show="detailVisible"
-      preset="card"
-      title="Operation details"
-      style="width: 600px"
-    >
-      <template v-if="detailEntry">
-        <p class="text-sm text-text-secondary">
-          <span class="font-medium">{{ detailEntry.packageName }}</span> —
-          {{ OPERATION_LABELS[detailEntry.operation] ?? detailEntry.operation }}
-          at {{ formatTimestamp(detailEntry.performedAt) }}
-        </p>
-        <pre
-          class="mt-3 max-h-80 overflow-auto rounded bg-surface-code p-3 text-xs whitespace-pre-wrap text-text-code"
-          >{{ detailEntry.rawOutput }}</pre>
-      </template>
-    </NModal>
-  </div>
+  </DeviceGate>
 </template>

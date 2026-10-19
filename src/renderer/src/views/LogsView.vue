@@ -2,7 +2,6 @@
 import type { AdbCommandLogCategory, AdbCommandLogEntry } from '@shared/types/logs'
 import {
   NButton,
-  NEmpty,
   NDataTable,
   NIcon,
   NInput,
@@ -14,8 +13,12 @@ import {
 } from 'naive-ui'
 import { RefreshOutline, SaveOutline, TrashOutline } from '@vicons/ionicons5'
 import { computed, h, onMounted, ref } from 'vue'
+import EmptyState from '@renderer/components/ui/EmptyState.vue'
+import PageHeader from '@renderer/components/ui/PageHeader.vue'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { useLogsStore } from '@renderer/stores/logs.store'
+import { deviceDisplayName } from '@renderer/utils/device-display-name'
+import { formatTimestamp } from '@renderer/utils/format-timestamp'
 
 type ResultFilter = 'all' | 'success' | 'failed'
 
@@ -56,13 +59,13 @@ function deviceLabel(deviceId: string | null): string {
     return 'All devices'
   }
   const device = devicesStore.devices.find((candidate) => candidate.id === deviceId)
-  return device?.nickname ?? device?.model ?? deviceId
+  return device ? deviceDisplayName(device) : deviceId
 }
 
 const deviceFilterOptions = computed(() => [
   { label: 'All devices', value: 'all' },
   ...devicesStore.devices.map((device) => ({
-    label: device.nickname ?? device.model ?? device.id,
+    label: deviceDisplayName(device),
     value: device.id
   }))
 ])
@@ -102,8 +105,11 @@ const filteredEntries = computed(() => {
   })
 })
 
-function formatTimestamp(iso: string): string {
-  return new Date(iso).toLocaleString()
+function clearFilters(): void {
+  searchText.value = ''
+  deviceFilter.value = 'all'
+  categoryFilter.value = 'all'
+  resultFilter.value = 'all'
 }
 
 async function handleClear(): Promise<void> {
@@ -142,13 +148,14 @@ const columns: DataTableColumns<AdbCommandLogEntry> = [
     title: 'Command',
     key: 'command',
     ellipsis: true,
-    render: (row) => h('code', { class: 'text-xs' }, row.command)
+    render: (row) => h('code', { class: 'font-mono text-xs' }, row.command)
   },
   {
     title: 'Duration',
     key: 'durationMs',
     width: 100,
-    render: (row) => `${row.durationMs} ms`
+    align: 'right',
+    render: (row) => h('span', { class: 'tabular-nums' }, `${row.durationMs} ms`)
   },
   {
     title: 'Result',
@@ -177,9 +184,8 @@ const columns: DataTableColumns<AdbCommandLogEntry> = [
 
 <template>
   <div class="flex h-full flex-col gap-3">
-    <div class="flex shrink-0 flex-wrap items-center justify-between gap-2">
-      <h2 class="text-lg font-medium text-text">Logs</h2>
-      <div class="flex items-center gap-2">
+    <PageHeader title="Logs">
+      <template #actions>
         <NButton size="small" :loading="logsStore.loading" @click="logsStore.load">
           <template #icon>
             <NIcon :component="RefreshOutline" />
@@ -192,14 +198,14 @@ const columns: DataTableColumns<AdbCommandLogEntry> = [
           </template>
           Export Logs
         </NButton>
-        <NButton size="small" type="error" @click="handleClear">
+        <NButton size="small" type="error" secondary @click="handleClear">
           <template #icon>
             <NIcon :component="TrashOutline" />
           </template>
           Clear
         </NButton>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <p class="shrink-0 text-xs text-text-muted">
       Every ADB command this app has run this session, across all devices. Cleared on restart —
@@ -209,23 +215,49 @@ const columns: DataTableColumns<AdbCommandLogEntry> = [
     <div class="flex shrink-0 flex-wrap items-center gap-2">
       <NInput
         v-model:value="searchText"
+        size="small"
         placeholder="Search by command..."
-        class="w-64"
+        aria-label="Search commands"
+        style="width: 16rem"
         clearable
       />
-      <NSelect v-model:value="deviceFilter" :options="deviceFilterOptions" class="w-48" />
-      <NSelect v-model:value="categoryFilter" :options="categoryFilterOptions" class="w-44" />
-      <NSelect v-model:value="resultFilter" :options="resultFilterOptions" class="w-36" />
+      <NSelect
+        v-model:value="deviceFilter"
+        :options="deviceFilterOptions"
+        size="small"
+        style="width: 12rem"
+      />
+      <NSelect
+        v-model:value="categoryFilter"
+        :options="categoryFilterOptions"
+        size="small"
+        style="width: 11rem"
+      />
+      <NSelect
+        v-model:value="resultFilter"
+        :options="resultFilterOptions"
+        size="small"
+        style="width: 9rem"
+      />
       <span class="text-xs text-text-muted">
         {{ filteredEntries.length }} / {{ logsStore.entries.length }} entries
       </span>
     </div>
 
-    <NEmpty
+    <EmptyState
       v-if="!logsStore.loading && filteredEntries.length === 0"
-      description="No log entries match"
-      class="flex-1 items-center justify-center"
-    />
+      :title="logsStore.entries.length === 0 ? 'No commands logged yet' : 'No entries match'"
+      :description="
+        logsStore.entries.length === 0
+          ? 'Every ADB command droid.or runs appears here.'
+          : 'Try different search terms, or clear the current filters.'
+      "
+      class="flex-1"
+    >
+      <template v-if="logsStore.entries.length > 0" #action>
+        <NButton size="small" @click="clearFilters">Clear filters</NButton>
+      </template>
+    </EmptyState>
 
     <NDataTable
       v-else

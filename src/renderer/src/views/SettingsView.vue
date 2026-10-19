@@ -1,13 +1,32 @@
 <script setup lang="ts">
 import type { AiProviderId } from '@shared/types/ai-settings'
-import { NAlert, NButton, NInput, NSelect, NSpin, NTag, useMessage } from 'naive-ui'
+import {
+  NAlert,
+  NButton,
+  NInput,
+  NRadioButton,
+  NRadioGroup,
+  NSelect,
+  NSpin,
+  NTag,
+  useMessage
+} from 'naive-ui'
 import { computed, onMounted, ref, watch } from 'vue'
+import PageHeader from '@renderer/components/ui/PageHeader.vue'
 import { useAdbSettingsStore } from '@renderer/stores/adb-settings.store'
 import { useAiSettingsStore } from '@renderer/stores/ai-settings.store'
+import { useSettingsStore, type ThemeMode } from '@renderer/stores/settings.store'
 
 const adbSettingsStore = useAdbSettingsStore()
 const aiSettingsStore = useAiSettingsStore()
+const settingsStore = useSettingsStore()
 const message = useMessage()
+
+const themeOptions: Array<{ label: string; value: ThemeMode }> = [
+  { label: 'System', value: 'system' },
+  { label: 'Light', value: 'light' },
+  { label: 'Dark', value: 'dark' }
+]
 
 onMounted(() => {
   void adbSettingsStore.load()
@@ -131,175 +150,228 @@ async function downloadPlatformTools(): Promise<void> {
 </script>
 
 <template>
-  <div class="flex h-full flex-col gap-4 overflow-y-auto pr-1">
-    <h2 class="text-lg font-medium text-text">Settings</h2>
+  <div>
+    <!-- No scroll container of its own: AppShell's content area already
+         scrolls, and a nested one scrolled the page header out of view. -->
+    <div class="flex flex-col gap-4 pb-4">
+      <PageHeader title="Settings" />
 
-    <NSpin :show="adbSettingsStore.loading">
-      <div class="flex flex-col gap-3 rounded border border-border p-4">
-        <h3 class="text-sm font-medium text-text">ADB Connection</h3>
+      <NSpin :show="adbSettingsStore.loading">
+        <div class="flex flex-col gap-3 rounded-lg border border-border p-4">
+          <h2 class="text-sm font-semibold text-text">ADB Connection</h2>
 
-        <NAlert v-if="adbSettingsStore.errorMessage" type="error" closable>
-          {{ adbSettingsStore.errorMessage }}
-        </NAlert>
-
-        <template v-if="adbSettingsStore.status">
-          <div class="flex flex-wrap items-center gap-2 text-sm">
-            <NTag
-              :type="adbSettingsStore.status.availability.available ? 'success' : 'error'"
-              size="small"
-            >
-              {{ adbSettingsStore.status.availability.available ? 'Available' : 'Not available' }}
-            </NTag>
-            <span v-if="adbSettingsStore.status.availability.available" class="text-text-muted">
-              ADB {{ adbSettingsStore.status.availability.version }}
-            </span>
-            <NTag v-if="sourceLabel" size="small">{{ sourceLabel }}</NTag>
-          </div>
-
-          <p class="truncate text-xs text-text-muted">
-            {{ adbSettingsStore.status.resolvedPath }}
-          </p>
-
-          <NAlert
-            v-if="!adbSettingsStore.status.availability.available"
-            type="warning"
-            :show-icon="true"
-          >
-            {{ adbSettingsStore.status.availability.reason }}
+          <NAlert v-if="adbSettingsStore.errorMessage" type="error" closable>
+            {{ adbSettingsStore.errorMessage }}
           </NAlert>
 
-          <div class="border-t border-divider pt-3">
-            <template v-if="adbSettingsStore.status.managedSupported">
-              <NButton :loading="adbSettingsStore.busy" @click="downloadPlatformTools">
-                {{
-                  adbSettingsStore.status.managedInstalled
-                    ? 'Update Platform-Tools'
-                    : 'Download Platform-Tools'
-                }}
-              </NButton>
-              <p class="mt-1 text-xs text-text-muted">
-                Downloads the official Android platform-tools package directly from Google
-                (dl.google.com) and manages ADB for you — no manual install needed.
-              </p>
-            </template>
-            <p v-else class="text-xs text-text-muted">
-              A managed platform-tools download isn't available for this operating
-              system/architecture. Install Android platform-tools manually, then set a custom path
-              below.
-            </p>
-          </div>
-
-          <div class="border-t border-divider pt-3">
-            <label class="text-xs font-medium text-text-secondary">Custom ADB path</label>
-            <div class="mt-1 flex items-center gap-2">
-              <NInput
-                v-model:value="customPathInput"
-                placeholder="/path/to/adb"
-                :disabled="adbSettingsStore.busy"
-              />
-              <NButton :disabled="adbSettingsStore.busy" @click="browsePath">Browse…</NButton>
-            </div>
-            <div class="mt-2 flex items-center gap-2">
-              <NButton
-                type="primary"
-                :loading="adbSettingsStore.busy"
-                :disabled="customPathInput.trim() === (adbSettingsStore.status.customPath ?? '')"
-                @click="saveCustomPath"
+          <template v-if="adbSettingsStore.status">
+            <div class="flex flex-wrap items-center gap-2 text-sm">
+              <NTag
+                :type="adbSettingsStore.status.availability.available ? 'success' : 'error'"
+                size="small"
               >
-                Save
-              </NButton>
-              <NButton
-                v-if="adbSettingsStore.status.customPath"
-                :disabled="adbSettingsStore.busy"
-                @click="clearCustomPath"
-              >
-                Clear override
-              </NButton>
+                {{ adbSettingsStore.status.availability.available ? 'Available' : 'Not available' }}
+              </NTag>
+              <span v-if="adbSettingsStore.status.availability.available" class="text-text-muted">
+                ADB {{ adbSettingsStore.status.availability.version }}
+              </span>
+              <NTag v-if="sourceLabel" size="small">{{ sourceLabel }}</NTag>
             </div>
-            <p class="mt-1 text-xs text-text-muted">
-              Overrides both the downloaded and system-PATH ADB. Validated before it's saved.
+
+            <p class="truncate text-xs text-text-muted">
+              {{ adbSettingsStore.status.resolvedPath }}
             </p>
-          </div>
-        </template>
-      </div>
-    </NSpin>
 
-    <NSpin :show="aiSettingsStore.loading">
-      <div class="flex flex-col gap-3 rounded border border-border p-4">
-        <h3 class="text-sm font-medium text-text">AI Analysis (optional)</h3>
-        <p class="text-xs text-text-muted">
-          Off by default. When enabled, an "Ask AI" button becomes available on individual packages
-          — nothing is sent anywhere unless you click it. Each request sends only the device's
-          manufacturer/model/Android version, the package name, app label, version, requested
-          permissions, and whether it's a system app. This never runs automatically or in bulk, and
-          an AI opinion is never treated as authoritative — it's shown alongside droid.or's own
-          local classification, not in place of it.
-        </p>
-
-        <NAlert v-if="aiSettingsStore.errorMessage" type="error" closable>
-          {{ aiSettingsStore.errorMessage }}
-        </NAlert>
-
-        <div>
-          <label class="text-xs font-medium text-text-secondary">Provider</label>
-          <NSelect v-model:value="providerInput" :options="aiProviderOptions" class="mt-1" />
-        </div>
-
-        <template v-if="providerInput !== 'none'">
-          <div>
-            <label class="text-xs font-medium text-text-secondary">Model</label>
-            <NInput
-              v-model:value="modelInput"
-              class="mt-1"
-              :placeholder="
-                providerInput === 'anthropic' ? 'e.g. claude-sonnet-5' : 'e.g. gpt-4o-mini'
-              "
-            />
-          </div>
-
-          <div v-if="providerInput === 'openai-compatible'">
-            <label class="text-xs font-medium text-text-secondary"> Base URL (optional) </label>
-            <NInput
-              v-model:value="baseUrlInput"
-              class="mt-1"
-              placeholder="https://api.openai.com/v1"
-            />
-            <p class="mt-1 text-xs text-text-muted">
-              Leave blank for OpenAI itself, or point at any OpenAI-compatible endpoint (Azure
-              OpenAI, a self-hosted proxy, ...).
-            </p>
-          </div>
-
-          <div>
-            <label class="text-xs font-medium text-text-secondary">API key</label>
-            <NInput
-              v-model:value="apiKeyInput"
-              class="mt-1"
-              type="password"
-              show-password-on="click"
-              :placeholder="aiSettingsStore.settings?.hasApiKey ? 'A key is already set' : 'sk-...'"
-            />
-            <p class="mt-1 text-xs text-text-muted">
-              Stored encrypted using this OS's own secret storage. Leave blank to keep the existing
-              key when saving other fields.
-            </p>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <NButton type="primary" :loading="aiSaving" @click="saveAiSettings">Save</NButton>
-            <NButton
-              v-if="aiSettingsStore.settings?.hasApiKey"
-              :loading="aiSaving"
-              @click="clearAiApiKey"
+            <NAlert
+              v-if="!adbSettingsStore.status.availability.available"
+              type="warning"
+              :show-icon="true"
             >
-              Clear API key
-            </NButton>
-          </div>
-        </template>
-        <template v-else>
-          <NButton type="primary" :loading="aiSaving" @click="saveAiSettings">Save</NButton>
-        </template>
+              {{ adbSettingsStore.status.availability.reason }}
+            </NAlert>
+
+            <div class="border-t border-divider pt-3">
+              <template v-if="adbSettingsStore.status.managedSupported">
+                <NButton :loading="adbSettingsStore.busy" @click="downloadPlatformTools">
+                  {{
+                    adbSettingsStore.status.managedInstalled
+                      ? 'Update Platform-Tools'
+                      : 'Download Platform-Tools'
+                  }}
+                </NButton>
+                <p class="mt-1 text-xs text-text-muted">
+                  Downloads the official Android platform-tools package directly from Google
+                  (dl.google.com) and manages ADB for you — no manual install needed.
+                </p>
+              </template>
+              <p v-else class="text-xs text-text-muted">
+                A managed platform-tools download isn't available for this operating
+                system/architecture. Install Android platform-tools manually, then set a custom path
+                below.
+              </p>
+            </div>
+
+            <div class="border-t border-divider pt-3">
+              <label for="settings-adb-path" class="text-xs font-medium text-text-secondary">
+                Custom ADB path
+              </label>
+              <div class="mt-1 flex items-center gap-2">
+                <NInput
+                  v-model:value="customPathInput"
+                  placeholder="/path/to/adb"
+                  :disabled="adbSettingsStore.busy"
+                  :input-props="{ id: 'settings-adb-path' }"
+                />
+                <NButton :disabled="adbSettingsStore.busy" @click="browsePath">Browse…</NButton>
+              </div>
+              <div class="mt-2 flex items-center gap-2">
+                <NButton
+                  type="primary"
+                  :loading="adbSettingsStore.busy"
+                  :disabled="customPathInput.trim() === (adbSettingsStore.status.customPath ?? '')"
+                  @click="saveCustomPath"
+                >
+                  Save
+                </NButton>
+                <NButton
+                  v-if="adbSettingsStore.status.customPath"
+                  :disabled="adbSettingsStore.busy"
+                  @click="clearCustomPath"
+                >
+                  Clear override
+                </NButton>
+              </div>
+              <p class="mt-1 text-xs text-text-muted">
+                Overrides both the downloaded and system-PATH ADB. Validated before it's saved.
+              </p>
+            </div>
+          </template>
+        </div>
+      </NSpin>
+
+      <div class="flex flex-col gap-3 rounded-lg border border-border p-4">
+        <h2 class="text-sm font-semibold text-text">Appearance</h2>
+        <p class="text-xs text-text-muted">
+          "System" follows your operating system's light/dark setting and updates live.
+        </p>
+        <div class="flex flex-col items-start gap-1">
+          <span id="settings-theme-label" class="text-xs font-medium text-text-secondary">
+            Theme
+          </span>
+          <NRadioGroup
+            :value="settingsStore.themeMode"
+            aria-labelledby="settings-theme-label"
+            @update:value="(mode: ThemeMode) => settingsStore.setThemeMode(mode)"
+          >
+            <NRadioButton v-for="option in themeOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </NRadioButton>
+          </NRadioGroup>
+        </div>
       </div>
-    </NSpin>
+
+      <NSpin :show="aiSettingsStore.loading">
+        <div class="flex flex-col gap-3 rounded-lg border border-border p-4">
+          <h2 class="text-sm font-semibold text-text">AI Analysis (optional)</h2>
+          <p class="text-xs text-text-muted">
+            Off by default. When enabled, an "Ask AI" button becomes available on individual
+            packages — nothing is sent anywhere unless you click it. This never runs automatically
+            or in bulk, and an AI opinion is never treated as authoritative — it's shown alongside
+            droid.or's own local classification, not in place of it.
+          </p>
+          <div class="text-xs text-text-muted">
+            <p>Each request sends only:</p>
+            <ul class="mt-1 list-inside list-disc">
+              <li>the device's manufacturer, model, and Android version</li>
+              <li>the package name, app label, and version</li>
+              <li>the permissions the app requests</li>
+              <li>whether it's a system app</li>
+            </ul>
+          </div>
+
+          <NAlert v-if="aiSettingsStore.errorMessage" type="error" closable>
+            {{ aiSettingsStore.errorMessage }}
+          </NAlert>
+
+          <div>
+            <label for="settings-ai-provider" class="text-xs font-medium text-text-secondary">
+              Provider
+            </label>
+            <NSelect
+              v-model:value="providerInput"
+              :options="aiProviderOptions"
+              class="mt-1"
+              :input-props="{ id: 'settings-ai-provider' }"
+            />
+          </div>
+
+          <template v-if="providerInput !== 'none'">
+            <div>
+              <label for="settings-ai-model" class="text-xs font-medium text-text-secondary">
+                Model
+              </label>
+              <NInput
+                v-model:value="modelInput"
+                class="mt-1"
+                :input-props="{ id: 'settings-ai-model' }"
+                :placeholder="
+                  providerInput === 'anthropic' ? 'e.g. claude-sonnet-5' : 'e.g. gpt-4o-mini'
+                "
+              />
+            </div>
+
+            <div v-if="providerInput === 'openai-compatible'">
+              <label for="settings-ai-base-url" class="text-xs font-medium text-text-secondary">
+                Base URL (optional)
+              </label>
+              <NInput
+                v-model:value="baseUrlInput"
+                class="mt-1"
+                :input-props="{ id: 'settings-ai-base-url' }"
+                placeholder="https://api.openai.com/v1"
+              />
+              <p class="mt-1 text-xs text-text-muted">
+                Leave blank for OpenAI itself, or point at any OpenAI-compatible endpoint (Azure
+                OpenAI, a self-hosted proxy, ...).
+              </p>
+            </div>
+
+            <div>
+              <label for="settings-ai-api-key" class="text-xs font-medium text-text-secondary">
+                API key
+              </label>
+              <NInput
+                v-model:value="apiKeyInput"
+                class="mt-1"
+                type="password"
+                show-password-on="click"
+                :input-props="{ id: 'settings-ai-api-key' }"
+                :placeholder="
+                  aiSettingsStore.settings?.hasApiKey ? 'A key is already set' : 'sk-...'
+                "
+              />
+              <p class="mt-1 text-xs text-text-muted">
+                Stored encrypted using this OS's own secret storage. Leave blank to keep the
+                existing key when saving other fields.
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <NButton type="primary" :loading="aiSaving" @click="saveAiSettings">Save</NButton>
+              <NButton
+                v-if="aiSettingsStore.settings?.hasApiKey"
+                :loading="aiSaving"
+                @click="clearAiApiKey"
+              >
+                Clear API key
+              </NButton>
+            </div>
+          </template>
+          <div v-else class="flex items-center gap-2">
+            <NButton type="primary" :loading="aiSaving" @click="saveAiSettings">Save</NButton>
+          </div>
+        </div>
+      </NSpin>
+    </div>
   </div>
 </template>
