@@ -1,44 +1,55 @@
 import { darkTheme, type GlobalTheme, type GlobalThemeOverrides } from 'naive-ui'
 import { type ComputedRef, computed, onScopeDispose, ref, watchEffect } from 'vue'
 import { useSettingsStore } from '@renderer/stores/settings.store'
+import { darkPalette, lightPalette, type NaivePalette } from '@renderer/theme/palette'
 
-/* §6.2 — Naive UI theme overrides, per theme. Hex values are literal because
- * Naive derives alpha variants (hover/pressed/etc.) from them. Each value
- * mirrors its --color-* token in tailwind.css so the two systems stay in sync.
- */
-const lightOverrides: GlobalThemeOverrides = {
-  common: {
-    primaryColor: '#007a55',
-    primaryColorHover: '#006045',
-    primaryColorPressed: '#064e3b',
-    primaryColorSuppl: '#007a55',
-    errorColor: '#c10007',
-    warningColor: '#bb4d00',
-    successColor: '#007a55',
-    infoColor: '#0069a8',
-    borderRadius: '6px',
-    borderRadiusSmall: '4px',
-    fontFamily: 'var(--font-sans)',
-    fontFamilyMono: 'var(--font-mono)'
+// Tailwind v4's default --font-sans / --font-mono stacks, so Naive components
+// and Tailwind-styled text render in the same font.
+const FONT_SANS =
+  'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"'
+const FONT_MONO =
+  'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
+
+/** Naive does not derive hover/pressed/suppl variants from an overridden base
+ *  color, so every variant is set explicitly. */
+function buildOverrides(p: NaivePalette): GlobalThemeOverrides {
+  return {
+    common: {
+      primaryColor: p.primary,
+      primaryColorHover: p.primaryHover,
+      primaryColorPressed: p.primaryPressed,
+      primaryColorSuppl: p.primaryHover,
+      successColor: p.success,
+      successColorHover: p.successHover,
+      successColorPressed: p.successPressed,
+      successColorSuppl: p.successHover,
+      warningColor: p.warning,
+      warningColorHover: p.warningHover,
+      warningColorPressed: p.warningPressed,
+      warningColorSuppl: p.warningHover,
+      errorColor: p.error,
+      errorColorHover: p.errorHover,
+      errorColorPressed: p.errorPressed,
+      errorColorSuppl: p.errorHover,
+      infoColor: p.info,
+      infoColorHover: p.infoHover,
+      infoColorPressed: p.infoPressed,
+      infoColorSuppl: p.infoHover,
+      bodyColor: p.body,
+      cardColor: p.card,
+      tableColor: p.card,
+      modalColor: p.card,
+      popoverColor: p.popover,
+      borderRadius: '6px',
+      borderRadiusSmall: '4px',
+      fontFamily: FONT_SANS,
+      fontFamilyMono: FONT_MONO
+    }
   }
 }
 
-const darkOverrides: GlobalThemeOverrides = {
-  common: {
-    primaryColor: '#10b981',
-    primaryColorHover: '#00d492',
-    primaryColorPressed: '#009966',
-    primaryColorSuppl: '#10b981',
-    errorColor: '#f87171',
-    warningColor: '#fb923c',
-    successColor: '#34d399',
-    infoColor: '#38bdf8',
-    borderRadius: '6px',
-    borderRadiusSmall: '4px',
-    fontFamily: 'var(--font-sans)',
-    fontFamilyMono: 'var(--font-mono)'
-  }
-}
+const lightOverrides = buildOverrides(lightPalette)
+const darkOverrides = buildOverrides(darkPalette)
 
 /**
  * Resolves the user's theme preference (light/dark/system) against the OS
@@ -73,6 +84,7 @@ export function useResolvedTheme(): {
   })
 
   const naiveTheme = computed<GlobalTheme | null>(() => (isDark.value ? darkTheme : null))
+  const themeOverrides = computed(() => (isDark.value ? darkOverrides : lightOverrides))
 
-  return { isDark, naiveTheme, themeOverrides: computed(() => (isDark.value ? darkOverrides : lightOverrides)) }
+  return { isDark, naiveTheme, themeOverrides }
 }

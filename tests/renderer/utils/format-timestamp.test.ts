@@ -8,8 +8,8 @@ describe('formatTimestamp', () => {
     expect(result.length).toBeGreaterThan(0)
   })
 
-  it('is stable for the same input', () => {
+  it('matches the platform locale formatting of the same instant', () => {
     const input = '2024-06-01T12:00:00.000Z'
-    expect(formatTimestamp(input)).toBe(formatTimestamp(input))
+    expect(formatTimestamp(input)).toBe(new Date(input).toLocaleString())
   })
 })

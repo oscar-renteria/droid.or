@@ -10,16 +10,14 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'drop', paths: string[]): void
-  (e: 'activate'): void
+  drop: [files: File[]]
+  activate: []
 }>()
 
+// A counter rather than a boolean: dragenter/dragleave also fire when the
+// pointer crosses child elements, which would otherwise flicker the highlight.
 const dragCount = ref(0)
 const active = computed(() => dragCount.value > 0)
-
-function handleDragOver(event: DragEvent): void {
-  event.preventDefault()
-}
 
 function handleDragEnter(event: DragEvent): void {
   event.preventDefault()
@@ -33,41 +31,37 @@ function handleDragLeave(): void {
 function handleDrop(event: DragEvent): void {
   event.preventDefault()
   dragCount.value = 0
-  const files = event.dataTransfer?.files
-  if (!files) return
-  const paths: string[] = []
-  for (let i = 0; i < files.length; i += 1) {
-    const file = files[i] as unknown as { path?: string }
-    if (file.path) paths.push(file.path)
-  }
-  emit('drop', paths)
+  emit('drop', Array.from(event.dataTransfer?.files ?? []))
 }
 
 function handleActivate(): void {
-  if (props.clickable) emit('activate')
+  if (props.clickable) {
+    emit('activate')
+  }
 }
 </script>
 
 <template>
   <div
-    class="flex flex-col items-center justify-center gap-2 rounded-lg border p-6 text-center transition-colors"
+    class="flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed p-6 text-center transition-colors"
     :class="[
-      active ? 'border-primary bg-primary/5' : 'border-dashed border-border',
-      'text-text'
+      active ? 'border-primary bg-primary/5' : 'border-border-strong',
+      clickable
+        ? 'cursor-pointer hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary'
+        : ''
     ]"
-    :role="props.clickable ? 'button' : undefined"
-    :tabindex="props.clickable ? 0 : undefined"
-    :aria-label="props.clickable ? props.title : undefined"
+    :role="clickable ? 'button' : undefined"
+    :tabindex="clickable ? 0 : undefined"
     @click="handleActivate"
     @keydown.enter.prevent="handleActivate"
     @keydown.space.prevent="handleActivate"
-    @dragover.prevent="handleDragOver"
+    @dragover.prevent
     @dragenter="handleDragEnter"
     @dragleave="handleDragLeave"
     @drop="handleDrop"
   >
-    <NIcon :component="FolderOpenOutline" size="28" class="text-text-muted" />
-    <div class="font-medium text-text truncate max-w-xs">{{ title }}</div>
-    <div class="text-xs text-text-muted truncate max-w-xs">{{ hint }}</div>
+    <NIcon :component="FolderOpenOutline" :size="28" class="text-text-muted" />
+    <p class="max-w-md text-sm font-medium text-text-secondary">{{ title }}</p>
+    <p class="max-w-md text-xs text-text-muted">{{ hint }}</p>
   </div>
 </template>

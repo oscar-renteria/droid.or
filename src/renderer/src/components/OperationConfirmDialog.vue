@@ -29,6 +29,11 @@ const emit = defineEmits<{
 }>()
 
 const typedConfirmation = ref('')
+const confirmInputRef = ref<InstanceType<typeof NInput> | null>(null)
+
+function focusConfirmInput(): void {
+  confirmInputRef.value?.focus()
+}
 
 watch(
   () => props.show,
@@ -174,15 +179,18 @@ function handleClose(): void {
     :title="copy.title"
     :type="dialogType"
     @update:show="(value: boolean) => !value && handleClose()"
+    @after-enter="focusConfirmInput"
   >
     <div class="flex flex-col gap-3">
       <div>
         <AppIdentity :label="displayName ?? packageName" :package-name="packageName" size="md" />
       </div>
       <p class="text-sm text-text-secondary">{{ copy.description }}</p>
-      <div v-if="props.potentialImpact" class="mt-2 rounded-lg border border-divider bg-surface p-2">
-        <div class="text-[10px] font-semibold uppercase tracking-wide text-text-muted">Potential impact</div>
-        <p class="mt-0.5 text-sm text-text-secondary break-words">{{ props.potentialImpact }}</p>
+      <div v-if="props.potentialImpact" class="rounded-lg border border-divider bg-surface p-2">
+        <div class="text-xs font-semibold tracking-wide text-text-muted uppercase">
+          Potential impact
+        </div>
+        <p class="mt-0.5 text-sm break-words text-text-secondary">{{ props.potentialImpact }}</p>
       </div>
 
       <NAlert v-if="isFavorite" type="error" :show-icon="true">
@@ -194,12 +202,15 @@ function handleClose(): void {
         This action needs extra confirmation. Type
         <span class="font-mono font-semibold">{{ confirmationWord }}</span> below to continue.
       </NAlert>
-      <div v-if="requiresTypedConfirmation" class="mt-2 flex flex-col gap-1">
-        <label class="text-xs font-medium text-text-secondary">Type {{ confirmationWord }} to confirm</label>
+      <div v-if="requiresTypedConfirmation" class="flex flex-col gap-1">
+        <label for="typed-confirmation" class="text-xs font-medium text-text-secondary">
+          Type {{ confirmationWord }} to confirm
+        </label>
         <NInput
+          ref="confirmInputRef"
           v-model:value="typedConfirmation"
           :placeholder="confirmationWord"
-          :input-props="{ autofocus: true }"
+          :input-props="{ id: 'typed-confirmation', autocomplete: 'off' }"
           @keydown.enter="handleConfirm"
         />
       </div>
@@ -207,7 +218,9 @@ function handleClose(): void {
 
     <template #action>
       <NButton @click="handleClose">Cancel</NButton>
-      <NButton :type="confirmButtonType" :disabled="!canConfirm" @click="handleConfirm">{{ actionVerb }}</NButton>
+      <NButton :type="confirmButtonType" :disabled="!canConfirm" @click="handleConfirm">{{
+        actionVerb
+      }}</NButton>
     </template>
   </NModal>
 </template>

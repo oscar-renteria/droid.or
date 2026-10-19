@@ -1,9 +1,19 @@
 <script setup lang="ts">
 import type { KnownDevice } from '@shared/types/device'
-import { NButton, NDropdown, NEmpty, NIcon, NInput, NModal, NPopconfirm, useMessage } from 'naive-ui'
+import {
+  NButton,
+  NDropdown,
+  NEmpty,
+  NIcon,
+  NInput,
+  NModal,
+  NPopconfirm,
+  useMessage
+} from 'naive-ui'
 import { EllipsisHorizontal } from '@vicons/ionicons5'
 import { computed, ref } from 'vue'
 import { useDevicesStore } from '@renderer/stores/devices.store'
+import { deviceDisplayName } from '@renderer/utils/device-display-name'
 import { getDeviceStateMeta } from '@renderer/utils/device-state-meta'
 
 const devicesStore = useDevicesStore()
@@ -12,19 +22,6 @@ const message = useMessage()
 const hasHistoryToClear = computed(() =>
   devicesStore.devices.some((device) => device.connectionState === 'disconnected')
 )
-
-function displayName(device: KnownDevice): string {
-  if (device.nickname) {
-    return device.nickname
-  }
-  if (device.manufacturer && device.model) {
-    return `${device.manufacturer} ${device.model}`
-  }
-  if (device.model) {
-    return device.model
-  }
-  return device.connectionState === 'no-permissions' ? 'Unknown device' : device.id
-}
 
 function selectDevice(device: KnownDevice): void {
   devicesStore.selectDevice(device.id)
@@ -112,34 +109,36 @@ function handleAction(key: ActionKey, device: KnownDevice): void {
         :class="
           devicesStore.selectedDeviceId === device.id
             ? 'border-l-primary bg-primary/10 hover:bg-primary/15'
-            : 'border-l-transparent hover:bg-surface'
+            : 'border-l-transparent hover:bg-surface-elevated'
         "
       >
         <button
           type="button"
-          class="flex-1 text-left min-w-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          @click="() => selectDevice(device)"
+          class="flex min-w-0 flex-1 items-start gap-2 rounded-md text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          @click="selectDevice(device)"
         >
           <span
-            class="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+            class="mt-1.5 block h-2 w-2 shrink-0 rounded-full"
             :class="getDeviceStateMeta(device.connectionState).dotClass"
             aria-hidden="true"
           />
-          <div class="min-w-0 flex-1">
-            <div class="truncate text-sm font-medium text-text">
-              {{ displayName(device) }}
-            </div>
-            <div class="truncate text-xs text-text-muted">
-              <template v-if="device.androidVersion">Android {{ device.androidVersion }} · </template>
+          <span class="block min-w-0 flex-1">
+            <span class="block truncate text-sm font-medium text-text">
+              {{ deviceDisplayName(device) }}
+            </span>
+            <span class="block truncate text-xs text-text-muted">
+              <template v-if="device.androidVersion"
+                >Android {{ device.androidVersion }} ·
+              </template>
               {{ getDeviceStateMeta(device.connectionState).label }}
-            </div>
-            <div
+            </span>
+            <span
               v-if="getDeviceStateMeta(device.connectionState).guidance"
-              class="mt-1 text-xs text-warning"
+              class="mt-1 block text-xs text-warning"
             >
               {{ getDeviceStateMeta(device.connectionState).guidance }}
-            </div>
-          </div>
+            </span>
+          </span>
         </button>
         <NDropdown
           v-if="device.connectionState !== 'no-permissions'"
@@ -149,13 +148,13 @@ function handleAction(key: ActionKey, device: KnownDevice): void {
         >
           <button
             type="button"
-            class="shrink-0 rounded px-1 text-text-muted transition-opacity"
+            class="shrink-0 rounded px-1 text-text-muted transition-opacity focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-primary"
             :class="
               devicesStore.selectedDeviceId === device.id
                 ? 'opacity-100'
                 : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'
             "
-            aria-label="Actions for {{ displayName(device) }}"
+            :aria-label="`Actions for ${deviceDisplayName(device)}`"
             @click.stop
           >
             <NIcon :component="EllipsisHorizontal" size="14" />

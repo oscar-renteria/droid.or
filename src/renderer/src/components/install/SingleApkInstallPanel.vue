@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import type { InstallPlanOperation } from '@shared/types/apk-install'
-import { NButton, NModal, NSpin, NTag, useMessage } from 'naive-ui'
+import { NButton, NIcon, NModal, NSpin, NTag, useMessage } from 'naive-ui'
+import { WarningOutline } from '@vicons/ionicons5'
 import { computed, ref } from 'vue'
+import AppIdentity from '@renderer/components/ui/AppIdentity.vue'
+import DropZone from '@renderer/components/ui/DropZone.vue'
 import { useApkInstallStore } from '@renderer/stores/apk-install.store'
 import { useDevicesStore } from '@renderer/stores/devices.store'
+import { formatBytes } from '@renderer/utils/format-bytes'
+import { PLAN_META } from '@renderer/utils/install-plan-meta'
 
 const devicesStore = useDevicesStore()
 const apkInstallStore = useApkInstallStore()
@@ -11,48 +15,22 @@ const message = useMessage()
 
 const selectedDevice = computed(() => devicesStore.selectedDevice)
 
-const PLAN_META: Record<
-  InstallPlanOperation,
-  { label: string; tagType: 'success' | 'info' | 'default' | 'warning' }
-> = {
-  'fresh-install': { label: 'New install', tagType: 'success' },
-  update: { label: 'Update', tagType: 'info' },
-  'reinstall-same-version': { label: 'Reinstall (same version)', tagType: 'default' },
-  'downgrade-attempt': { label: 'Downgrade attempt', tagType: 'warning' }
+/** Fallback label when the APK's metadata hasn't been read yet — mirrors
+ *  what the queue row would have hand-rolled before AppIdentity. */
+function rowLabel(filePath: string): string {
+  const item = apkInstallStore.queue.find((entry) => entry.filePath === filePath)
+  return item?.info?.label ?? item?.info?.packageName ?? filePath.split(/[\\/]/).pop() ?? filePath
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  const units = ['KB', 'MB', 'GB']
-  let value = bytes / 1024
-  let unitIndex = 0
-  while (value >= 1024 && unitIndex < units.length - 1) {
-    value /= 1024
-    unitIndex += 1
-  }
-  return `${value.toFixed(1)} ${units[unitIndex]}`
-}
-
-const isDragging = ref(false)
-
-function handleDragOver(event: DragEvent): void {
-  event.preventDefault()
-  isDragging.value = true
-}
-
-function handleDragLeave(): void {
-  isDragging.value = false
-}
-
-function handleDrop(event: DragEvent): void {
-  event.preventDefault()
-  isDragging.value = false
+function handleDrop(files: File[]): void {
   const device = selectedDevice.value
-  const files = event.dataTransfer?.files
-  if (!device || !files || !window.droidor) {
+  if (!device || !window.droidor) {
     return
   }
-  const paths = Array.from(files).map((file) => window.droidor!.getPathForFile(file))
+  const paths = files.map((file) => window.droidor!.getPathForFile(file))
+  if (paths.length === 0) {
+    return
+  }
   void apkInstallStore.addFiles(device.id, paths)
 }
 
@@ -122,26 +100,14 @@ async function confirmInstallAll(): Promise<void> {
       </NButton>
     </div>
 
-    <div
-      class="flex shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded border-2 border-dashed p-6 text-center transition-colors"
-      :class="
-        isDragging
-          ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30'
-          : 'border-border-strong'
-      "
-      @dragover="handleDragOver"
-      @dragleave="handleDragLeave"
+    <DropZone
+      clickable
+      title="Drag & drop .apk files here, or click to browse"
+      hint="Only single .apk files are supported here — for a split APK set, an app bundle, or a .apks/.xapk/.apkm archive, use the Split / Bundle tab instead."
+      class="shrink-0"
       @drop="handleDrop"
-      @click="browseFiles"
-    >
-      <p class="text-sm font-medium text-text-secondary">
-        Drag & drop .apk files here, or click to browse
-      </p>
-      <p class="text-xs text-text-muted">
-        Only single .apk files are supported here — for a split APK set, an app bundle, or a
-        .apks/.xapk/.apkm archive, use the Split / Bundle tab instead.
-      </p>
-    </div>
+      @activate="browseFiles"
+    />
 
     <div class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
       <div
@@ -150,33 +116,23 @@ async function confirmInstallAll(): Promise<void> {
         class="flex items-start gap-3 rounded border border-border p-3"
       >
         <NSpin v-if="item.status === 'inspecting'" :size="24" class="mt-1 shrink-0" />
-        <img
-          v-else-if="item.info?.iconDataUrl"
-          :src="item.info.iconDataUrl"
-          alt=""
-          class="h-8 w-8 shrink-0 rounded"
-        />
-        <div
+        <AppIdentity
           v-else
-          class="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-surface-elevated text-xs font-medium text-text-muted"
-        >
-          {{
-            (item.info?.label ?? item.info?.packageName ?? item.filePath).charAt(0).toUpperCase()
-          }}
-        </div>
+          :label="rowLabel(item.filePath)"
+          :package-name="item.info?.packageName ?? item.filePath"
+          :icon-data-url="item.info?.iconDataUrl ?? null"
+          size="md"
+        />
 
         <div class="min-w-0 flex-1">
           <template v-if="item.status === 'error'">
             <div class="truncate font-medium text-text">
               {{ item.filePath }}
             </div>
-            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ item.message }}</p>
+            <p class="mt-1 text-sm text-danger">{{ item.message }}</p>
           </template>
           <template v-else-if="item.info">
             <div class="flex flex-wrap items-center gap-2">
-              <span class="font-medium text-text">{{
-                item.info.label ?? item.info.packageName
-              }}</span>
               <NTag v-if="item.plan" size="small" :type="PLAN_META[item.plan.operation].tagType">
                 {{ PLAN_META[item.plan.operation].label }}
               </NTag>
@@ -184,22 +140,23 @@ async function confirmInstallAll(): Promise<void> {
               <NTag v-if="item.status === 'failed'" size="small" type="error">Failed</NTag>
             </div>
             <div class="text-xs text-text-muted">
-              {{ item.info.packageName }} · {{ item.info.versionName ?? 'unknown version' }} (code
+              {{ item.info.versionName ?? 'unknown version' }} (code
               {{ item.info.versionCode ?? '?' }}) · {{ formatBytes(item.info.fileSizeBytes) }}
             </div>
             <div
               v-if="item.plan?.operation === 'downgrade-attempt'"
-              class="mt-1 text-xs text-amber-600 dark:text-amber-400"
+              class="mt-1 flex items-start gap-1 text-xs text-warning"
             >
-              The installed version (code {{ item.plan.currentVersionCode }}) is newer than this
-              file. Android will likely refuse this install.
+              <NIcon :component="WarningOutline" :size="14" class="mt-0.5 shrink-0" />
+              <span>
+                The installed version (code {{ item.plan.currentVersionCode }}) is newer than this
+                file. Android will likely refuse this install.
+              </span>
             </div>
             <p
               v-if="(item.status === 'failed' || item.status === 'success') && item.message"
               class="mt-1 text-sm"
-              :class="
-                item.status === 'failed' ? 'text-red-600 dark:text-red-400' : 'text-text-muted'
-              "
+              :class="item.status === 'failed' ? 'text-danger' : 'text-text-muted'"
             >
               {{ item.message }}
             </p>
@@ -236,7 +193,9 @@ async function confirmInstallAll(): Promise<void> {
       </div>
       <template #action>
         <NButton @click="bulkConfirmVisible = false">Cancel</NButton>
-        <NButton type="primary" @click="confirmInstallAll">Install {{ readyItems.length }} app(s)</NButton>
+        <NButton type="primary" @click="confirmInstallAll"
+          >Install {{ readyItems.length }} app(s)</NButton
+        >
       </template>
     </NModal>
   </div>

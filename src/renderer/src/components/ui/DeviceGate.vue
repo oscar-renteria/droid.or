@@ -1,35 +1,33 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { NAlert, NButton } from 'naive-ui'
-import { useRouter } from 'vue-router'
+import EmptyState from '@renderer/components/ui/EmptyState.vue'
 import { useDevicesStore } from '@renderer/stores/devices.store'
+import { getDeviceStateMeta } from '@renderer/utils/device-state-meta'
 
-defineProps<{
+const props = defineProps<{
+  /** Fallback guidance for a selected device whose state has none of its own. */
   requirement: string
+  /** Shown when no device is selected at all. */
   noDeviceText: string
 }>()
 
 const devicesStore = useDevicesStore()
-const router = useRouter()
+const device = computed(() => devicesStore.selectedDevice)
+const canProceed = computed(() => device.value?.connectionState === 'device')
 
-const connectionState = computed(
-  () => devicesStore.selectedDevice?.connectionState ?? null
+const title = computed(() =>
+  device.value ? getDeviceStateMeta(device.value.connectionState).label : 'No device selected'
 )
-const canProceed = computed(() => connectionState.value === 'device')
+const body = computed(() =>
+  device.value
+    ? (getDeviceStateMeta(device.value.connectionState).guidance ?? props.requirement)
+    : props.noDeviceText
+)
 </script>
 
 <template>
-  <div v-if="!canProceed" class="flex flex-col items-center justify-center h-full p-6 text-center">
-    <NAlert
-      type="error"
-      :title="requirement"
-      class="w-full max-w-md mb-4 border border-border"
-    >
-      {{ noDeviceText }}
-    </NAlert>
-    <NButton size="small" @click="router.push({ name: 'settings' })">Go to Settings</NButton>
-  </div>
-  <div v-else class="min-h-0 w-full">
+  <div v-if="canProceed" class="h-full min-h-0 w-full">
     <slot />
   </div>
+  <EmptyState v-else :title="title" :description="body" class="h-full" />
 </template>
