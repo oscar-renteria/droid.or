@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { PackageRecommendation } from '@shared/types/analyzer'
-import { NAlert, NButton, NCheckbox, NEmpty, NSpin, NTag, useMessage } from 'naive-ui'
+import { NAlert, NButton, NCheckbox, NEmpty, NIcon, NSpin, NTag, useMessage } from 'naive-ui'
 import { computed, ref, watch } from 'vue'
 import ProfileApplyDialog from '@renderer/components/ProfileApplyDialog.vue'
 import { useAnalyzerStore } from '@renderer/stores/analyzer.store'
@@ -14,7 +14,7 @@ import {
   type DebloatProfile
 } from '@renderer/utils/debloat-profiles'
 import { getDeviceStateMeta } from '@renderer/utils/device-state-meta'
-import { getRiskMeta } from '@renderer/utils/risk-meta'
+import { getRiskMeta, riskNaiveType } from '@renderer/utils/risk-meta'
 
 const devicesStore = useDevicesStore()
 const analyzerStore = useAnalyzerStore()
@@ -250,8 +250,11 @@ async function confirmApply(): Promise<void> {
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2">
                   <span class="font-medium text-text">{{ displayLabel(candidate) }}</span>
-                  <NTag size="small" :type="getRiskMeta(candidate.risk).tagType">
-                    {{ getRiskMeta(candidate.risk).emoji }} {{ getRiskMeta(candidate.risk).label }}
+                  <NTag size="small" :type="riskNaiveType(getRiskMeta(candidate.risk).tone)">
+                    <template #icon>
+                      <NIcon :component="getRiskMeta(candidate.risk).icon" />
+                    </template>
+                    {{ getRiskMeta(candidate.risk).label }}
                   </NTag>
                   <NTag v-if="candidate.isDisabled" size="small">Already disabled</NTag>
                 </div>

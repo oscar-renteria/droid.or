@@ -10,7 +10,7 @@ import { useDevicesStore } from '@renderer/stores/devices.store'
 import { useOperationsStore } from '@renderer/stores/operations.store'
 import { usePackagesStore } from '@renderer/stores/packages.store'
 import { getDeviceStateMeta } from '@renderer/utils/device-state-meta'
-import { getRiskMeta } from '@renderer/utils/risk-meta'
+import { getRiskMeta, riskNaiveType } from '@renderer/utils/risk-meta'
 
 const devicesStore = useDevicesStore()
 const analyzerStore = useAnalyzerStore()
@@ -220,8 +220,10 @@ async function handleConfirm(): Promise<void> {
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-medium text-text">{{ displayLabel(recommendation) }}</span>
-                <NTag size="small" :type="getRiskMeta(recommendation.risk).tagType">
-                  {{ getRiskMeta(recommendation.risk).emoji }}
+                <NTag size="small" :type="riskNaiveType(getRiskMeta(recommendation.risk).tone)">
+                  <template #icon>
+                    <NIcon :component="getRiskMeta(recommendation.risk).icon" />
+                  </template>
                   {{ getRiskMeta(recommendation.risk).label }}
                 </NTag>
                 <NTag v-if="recommendation.isDisabled" size="small">Already disabled</NTag>
