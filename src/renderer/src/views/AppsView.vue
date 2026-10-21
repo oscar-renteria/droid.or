@@ -20,6 +20,7 @@ import {
 import { RefreshOutline, Star, StarOutline } from '@vicons/ionicons5'
 import { computed, h, onMounted, ref, watch } from 'vue'
 import BackupDialog from '@renderer/components/BackupDialog.vue'
+import CopyToDeviceDialog from '@renderer/components/CopyToDeviceDialog.vue'
 import OperationConfirmDialog from '@renderer/components/OperationConfirmDialog.vue'
 import AppIdentity from '@renderer/components/ui/AppIdentity.vue'
 import DeviceGate from '@renderer/components/ui/DeviceGate.vue'
@@ -158,6 +159,27 @@ const confirmDialogVisible = computed({
 })
 
 const backupDialogVisible = ref(false)
+
+const copyDialogVisible = ref(false)
+const copyRequest = ref<{
+  sourceDeviceId: string
+  packageName: string
+  displayName: string | null
+} | null>(null)
+
+function openCopyDialog(): void {
+  const device = selectedDevice.value
+  const pkg = selectedPackage.value
+  if (!device || !pkg) {
+    return
+  }
+  copyRequest.value = {
+    sourceDeviceId: device.id,
+    packageName: pkg.packageName,
+    displayName: selectedPackageMetadata.value?.label ?? pkg.displayName
+  }
+  copyDialogVisible.value = true
+}
 
 function onBackupDone(): void {
   checkedKeys.value = []
@@ -522,6 +544,9 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
               >
                 Clear Data
               </NButton>
+              <NButton v-if="!selectedPackage.isSystemApp" size="small" @click="openCopyDialog">
+                Copy to device…
+              </NButton>
             </div>
           </div>
 
@@ -591,6 +616,14 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
         :device-id="selectedDevice.id"
         :package-names="checkedKeys"
         @done="onBackupDone"
+      />
+
+      <CopyToDeviceDialog
+        v-if="copyRequest"
+        v-model:show="copyDialogVisible"
+        :source-device-id="copyRequest.sourceDeviceId"
+        :package-name="copyRequest.packageName"
+        :display-name="copyRequest.displayName"
       />
     </div>
   </DeviceGate>

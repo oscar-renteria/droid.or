@@ -9,6 +9,7 @@ import { registerApkInstallHandlers } from './handlers/apk-install.handler'
 import { registerAnalyzerHandlers } from './handlers/analyzer.handler'
 import { registerDashboardHandlers } from './handlers/dashboard.handler'
 import { registerDeviceHandlers } from './handlers/device.handler'
+import { registerDeviceTransferHandlers } from './handlers/device-transfer.handler'
 import { registerLogsHandlers } from './handlers/logs.handler'
 import { registerOperationsHandlers } from './handlers/operations.handler'
 import { registerPackagesHandlers } from './handlers/packages.handler'
@@ -40,6 +41,7 @@ export function registerIpcHandlers(context: AppContext): void {
   registerApkInstallHandlers(context.db, context.adbClient, context.deviceRegistry)
   registerSplitInstallHandlers(context.db, context.adbClient, context.deviceRegistry)
   registerApkBackupHandlers(context.adbClient, context.deviceRegistry)
+  registerDeviceTransferHandlers(context.db, context.adbClient, context.deviceRegistry)
   registerSecurityReviewHandlers(context.adbClient, context.deviceRegistry)
   registerLogsHandlers(context.adbCommandLog)
   registerSafetyDisclaimerHandlers(context.db)

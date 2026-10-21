@@ -138,6 +138,26 @@ export interface DroidorApi {
     packageNames: string[],
     destDir: string
   ) => Promise<PackageBackupResult[]>
+  /** Pulls every APK file of an app from the source device and reports
+   *  what installing that exact set would do on the target device.
+   *  Changes neither device. Rejects if either device isn't connected and
+   *  authorized, if the app isn't installed in user storage on the
+   *  source, or if this same transfer is already running. */
+  analyzeDeviceTransfer: (
+    sourceDeviceId: string,
+    targetDeviceId: string,
+    packageName: string
+  ) => Promise<SplitInstallAnalysis>
+  /** Pulls the app from the source again and installs every one of its
+   *  APK files on the target via `adb install-multiple`. Refuses (rejects)
+   *  if the fresh copy's version code no longer matches
+   *  `expectedVersionCode`, or if it can't be installed on the target. */
+  performDeviceTransfer: (
+    sourceDeviceId: string,
+    targetDeviceId: string,
+    packageName: string,
+    expectedVersionCode: number | null
+  ) => Promise<OperationResult>
   /** Two read-only signals for a human to review — which apps hold Device
    *  Admin, and which hold an enabled Accessibility Service. This is
    *  explicitly not malware detection: holding either is normal for many

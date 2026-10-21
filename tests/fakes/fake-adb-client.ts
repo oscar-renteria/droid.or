@@ -1,3 +1,4 @@
+import { writeFile } from 'node:fs/promises'
 import type { AdbClient, MutationCommandResult } from '@main/adb/adb-client'
 import type { RawAdbDevice } from '@main/adb/device-list-parser'
 import type { AdbAvailability } from '@shared/validation/device.schema'
@@ -26,6 +27,9 @@ export class FakeAdbClient implements AdbClient {
    *  failed pull. */
   readonly pullResponses = new Map<string, Error | undefined>()
   readonly pullCalls: Array<{ serial: string; remotePath: string; localPath: string }> = []
+  /** When true, a successful pull writes a placeholder file to localPath,
+   *  for code that reads the pulled files back from disk afterwards. */
+  pullWritesFiles = false
   watchCallCount = 0
   /** Records every command the tested code switched to, for assertions. */
   adbCommandHistory: string[] = []
@@ -85,7 +89,7 @@ export class FakeAdbClient implements AdbClient {
     if (configuredError) {
       return Promise.reject(configuredError)
     }
-    return Promise.resolve()
+    return this.pullWritesFiles ? writeFile(localPath, 'x') : Promise.resolve()
   }
 
   /** Reuses the same mutationResponses/mutationCalls map as

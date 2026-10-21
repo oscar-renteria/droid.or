@@ -354,7 +354,8 @@ export async function performSplitInstall(
   sourceKind: SplitSourceKind,
   sourcePaths: string[],
   selectedFileNames: string[],
-  parseApk?: ParseApkFn
+  parseApk?: ParseApkFn,
+  historyNote?: string
 ): Promise<OperationResult> {
   const { parts: rawParts, cleanupDir } = await resolveSplitSource(
     sourceKind,
@@ -436,7 +437,7 @@ export async function performSplitInstall(
           : 'not installed',
       newState: newVersionCode !== null ? `version code ${newVersionCode}` : null,
       success,
-      rawOutput: `Installed from ${orderedParts.length} file(s): ${orderedParts
+      rawOutput: `${historyNote ? `${historyNote}\n` : ''}Installed from ${orderedParts.length} file(s): ${orderedParts
         .map((part) => part.fileName)
         .join(', ')}\n\n${rawOutput || '(no output)'}`
     })

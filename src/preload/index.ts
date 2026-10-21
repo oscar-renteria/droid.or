@@ -196,6 +196,30 @@ const droidorApi: DroidorApi = {
     return z.array(packageBackupResultSchema).parse(result)
   },
 
+  analyzeDeviceTransfer: async (sourceDeviceId, targetDeviceId, packageName) => {
+    const result = await ipcRenderer.invoke(IpcChannel.AnalyzeDeviceTransfer, {
+      sourceDeviceId,
+      targetDeviceId,
+      packageName
+    })
+    return splitInstallAnalysisSchema.parse(result)
+  },
+
+  performDeviceTransfer: async (
+    sourceDeviceId,
+    targetDeviceId,
+    packageName,
+    expectedVersionCode
+  ) => {
+    const result = await ipcRenderer.invoke(IpcChannel.PerformDeviceTransfer, {
+      sourceDeviceId,
+      targetDeviceId,
+      packageName,
+      expectedVersionCode
+    })
+    return operationResultSchema.parse(result)
+  },
+
   getSecurityReview: async (deviceId) => {
     const result = await ipcRenderer.invoke(IpcChannel.GetSecurityReview, { deviceId })
     return securityReviewResultSchema.parse(result)

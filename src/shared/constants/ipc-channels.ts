@@ -32,6 +32,8 @@ export enum IpcChannel {
   InstallSplitApks = 'split-install:install',
   BrowseForBackupDirectory = 'backup:browse-for-directory',
   BackupPackages = 'backup:backup-packages',
+  AnalyzeDeviceTransfer = 'transfer:analyze',
+  PerformDeviceTransfer = 'transfer:perform',
   GetSecurityReview = 'security:get-review',
   GetLogs = 'logs:get',
   ClearLogs = 'logs:clear',
