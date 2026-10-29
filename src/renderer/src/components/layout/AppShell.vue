@@ -12,7 +12,7 @@ import {
   ShieldCheckmarkOutline,
   TimeOutline
 } from '@vicons/ionicons5'
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import type { Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAdbAvailability } from '@renderer/composables/useAdbAvailability'
@@ -20,6 +20,7 @@ import { useAppInfo } from '@renderer/composables/useAppInfo'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { deviceDisplayName } from '@renderer/utils/device-display-name'
 import { getDeviceStateMeta } from '@renderer/utils/device-state-meta'
+import AboutModal from '@renderer/components/AboutModal.vue'
 import DeviceSidebar from './DeviceSidebar.vue'
 
 const route = useRoute()
@@ -27,6 +28,7 @@ const router = useRouter()
 const { appInfo } = useAppInfo()
 const { adbAvailability } = useAdbAvailability()
 const devicesStore = useDevicesStore()
+const showAboutModal = ref(false)
 
 onMounted(() => {
   void devicesStore.initialize()
@@ -168,10 +170,19 @@ const navGroups: Array<Array<{ name: string; label: string; icon: Component }>> 
     <footer
       class="flex h-6 shrink-0 items-center justify-end border-t border-border px-4 text-xs text-text-muted"
     >
-      <span v-if="appInfo"
-        >droid.or v{{ appInfo.appVersion }} · Electron {{ appInfo.electronVersion }}</span
+      <button
+        type="button"
+        class="rounded-sm hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        aria-haspopup="dialog"
+        :aria-expanded="showAboutModal"
+        @click="showAboutModal = true"
       >
-      <span v-else>droid.or</span>
+        <template v-if="appInfo">
+          droid.or v{{ appInfo.appVersion }} · Electron {{ appInfo.electronVersion }}
+        </template>
+        <template v-else>droid.or</template>
+      </button>
+      <AboutModal v-model:show="showAboutModal" />
     </footer>
   </div>
 </template>

@@ -755,7 +755,7 @@ To allow work to pause, resume, and switch between agents or context windows sea
 | `[DONE]` | **TSK-14** | Phase 4 | Implement `useSupportLink` Composable | `src/renderer/src/composables/useSupportLink.ts` | TSK-07, TSK-08 |
 | `[DONE]` | **TSK-15** | Phase 4 | Add "Support Development" Card to Settings View | `src/renderer/src/views/SettingsView.vue` | TSK-14 |
 | `[DONE]` | **TSK-16** | Phase 4 | Build `AboutModal.vue` Component | `src/renderer/src/components/AboutModal.vue` | TSK-14 |
-| `[TODO]` | **TSK-17** | Phase 4 | Wire About Modal into `AppShell.vue` Footer | `src/renderer/src/components/layout/AppShell.vue` | TSK-16 |
+| `[DONE]` | **TSK-17** | Phase 4 | Wire About Modal into `AppShell.vue` Footer | `src/renderer/src/components/layout/AppShell.vue` | TSK-16 |
 | `[TODO]` | **TSK-18** | Phase 4 | Add Unit Tests for `useSupportLink` Composable | `tests/renderer/composables/useSupportLink.test.ts` | TSK-14 |
 | `[TODO]` | **TSK-19** | Phase 5 | Execute Full Quality Gate & Regressions Check | Global repository | TSK-01 – TSK-18 |
 
@@ -913,8 +913,8 @@ To allow work to pause, resume, and switch between agents or context windows sea
 - **Verification Command:** `npm run typecheck:web`
 - **Dependencies:** TSK-14
 
-##### [TODO] TSK-17: Wire About Modal into `AppShell.vue` Footer
-- **Status:** `[TODO]`
+##### [DONE] TSK-17: Wire About Modal into `AppShell.vue` Footer
+- **Status:** `[DONE]`
 - **Target Files:** `src/renderer/src/components/layout/AppShell.vue`
 - **Description:** Add a ref `showAboutModal = ref(false)` and wrap the footer version text in a subtle clickable button/link that toggles the modal.
 - **Ponytail Check:** Minimal diff in `AppShell.vue`: 1 state ref, 1 click handler, and `<AboutModal v-model:show="showAboutModal" />`.
