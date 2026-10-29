@@ -746,7 +746,7 @@ To allow work to pause, resume, and switch between agents or context windows sea
 | `[DONE]` | **TSK-05** | Phase 2 | Define Zod Validation Schema for Support Links | `src/shared/validation/support.schema.ts` | None |
 | `[DONE]` | **TSK-06** | Phase 2 | Add Unit Tests for Support Schemas | `tests/shared/support.schema.test.ts` | TSK-05 |
 | `[DONE]` | **TSK-07** | Phase 2 | Extend `DroidorApi` Interface Contract | `src/shared/types/droidor-api.ts` | TSK-05 |
-| `[TODO]` | **TSK-08** | Phase 2 | Wire Preload Bridge with Zod Schema Validation | `src/preload/index.ts` | TSK-04, TSK-05, TSK-07 |
+| `[DONE]` | **TSK-08** | Phase 2 | Wire Preload Bridge with Zod Schema Validation | `src/preload/index.ts` | TSK-04, TSK-05, TSK-07 |
 | `[TODO]` | **TSK-09** | Phase 3 | Implement Static URLs & Safe Domain Validator | `src/main/support/support-config.ts` | TSK-05 |
 | `[TODO]` | **TSK-10** | Phase 3 | Add Unit Tests for URL Validator & Config | `tests/main/support/support-config.test.ts` | TSK-09 |
 | `[TODO]` | **TSK-11** | Phase 3 | Implement Main IPC Handler (`shell.openExternal`) | `src/main/ipc/handlers/support.handler.ts` | TSK-04, TSK-05, TSK-09 |
@@ -833,8 +833,8 @@ To allow work to pause, resume, and switch between agents or context windows sea
 - **Verification Command:** `npm run typecheck:web`
 - **Dependencies:** TSK-05
 
-##### [TODO] TSK-08: Wire Preload Bridge with Zod Schema Validation
-- **Status:** `[TODO]`
+##### [DONE] TSK-08: Wire Preload Bridge with Zod Schema Validation
+- **Status:** `[DONE]`
 - **Target Files:** `src/preload/index.ts`
 - **Description:** Expose `openDonationLink(provider)` on `contextBridge`, validating the response against `openDonationLinkResultSchema`.
 - **Ponytail Check:** Follows existing preload pattern (`ipcRenderer.invoke(IpcChannel.OpenDonationLink, provider)`).

@@ -23,6 +23,7 @@ import { securityReviewResultSchema } from '@shared/validation/security-review.s
 import { adbCommandLogListSchema } from '@shared/validation/logs.schema'
 import { safetyDisclaimerStatusSchema } from '@shared/validation/safety-disclaimer.schema'
 import { aiAnalysisResultSchema, aiSettingsSchema } from '@shared/validation/ai-settings.schema'
+import { openDonationLinkResultSchema } from '@shared/validation/support.schema'
 import type { DroidorApi } from '@shared/types/droidor-api'
 
 /**
@@ -35,6 +36,11 @@ const droidorApi: DroidorApi = {
   getAppInfo: async () => {
     const result = await ipcRenderer.invoke(IpcChannel.GetAppInfo)
     return appInfoSchema.parse(result)
+  },
+
+  openDonationLink: async (provider) => {
+    const result = await ipcRenderer.invoke(IpcChannel.OpenDonationLink, provider)
+    return openDonationLinkResultSchema.parse(result)
   },
 
   getAdbAvailability: async () => {
