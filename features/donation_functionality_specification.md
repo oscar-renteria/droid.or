@@ -747,7 +747,7 @@ To allow work to pause, resume, and switch between agents or context windows sea
 | `[DONE]` | **TSK-06** | Phase 2 | Add Unit Tests for Support Schemas | `tests/shared/support.schema.test.ts` | TSK-05 |
 | `[DONE]` | **TSK-07** | Phase 2 | Extend `DroidorApi` Interface Contract | `src/shared/types/droidor-api.ts` | TSK-05 |
 | `[DONE]` | **TSK-08** | Phase 2 | Wire Preload Bridge with Zod Schema Validation | `src/preload/index.ts` | TSK-04, TSK-05, TSK-07 |
-| `[TODO]` | **TSK-09** | Phase 3 | Implement Static URLs & Safe Domain Validator | `src/main/support/support-config.ts` | TSK-05 |
+| `[DONE]` | **TSK-09** | Phase 3 | Implement Static URLs & Safe Domain Validator | `src/main/support/support-config.ts` | TSK-05 |
 | `[TODO]` | **TSK-10** | Phase 3 | Add Unit Tests for URL Validator & Config | `tests/main/support/support-config.test.ts` | TSK-09 |
 | `[TODO]` | **TSK-11** | Phase 3 | Implement Main IPC Handler (`shell.openExternal`) | `src/main/ipc/handlers/support.handler.ts` | TSK-04, TSK-05, TSK-09 |
 | `[TODO]` | **TSK-12** | Phase 3 | Register Support Handler in Main IPC Registry | `src/main/ipc/register-ipc-handlers.ts` | TSK-11 |
@@ -845,8 +845,8 @@ To allow work to pause, resume, and switch between agents or context windows sea
 
 #### Phase 3: Main Process Security & Handlers
 
-##### [TODO] TSK-09: Implement Static URLs & Safe Domain Validator
-- **Status:** `[TODO]`
+##### [DONE] TSK-09: Implement Static URLs & Safe Domain Validator
+- **Status:** `[DONE]`
 - **Target Files:** `src/main/support/support-config.ts` (New file)
 - **Description:** Define `DONATION_URLS` mapping for `'github-sponsors'` and `'kofi'`. Implement `validateSafeExternalUrl(rawUrl)` enforcing `https:` and approved domain set (`github.com`, `ko-fi.com`).
 - **Ponytail Check:** Standard library `URL` class only. Zero dependencies, under 25 lines.
