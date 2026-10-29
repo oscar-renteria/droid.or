@@ -106,4 +106,8 @@ See `CONTRIBUTING.md` for how to contribute.
 
 ## License
 
-Not currently licensed for external distribution or reuse.
+This project is licensed under the [MIT License](LICENSE).
+
+## Trademarks & Disclaimers
+
+Android, Google Play, and ADB are trademarks of Google LLC. `droid.or` is an independent open-source project and is not affiliated with, sponsored by, or endorsed by Google LLC or the Android Open Source Project. All other trademarks, service marks, and trade names are the property of their respective owners.

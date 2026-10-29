@@ -129,6 +129,8 @@ directory. Nothing is synced to any remote service.
 
 ## Reporting a vulnerability
 
-This is currently a private, unlicensed project with no public release —
-if you have access to this repository and find a security issue, open an
-issue here rather than a public disclosure elsewhere.
+If you find a security issue, please open an issue in this repository or contact the maintainers directly rather than making a public disclosure elsewhere.
+
+## Trademarks & Legal Disclaimers
+
+`droid.or` is an independent open-source project licensed under the [MIT License](LICENSE) and is not affiliated with, sponsored by, or endorsed by Google LLC, Android, or device manufacturers.
