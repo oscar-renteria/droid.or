@@ -751,7 +751,7 @@ To allow work to pause, resume, and switch between agents or context windows sea
 | `[DONE]` | **TSK-10** | Phase 3 | Add Unit Tests for URL Validator & Config | `tests/main/support/support-config.test.ts` | TSK-09 |
 | `[DONE]` | **TSK-11** | Phase 3 | Implement Main IPC Handler (`shell.openExternal`) | `src/main/ipc/handlers/support.handler.ts` | TSK-04, TSK-05, TSK-09 |
 | `[DONE]` | **TSK-12** | Phase 3 | Register Support Handler in Main IPC Registry | `src/main/ipc/register-ipc-handlers.ts` | TSK-11 |
-| `[TODO]` | **TSK-13** | Phase 3 | Add Unit Tests for Support IPC Handler | `tests/main/ipc/support.handler.test.ts` | TSK-11, TSK-12 |
+| `[DONE]` | **TSK-13** | Phase 3 | Add Unit Tests for Support IPC Handler | `tests/main/ipc/support.handler.test.ts` | TSK-11, TSK-12 |
 | `[TODO]` | **TSK-14** | Phase 4 | Implement `useSupportLink` Composable | `src/renderer/src/composables/useSupportLink.ts` | TSK-07, TSK-08 |
 | `[TODO]` | **TSK-15** | Phase 4 | Add "Support Development" Card to Settings View | `src/renderer/src/views/SettingsView.vue` | TSK-14 |
 | `[TODO]` | **TSK-16** | Phase 4 | Build `AboutModal.vue` Component | `src/renderer/src/components/AboutModal.vue` | TSK-14 |
@@ -877,8 +877,8 @@ To allow work to pause, resume, and switch between agents or context windows sea
 - **Verification Command:** `npm run typecheck:node`
 - **Dependencies:** TSK-11
 
-##### [TODO] TSK-13: Add Unit Tests for Support IPC Handler
-- **Status:** `[TODO]`
+##### [DONE] TSK-13: Add Unit Tests for Support IPC Handler
+- **Status:** `[DONE]`
 - **Target Files:** `tests/main/ipc/support.handler.test.ts` (New file)
 - **Description:** Test valid provider invokes `shell.openExternal`; invalid provider returns error; `shell.openExternal` failure is caught and returned cleanly.
 - **Ponytail Check:** Vitest unit test using `vi.spyOn(shell, 'openExternal')` and stubbed `ipcMain.handle`.
