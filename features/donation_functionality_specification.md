@@ -752,7 +752,7 @@ To allow work to pause, resume, and switch between agents or context windows sea
 | `[DONE]` | **TSK-11** | Phase 3 | Implement Main IPC Handler (`shell.openExternal`) | `src/main/ipc/handlers/support.handler.ts` | TSK-04, TSK-05, TSK-09 |
 | `[DONE]` | **TSK-12** | Phase 3 | Register Support Handler in Main IPC Registry | `src/main/ipc/register-ipc-handlers.ts` | TSK-11 |
 | `[DONE]` | **TSK-13** | Phase 3 | Add Unit Tests for Support IPC Handler | `tests/main/ipc/support.handler.test.ts` | TSK-11, TSK-12 |
-| `[TODO]` | **TSK-14** | Phase 4 | Implement `useSupportLink` Composable | `src/renderer/src/composables/useSupportLink.ts` | TSK-07, TSK-08 |
+| `[DONE]` | **TSK-14** | Phase 4 | Implement `useSupportLink` Composable | `src/renderer/src/composables/useSupportLink.ts` | TSK-07, TSK-08 |
 | `[TODO]` | **TSK-15** | Phase 4 | Add "Support Development" Card to Settings View | `src/renderer/src/views/SettingsView.vue` | TSK-14 |
 | `[TODO]` | **TSK-16** | Phase 4 | Build `AboutModal.vue` Component | `src/renderer/src/components/AboutModal.vue` | TSK-14 |
 | `[TODO]` | **TSK-17** | Phase 4 | Wire About Modal into `AppShell.vue` Footer | `src/renderer/src/components/layout/AppShell.vue` | TSK-16 |
@@ -889,8 +889,8 @@ To allow work to pause, resume, and switch between agents or context windows sea
 
 #### Phase 4: Renderer UI & Composables
 
-##### [TODO] TSK-14: Implement `useSupportLink` Composable
-- **Status:** `[TODO]`
+##### [DONE] TSK-14: Implement `useSupportLink` Composable
+- **Status:** `[DONE]`
 - **Target Files:** `src/renderer/src/composables/useSupportLink.ts` (New file)
 - **Description:** Composable providing `openSupportLink(provider)`: debounces rapid clicks, invokes `window.droidor.openDonationLink`, shows Naive UI `useMessage` info/warning toasts, and falls back to clipboard copy if browser launch fails.
 - **Ponytail Check:** ~30 lines. Eliminates the need for a Pinia store; reuses existing Naive UI feedback systems.
