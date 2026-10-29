@@ -739,7 +739,7 @@ To allow work to pause, resume, and switch between agents or context windows sea
 | Status | Task ID | Phase | Title | Primary File(s) | Dependencies |
 | :---: | :--- | :--- | :--- | :--- | :--- |
 | `[DONE]` | **TSK-01** | Phase 1 | Create Root `LICENSE` File (MIT) | `LICENSE` | None |
-| `[TODO]` | **TSK-02** | Phase 1 | Update `package.json` License Metadata | `package.json` | TSK-01 |
+| `[DONE]` | **TSK-02** | Phase 1 | Update `package.json` License Metadata | `package.json` | TSK-01 |
 | `[TODO]` | **TSK-03** | Phase 1 | Update Documentation & Trademark Disclaimers | `README.md`, `SECURITY.md` | TSK-02 |
 | `[TODO]` | **TSK-04** | Phase 2 | Declare `OpenDonationLink` in `IpcChannel` | `src/shared/constants/ipc-channels.ts` | None |
 | `[TODO]` | **TSK-05** | Phase 2 | Define Zod Validation Schema for Support Links | `src/shared/validation/support.schema.ts` | None |
@@ -772,8 +772,8 @@ To allow work to pause, resume, and switch between agents or context windows sea
 - **Verification Command:** `test -f LICENSE && grep -q "MIT License" LICENSE`
 - **Dependencies:** None
 
-##### [TODO] TSK-02: Update `package.json` License Metadata
-- **Status:** `[TODO]`
+##### [DONE] TSK-02: Update `package.json` License Metadata
+- **Status:** `[DONE]`
 - **Target Files:** `package.json`
 - **Description:** Change `"license": "UNLICENSED"` to `"license": "MIT"`. Keep `"private": true` until public release.
 - **Ponytail Check:** Exactly 1 line changed in `package.json`.
