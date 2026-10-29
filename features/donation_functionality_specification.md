@@ -748,7 +748,7 @@ To allow work to pause, resume, and switch between agents or context windows sea
 | `[DONE]` | **TSK-07** | Phase 2 | Extend `DroidorApi` Interface Contract | `src/shared/types/droidor-api.ts` | TSK-05 |
 | `[DONE]` | **TSK-08** | Phase 2 | Wire Preload Bridge with Zod Schema Validation | `src/preload/index.ts` | TSK-04, TSK-05, TSK-07 |
 | `[DONE]` | **TSK-09** | Phase 3 | Implement Static URLs & Safe Domain Validator | `src/main/support/support-config.ts` | TSK-05 |
-| `[TODO]` | **TSK-10** | Phase 3 | Add Unit Tests for URL Validator & Config | `tests/main/support/support-config.test.ts` | TSK-09 |
+| `[DONE]` | **TSK-10** | Phase 3 | Add Unit Tests for URL Validator & Config | `tests/main/support/support-config.test.ts` | TSK-09 |
 | `[TODO]` | **TSK-11** | Phase 3 | Implement Main IPC Handler (`shell.openExternal`) | `src/main/ipc/handlers/support.handler.ts` | TSK-04, TSK-05, TSK-09 |
 | `[TODO]` | **TSK-12** | Phase 3 | Register Support Handler in Main IPC Registry | `src/main/ipc/register-ipc-handlers.ts` | TSK-11 |
 | `[TODO]` | **TSK-13** | Phase 3 | Add Unit Tests for Support IPC Handler | `tests/main/ipc/support.handler.test.ts` | TSK-11, TSK-12 |
@@ -853,8 +853,8 @@ To allow work to pause, resume, and switch between agents or context windows sea
 - **Verification Command:** `npm run typecheck:node`
 - **Dependencies:** TSK-05
 
-##### [TODO] TSK-10: Add Unit Tests for URL Validator & Config
-- **Status:** `[TODO]`
+##### [DONE] TSK-10: Add Unit Tests for URL Validator & Config
+- **Status:** `[DONE]`
 - **Target Files:** `tests/main/support/support-config.test.ts` (New file)
 - **Description:** Test valid HTTPS URLs return `true`; `http:`, `file:`, javascript URLs, untrusted domains (`evil-github.com`), and malformed strings return `false`.
 - **Ponytail Check:** Fast, isolated unit test with zero mocks or environment dependencies.
