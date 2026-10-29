@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
   {
-    ignores: ['out/**', 'dist/**', 'node_modules/**', '**/*.d.ts']
+    ignores: ['out/**', 'dist/**', 'node_modules/**', '.agents/**', '**/*.d.ts']
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
