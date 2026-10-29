@@ -741,7 +741,7 @@ To allow work to pause, resume, and switch between agents or context windows sea
 | `[DONE]` | **TSK-01** | Phase 1 | Create Root `LICENSE` File (MIT) | `LICENSE` | None |
 | `[DONE]` | **TSK-02** | Phase 1 | Update `package.json` License Metadata | `package.json` | TSK-01 |
 | `[DONE]` | **TSK-03** | Phase 1 | Update Documentation & Trademark Disclaimers | `README.md`, `SECURITY.md` | TSK-02 |
-| `[TODO]` | **TSK-03B** | Phase 1 | Ignore `.agents` in `.prettierignore` (Bug Fix) | `.prettierignore` | None |
+| `[DONE]` | **TSK-03B** | Phase 1 | Ignore `.agents` in `.prettierignore` (Bug Fix) | `.prettierignore` | None |
 | `[TODO]` | **TSK-04** | Phase 2 | Declare `OpenDonationLink` in `IpcChannel` | `src/shared/constants/ipc-channels.ts` | None |
 | `[TODO]` | **TSK-05** | Phase 2 | Define Zod Validation Schema for Support Links | `src/shared/validation/support.schema.ts` | None |
 | `[TODO]` | **TSK-06** | Phase 2 | Add Unit Tests for Support Schemas | `tests/shared/support.schema.test.ts` | TSK-05 |
@@ -789,8 +789,8 @@ To allow work to pause, resume, and switch between agents or context windows sea
 - **Verification Command:** `git diff README.md SECURITY.md`
 - **Dependencies:** TSK-02
 
-##### [TODO] TSK-03B: Ignore `.agents` in `.prettierignore` (Bug Fix)
-- **Status:** `[TODO]`
+##### [DONE] TSK-03B: Ignore `.agents` in `.prettierignore` (Bug Fix)
+- **Status:** `[DONE]`
 - **Target Files:** `.prettierignore`
 - **Description:** Exclude `.agents` directory in `.prettierignore` so local agent skill files do not trigger workspace Prettier formatting failures.
 - **Ponytail Check:** Exactly 1 line added to `.prettierignore`.
