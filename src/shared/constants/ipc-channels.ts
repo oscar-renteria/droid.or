@@ -42,7 +42,8 @@ export enum IpcChannel {
   AcknowledgeSafetyDisclaimer = 'safety-disclaimer:acknowledge',
   GetAiSettings = 'ai:get-settings',
   SetAiSettings = 'ai:set-settings',
-  AnalyzePackageWithAi = 'ai:analyze-package'
+  AnalyzePackageWithAi = 'ai:analyze-package',
+  OpenDonationLink = 'support:open-donation-link'
 }
 
 /**

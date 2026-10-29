@@ -742,9 +742,9 @@ To allow work to pause, resume, and switch between agents or context windows sea
 | `[DONE]` | **TSK-02** | Phase 1 | Update `package.json` License Metadata | `package.json` | TSK-01 |
 | `[DONE]` | **TSK-03** | Phase 1 | Update Documentation & Trademark Disclaimers | `README.md`, `SECURITY.md` | TSK-02 |
 | `[DONE]` | **TSK-03B** | Phase 1 | Ignore `.agents` in `.prettierignore` (Bug Fix) | `.prettierignore` | None |
-| `[TODO]` | **TSK-04** | Phase 2 | Declare `OpenDonationLink` in `IpcChannel` | `src/shared/constants/ipc-channels.ts` | None |
-| `[TODO]` | **TSK-05** | Phase 2 | Define Zod Validation Schema for Support Links | `src/shared/validation/support.schema.ts` | None |
-| `[TODO]` | **TSK-06** | Phase 2 | Add Unit Tests for Support Schemas | `tests/shared/support.schema.test.ts` | TSK-05 |
+| `[DONE]` | **TSK-04** | Phase 2 | Declare `OpenDonationLink` in `IpcChannel` | `src/shared/constants/ipc-channels.ts` | None |
+| `[DONE]` | **TSK-05** | Phase 2 | Define Zod Validation Schema for Support Links | `src/shared/validation/support.schema.ts` | None |
+| `[DONE]` | **TSK-06** | Phase 2 | Add Unit Tests for Support Schemas | `tests/shared/support.schema.test.ts` | TSK-05 |
 | `[TODO]` | **TSK-07** | Phase 2 | Extend `DroidorApi` Interface Contract | `src/shared/types/droidor-api.ts` | TSK-05 |
 | `[TODO]` | **TSK-08** | Phase 2 | Wire Preload Bridge with Zod Schema Validation | `src/preload/index.ts` | TSK-04, TSK-05, TSK-07 |
 | `[TODO]` | **TSK-09** | Phase 3 | Implement Static URLs & Safe Domain Validator | `src/main/support/support-config.ts` | TSK-05 |
@@ -801,24 +801,24 @@ To allow work to pause, resume, and switch between agents or context windows sea
 
 #### Phase 2: Shared Contracts & Preload Boundary
 
-##### [TODO] TSK-04: Declare `OpenDonationLink` in `IpcChannel` Enum
-- **Status:** `[TODO]`
+##### [DONE] TSK-04: Declare `OpenDonationLink` in `IpcChannel` Enum
+- **Status:** `[DONE]`
 - **Target Files:** `src/shared/constants/ipc-channels.ts`
 - **Description:** Add `OpenDonationLink = 'support:open-donation-link'` to the `IpcChannel` enum.
 - **Ponytail Check:** Exactly 1 enum member added. No redundant channels.
 - **Verification Command:** `npm run typecheck:node`
 - **Dependencies:** None
 
-##### [TODO] TSK-05: Define Zod Validation Schema for Support Links
-- **Status:** `[TODO]`
+##### [DONE] TSK-05: Define Zod Validation Schema for Support Links
+- **Status:** `[DONE]`
 - **Target Files:** `src/shared/validation/support.schema.ts` (New file)
 - **Description:** Export `donationProviderIdSchema = z.enum(['github-sponsors', 'kofi'])`, its inferred type `DonationProviderId`, and `openDonationLinkResultSchema`.
 - **Ponytail Check:** Under 20 lines of code. No dynamic metadata schemas; covers only the runtime IPC payload.
 - **Verification Command:** `npm run typecheck:node`
 - **Dependencies:** None
 
-##### [TODO] TSK-06: Add Unit Tests for Support Schemas
-- **Status:** `[TODO]`
+##### [DONE] TSK-06: Add Unit Tests for Support Schemas
+- **Status:** `[DONE]`
 - **Target Files:** `tests/shared/support.schema.test.ts` (New file)
 - **Description:** Verify valid provider IDs (`github-sponsors`, `kofi`) pass; invalid IDs (`paypal`, `unknown`, `""`) fail; result schema parses expected fields.
 - **Ponytail Check:** Direct assert-based Vitest unit test following existing schema test conventions (`tests/shared/app-info.schema.test.ts`).
