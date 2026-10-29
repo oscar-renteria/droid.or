@@ -756,7 +756,7 @@ To allow work to pause, resume, and switch between agents or context windows sea
 | `[DONE]` | **TSK-15** | Phase 4 | Add "Support Development" Card to Settings View | `src/renderer/src/views/SettingsView.vue` | TSK-14 |
 | `[DONE]` | **TSK-16** | Phase 4 | Build `AboutModal.vue` Component | `src/renderer/src/components/AboutModal.vue` | TSK-14 |
 | `[DONE]` | **TSK-17** | Phase 4 | Wire About Modal into `AppShell.vue` Footer | `src/renderer/src/components/layout/AppShell.vue` | TSK-16 |
-| `[TODO]` | **TSK-18** | Phase 4 | Add Unit Tests for `useSupportLink` Composable | `tests/renderer/composables/useSupportLink.test.ts` | TSK-14 |
+| `[DONE]` | **TSK-18** | Phase 4 | Add Unit Tests for `useSupportLink` Composable | `tests/renderer/composables/useSupportLink.test.ts` | TSK-14 |
 | `[TODO]` | **TSK-19** | Phase 5 | Execute Full Quality Gate & Regressions Check | Global repository | TSK-01 – TSK-18 |
 
 ---
@@ -921,8 +921,8 @@ To allow work to pause, resume, and switch between agents or context windows sea
 - **Verification Command:** `npm run typecheck:web`
 - **Dependencies:** TSK-16
 
-##### [TODO] TSK-18: Add Unit Tests for `useSupportLink` Composable
-- **Status:** `[TODO]`
+##### [DONE] TSK-18: Add Unit Tests for `useSupportLink` Composable
+- **Status:** `[DONE]`
 - **Target Files:** `tests/renderer/composables/useSupportLink.test.ts` (New file)
 - **Description:** Test `useSupportLink` invokes `window.droidor.openDonationLink`, triggers success message, handles failure, and copies URL to clipboard on error.
 - **Ponytail Check:** Simple component/composable test with mocked `window.droidor` and `navigator.clipboard`.

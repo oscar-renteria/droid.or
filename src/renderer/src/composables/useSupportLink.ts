@@ -2,8 +2,13 @@ import { useMessage } from 'naive-ui'
 import { ref } from 'vue'
 import type { DonationProviderId } from '@shared/validation/support.schema'
 
-export function useSupportLink() {
-  const message = useMessage()
+type MessageApi = {
+  info: (message: string) => void
+  warning: (message: string) => void
+  error: (message: string) => void
+}
+
+export function useSupportLink(messageApi: MessageApi = useMessage()) {
   const opening = ref(false)
 
   async function openSupportLink(provider: DonationProviderId): Promise<void> {
@@ -13,15 +18,15 @@ export function useSupportLink() {
     try {
       const result = await window.droidor.openDonationLink(provider)
       if (result.success) {
-        message.info('Opening link in your browser…')
+        messageApi.info('Opening link in your browser…')
       } else {
-        message.warning(result.error ?? 'Could not open the browser. Link copied to clipboard.')
+        messageApi.warning(result.error ?? 'Could not open the browser. Link copied to clipboard.')
         if (result.urlOpened) {
           await navigator.clipboard.writeText(result.urlOpened)
         }
       }
     } catch {
-      message.error('Failed to open the donation link.')
+      messageApi.error('Failed to open the donation link.')
     } finally {
       setTimeout(() => {
         opening.value = false
