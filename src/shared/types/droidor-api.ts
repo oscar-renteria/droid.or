@@ -13,6 +13,7 @@ import type { SecurityReviewResult } from './security-review'
 import type { AdbCommandLogEntry } from './logs'
 import type { SafetyDisclaimerStatus } from './safety-disclaimer'
 import type { AiAnalysisResult, AiProviderId, AiSettings } from './ai-settings'
+import type { DonationProviderId, OpenDonationLinkResult } from '../validation/support.schema'
 
 /**
  * Contract for the API the preload script exposes on window.droidor.
@@ -21,6 +22,7 @@ import type { AiAnalysisResult, AiProviderId, AiSettings } from './ai-settings'
  */
 export interface DroidorApi {
   getAppInfo: () => Promise<AppInfo>
+  openDonationLink: (provider: DonationProviderId) => Promise<OpenDonationLinkResult>
   getAdbAvailability: () => Promise<AdbAvailability>
   /** Full picture of where the effective adb command came from and what
    *  else is available (a managed download, a configured custom path). */

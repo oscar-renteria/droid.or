@@ -745,7 +745,7 @@ To allow work to pause, resume, and switch between agents or context windows sea
 | `[DONE]` | **TSK-04** | Phase 2 | Declare `OpenDonationLink` in `IpcChannel` | `src/shared/constants/ipc-channels.ts` | None |
 | `[DONE]` | **TSK-05** | Phase 2 | Define Zod Validation Schema for Support Links | `src/shared/validation/support.schema.ts` | None |
 | `[DONE]` | **TSK-06** | Phase 2 | Add Unit Tests for Support Schemas | `tests/shared/support.schema.test.ts` | TSK-05 |
-| `[TODO]` | **TSK-07** | Phase 2 | Extend `DroidorApi` Interface Contract | `src/shared/types/droidor-api.ts` | TSK-05 |
+| `[DONE]` | **TSK-07** | Phase 2 | Extend `DroidorApi` Interface Contract | `src/shared/types/droidor-api.ts` | TSK-05 |
 | `[TODO]` | **TSK-08** | Phase 2 | Wire Preload Bridge with Zod Schema Validation | `src/preload/index.ts` | TSK-04, TSK-05, TSK-07 |
 | `[TODO]` | **TSK-09** | Phase 3 | Implement Static URLs & Safe Domain Validator | `src/main/support/support-config.ts` | TSK-05 |
 | `[TODO]` | **TSK-10** | Phase 3 | Add Unit Tests for URL Validator & Config | `tests/main/support/support-config.test.ts` | TSK-09 |
@@ -825,8 +825,8 @@ To allow work to pause, resume, and switch between agents or context windows sea
 - **Verification Command:** `npx vitest run tests/shared/support.schema.test.ts`
 - **Dependencies:** TSK-05
 
-##### [TODO] TSK-07: Extend `DroidorApi` Interface Contract
-- **Status:** `[TODO]`
+##### [DONE] TSK-07: Extend `DroidorApi` Interface Contract
+- **Status:** `[DONE]`
 - **Target Files:** `src/shared/types/droidor-api.ts`
 - **Description:** Add `openDonationLink: (provider: DonationProviderId) => Promise<OpenDonationLinkResult>` to the `DroidorApi` interface.
 - **Ponytail Check:** Exactly 1 typed method signature added to the interface.
