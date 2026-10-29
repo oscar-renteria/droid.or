@@ -750,7 +750,7 @@ To allow work to pause, resume, and switch between agents or context windows sea
 | `[DONE]` | **TSK-09** | Phase 3 | Implement Static URLs & Safe Domain Validator | `src/main/support/support-config.ts` | TSK-05 |
 | `[DONE]` | **TSK-10** | Phase 3 | Add Unit Tests for URL Validator & Config | `tests/main/support/support-config.test.ts` | TSK-09 |
 | `[DONE]` | **TSK-11** | Phase 3 | Implement Main IPC Handler (`shell.openExternal`) | `src/main/ipc/handlers/support.handler.ts` | TSK-04, TSK-05, TSK-09 |
-| `[TODO]` | **TSK-12** | Phase 3 | Register Support Handler in Main IPC Registry | `src/main/ipc/register-ipc-handlers.ts` | TSK-11 |
+| `[DONE]` | **TSK-12** | Phase 3 | Register Support Handler in Main IPC Registry | `src/main/ipc/register-ipc-handlers.ts` | TSK-11 |
 | `[TODO]` | **TSK-13** | Phase 3 | Add Unit Tests for Support IPC Handler | `tests/main/ipc/support.handler.test.ts` | TSK-11, TSK-12 |
 | `[TODO]` | **TSK-14** | Phase 4 | Implement `useSupportLink` Composable | `src/renderer/src/composables/useSupportLink.ts` | TSK-07, TSK-08 |
 | `[TODO]` | **TSK-15** | Phase 4 | Add "Support Development" Card to Settings View | `src/renderer/src/views/SettingsView.vue` | TSK-14 |
@@ -869,8 +869,8 @@ To allow work to pause, resume, and switch between agents or context windows sea
 - **Verification Command:** `npm run typecheck:node`
 - **Dependencies:** TSK-04, TSK-05, TSK-09
 
-##### [TODO] TSK-12: Register Support Handler in Main IPC Registry
-- **Status:** `[TODO]`
+##### [DONE] TSK-12: Register Support Handler in Main IPC Registry
+- **Status:** `[DONE]`
 - **Target Files:** `src/main/ipc/register-ipc-handlers.ts`
 - **Description:** Import and call `registerSupportHandlers()` inside `registerIpcHandlers()`.
 - **Ponytail Check:** Exactly 2 lines added (import + function invocation).

@@ -17,6 +17,7 @@ import { registerRecoveryHandlers } from './handlers/recovery.handler'
 import { registerSafetyDisclaimerHandlers } from './handlers/safety-disclaimer.handler'
 import { registerSecurityReviewHandlers } from './handlers/security-review.handler'
 import { registerSplitInstallHandlers } from './handlers/split-install.handler'
+import { registerSupportHandlers } from './handlers/support.handler'
 
 /**
  * Wires every supported IPC channel to its handler. This is the only place
@@ -25,6 +26,7 @@ import { registerSplitInstallHandlers } from './handlers/split-install.handler'
  */
 export function registerIpcHandlers(context: AppContext): void {
   ipcMain.handle(IpcChannel.GetAppInfo, () => getAppInfo())
+  registerSupportHandlers()
 
   registerAdbHandlers(context.adbClient, context.adbSettingsService)
   registerDeviceHandlers(context.deviceRegistry)
