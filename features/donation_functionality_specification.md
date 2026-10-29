@@ -753,7 +753,7 @@ To allow work to pause, resume, and switch between agents or context windows sea
 | `[DONE]` | **TSK-12** | Phase 3 | Register Support Handler in Main IPC Registry | `src/main/ipc/register-ipc-handlers.ts` | TSK-11 |
 | `[DONE]` | **TSK-13** | Phase 3 | Add Unit Tests for Support IPC Handler | `tests/main/ipc/support.handler.test.ts` | TSK-11, TSK-12 |
 | `[DONE]` | **TSK-14** | Phase 4 | Implement `useSupportLink` Composable | `src/renderer/src/composables/useSupportLink.ts` | TSK-07, TSK-08 |
-| `[TODO]` | **TSK-15** | Phase 4 | Add "Support Development" Card to Settings View | `src/renderer/src/views/SettingsView.vue` | TSK-14 |
+| `[DONE]` | **TSK-15** | Phase 4 | Add "Support Development" Card to Settings View | `src/renderer/src/views/SettingsView.vue` | TSK-14 |
 | `[TODO]` | **TSK-16** | Phase 4 | Build `AboutModal.vue` Component | `src/renderer/src/components/AboutModal.vue` | TSK-14 |
 | `[TODO]` | **TSK-17** | Phase 4 | Wire About Modal into `AppShell.vue` Footer | `src/renderer/src/components/layout/AppShell.vue` | TSK-16 |
 | `[TODO]` | **TSK-18** | Phase 4 | Add Unit Tests for `useSupportLink` Composable | `tests/renderer/composables/useSupportLink.test.ts` | TSK-14 |
@@ -897,8 +897,8 @@ To allow work to pause, resume, and switch between agents or context windows sea
 - **Verification Command:** `npm run typecheck:web`
 - **Dependencies:** TSK-07, TSK-08
 
-##### [TODO] TSK-15: Add "Support Development" Card to Settings View
-- **Status:** `[TODO]`
+##### [DONE] TSK-15: Add "Support Development" Card to Settings View
+- **Status:** `[DONE]`
 - **Target Files:** `src/renderer/src/views/SettingsView.vue`
 - **Description:** Add card matching existing settings style: title, explanation of voluntary support, non-tax-deductible disclaimer, and two buttons ("Sponsor on GitHub", "Support on Ko-fi") wired to `useSupportLink`.
 - **Ponytail Check:** Uses existing styling (`rounded-lg border border-border p-4`) and existing Ionicons (`LogoGithub`, `HeartOutline`).

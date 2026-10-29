@@ -3,6 +3,7 @@ import type { AiProviderId } from '@shared/types/ai-settings'
 import {
   NAlert,
   NButton,
+  NIcon,
   NInput,
   NRadioButton,
   NRadioGroup,
@@ -11,8 +12,10 @@ import {
   NTag,
   useMessage
 } from 'naive-ui'
+import { HeartOutline, LogoGithub } from '@vicons/ionicons5'
 import { computed, onMounted, ref, watch } from 'vue'
 import PageHeader from '@renderer/components/ui/PageHeader.vue'
+import { useSupportLink } from '@renderer/composables/useSupportLink'
 import { useAdbSettingsStore } from '@renderer/stores/adb-settings.store'
 import { useAiSettingsStore } from '@renderer/stores/ai-settings.store'
 import { useSettingsStore, type ThemeMode } from '@renderer/stores/settings.store'
@@ -21,6 +24,7 @@ const adbSettingsStore = useAdbSettingsStore()
 const aiSettingsStore = useAiSettingsStore()
 const settingsStore = useSettingsStore()
 const message = useMessage()
+const { opening, openSupportLink } = useSupportLink()
 
 const themeOptions: Array<{ label: string; value: ThemeMode }> = [
   { label: 'System', value: 'system' },
@@ -267,6 +271,32 @@ async function downloadPlatformTools(): Promise<void> {
               {{ option.label }}
             </NRadioButton>
           </NRadioGroup>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3 rounded-lg border border-border p-4">
+        <h2 class="text-sm font-semibold text-text">Support Development</h2>
+        <p class="text-xs text-text-muted">
+          droid.or is free and open source. Optional contributions help fund ongoing maintenance,
+          device testing, and development.
+        </p>
+        <NAlert type="info" :show-icon="true">
+          Contributions are voluntary personal gifts. They do not unlock features and are not
+          tax-deductible.
+        </NAlert>
+        <div class="flex flex-wrap gap-2">
+          <NButton type="primary" :loading="opening" @click="openSupportLink('github-sponsors')">
+            <template #icon>
+              <NIcon :component="LogoGithub" aria-hidden="true" />
+            </template>
+            Sponsor on GitHub
+          </NButton>
+          <NButton :loading="opening" @click="openSupportLink('kofi')">
+            <template #icon>
+              <NIcon :component="HeartOutline" aria-hidden="true" />
+            </template>
+            Support on Ko-fi
+          </NButton>
         </div>
       </div>
 
