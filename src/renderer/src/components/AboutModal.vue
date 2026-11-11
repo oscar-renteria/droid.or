@@ -37,24 +37,25 @@ async function handleSupportClick(): Promise<void> {
     @update:show="(value: boolean) => emit('update:show', value)"
     @close="close"
   >
-    <div class="flex flex-col gap-4 text-sm">
-      <p class="text-text-secondary">Version {{ appInfo?.appVersion ?? 'unavailable' }}</p>
+    <div class="flex flex-col gap-5 text-sm">
+      <p class="text-xs text-text-muted">Version {{ appInfo?.appVersion ?? 'unavailable' }}</p>
 
-      <section class="flex flex-col gap-1">
-        <h2 class="font-semibold text-text">License</h2>
-        <p class="text-text-secondary">
-          droid.or is free and open-source software licensed under the MIT License. See the included
-          LICENSE file for details.
+      <section class="flex flex-col gap-2">
+        <div class="flex flex-col gap-1">
+          <h2 class="font-semibold text-text">License</h2>
+          <p class="text-text-secondary">
+            droid.or is free and open-source software licensed under the MIT License. See the
+            included LICENSE file for details.
+          </p>
+        </div>
+        <p class="text-xs leading-relaxed text-text-muted">
+          Android, Google Play, and ADB are trademarks of Google LLC. droid.or is an independent
+          open-source project and is not affiliated with, sponsored by, or endorsed by Google LLC or
+          the Android Open Source Project.
         </p>
       </section>
 
-      <p class="text-xs text-text-muted">
-        Android, Google Play, and ADB are trademarks of Google LLC. droid.or is an independent
-        open-source project and is not affiliated with, sponsored by, or endorsed by Google LLC or
-        the Android Open Source Project.
-      </p>
-
-      <section class="flex flex-col gap-2">
+      <section class="flex flex-col gap-2 border-t border-divider pt-4">
         <h2 class="font-semibold text-text">Support Development</h2>
         <p class="text-xs text-text-muted">
           Contributions are voluntary, do not unlock features, and are not tax-deductible.
@@ -64,6 +65,7 @@ async function handleSupportClick(): Promise<void> {
             type="primary"
             :loading="opening"
             :disabled="opening"
+            class="about-support-action"
             @click="handleSupportClick"
           >
             <template #icon>
@@ -76,8 +78,15 @@ async function handleSupportClick(): Promise<void> {
     </div>
     <template #footer>
       <div class="flex justify-end">
-        <NButton @click="close">Close</NButton>
+        <NButton class="about-support-action" @click="close"> Close </NButton>
       </div>
     </template>
   </NModal>
 </template>
+
+<style>
+.n-button.about-support-action:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+</style>

@@ -101,7 +101,7 @@ flowchart TD
 
 **Objective:** Polish the contribution surfaces in `SettingsView.vue` and `AboutModal.vue` using Impeccable craft guidelines.
 
-### 5.1 Design Targets & Heuristics
+### 5.1 Design Targets & Heuristics [COMPLETED]
 
 1. **GitHub Sponsors Iframe Theme Harmony:**
    - _Problem:_ An external `iframe` loading GitHub's card may render with an opaque white background if GitHub's assets delay or if the user's OS is in light mode while `droid.or` is toggled to dark mode.
@@ -119,10 +119,10 @@ flowchart TD
 
 |  Status  | Task ID       | Description                                 | Target Files                                                     | Verification Command                |
 | :------: | :------------ | :------------------------------------------ | :--------------------------------------------------------------- | :---------------------------------- |
-| `[TODO]` | **TSK-P2-01** | Iframe container polish & theme fallback    | `src/renderer/src/views/SettingsView.vue`                        | Visual inspection & `npm run build` |
-| `[TODO]` | **TSK-P2-02** | Typography & contrast audit on Support card | `src/renderer/src/views/SettingsView.vue`                        | WCAG contrast check (>= 4.5:1)      |
-| `[TODO]` | **TSK-P2-03** | About modal visual refinement & spacing     | `src/renderer/src/components/AboutModal.vue`                     | `npm run build`                     |
-| `[TODO]` | **TSK-P2-04** | Impeccable accessibility & keyboard audit   | `src/renderer/src/components/AboutModal.vue`, `SettingsView.vue` | Full keyboard tab runthrough        |
+| `[COMPLETED]` | **TSK-P2-01** | Iframe container polish & theme fallback    | `src/renderer/src/views/SettingsView.vue`                        | Visual inspection & `npm run build` |
+| `[COMPLETED]` | **TSK-P2-02** | Typography & contrast audit on Support card | `src/renderer/src/views/SettingsView.vue`                        | WCAG contrast check (>= 4.5:1)      |
+| `[COMPLETED]` | **TSK-P2-03** | About modal visual refinement & spacing     | `src/renderer/src/components/AboutModal.vue`                     | `npm run build`                     |
+| `[COMPLETED]` | **TSK-P2-04** | Impeccable accessibility & keyboard audit   | `src/renderer/src/components/AboutModal.vue`, `SettingsView.vue` | Full keyboard tab runthrough        |
 
 ---
 

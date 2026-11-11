@@ -281,21 +281,25 @@ async function downloadPlatformTools(): Promise<void> {
           Contributions are voluntary personal gifts. They do not unlock features and are not
           tax-deductible.
         </NAlert>
-        <iframe
-          :src="GITHUB_SPONSORS_CARD_URL"
-          title="GitHub Sponsors card for oscar-renteria"
-          width="600"
-          height="225"
-          loading="lazy"
-          class="block h-[225px] w-full max-w-[600px] border-0"
-        />
+        <div
+          class="w-full max-w-[600px] overflow-hidden rounded-md border border-border bg-surface p-2"
+        >
+          <iframe
+            :src="GITHUB_SPONSORS_CARD_URL"
+            title="GitHub Sponsors card for oscar-renteria"
+            width="600"
+            height="225"
+            loading="lazy"
+            class="block aspect-[8/3] h-auto w-full max-w-full border-0"
+          />
+        </div>
         <p class="text-xs text-text-secondary">
           If the embedded card is unavailable, you can
           <a
             :href="GITHUB_SPONSORS_URL"
             target="_blank"
             rel="noopener noreferrer"
-            class="rounded-sm text-primary underline underline-offset-2 hover:text-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            class="support-fallback-link rounded-sm text-primary underline underline-offset-2 hover:text-primary-hover"
           >
             open GitHub Sponsors in your browser </a
           >.
@@ -399,6 +403,7 @@ async function downloadPlatformTools(): Promise<void> {
               </NButton>
             </div>
           </template>
+
           <div v-else class="flex items-center gap-2">
             <NButton type="primary" :loading="aiSaving" @click="saveAiSettings">Save</NButton>
           </div>
@@ -407,3 +412,10 @@ async function downloadPlatformTools(): Promise<void> {
     </div>
   </div>
 </template>
+
+<style>
+.support-fallback-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+</style>
