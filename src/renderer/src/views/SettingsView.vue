@@ -3,7 +3,6 @@ import type { AiProviderId } from '@shared/types/ai-settings'
 import {
   NAlert,
   NButton,
-  NIcon,
   NInput,
   NRadioButton,
   NRadioGroup,
@@ -12,10 +11,9 @@ import {
   NTag,
   useMessage
 } from 'naive-ui'
-import { HeartOutline, LogoGithub } from '@vicons/ionicons5'
 import { computed, onMounted, ref, watch } from 'vue'
 import PageHeader from '@renderer/components/ui/PageHeader.vue'
-import { useSupportLink } from '@renderer/composables/useSupportLink'
+import { GITHUB_SPONSORS_CARD_URL, GITHUB_SPONSORS_URL } from '@shared/constants/support'
 import { useAdbSettingsStore } from '@renderer/stores/adb-settings.store'
 import { useAiSettingsStore } from '@renderer/stores/ai-settings.store'
 import { useSettingsStore, type ThemeMode } from '@renderer/stores/settings.store'
@@ -24,7 +22,6 @@ const adbSettingsStore = useAdbSettingsStore()
 const aiSettingsStore = useAiSettingsStore()
 const settingsStore = useSettingsStore()
 const message = useMessage()
-const { opening, openSupportLink } = useSupportLink()
 
 const themeOptions: Array<{ label: string; value: ThemeMode }> = [
   { label: 'System', value: 'system' },
@@ -284,20 +281,25 @@ async function downloadPlatformTools(): Promise<void> {
           Contributions are voluntary personal gifts. They do not unlock features and are not
           tax-deductible.
         </NAlert>
-        <div class="flex flex-wrap gap-2">
-          <NButton type="primary" :loading="opening" @click="openSupportLink('github-sponsors')">
-            <template #icon>
-              <NIcon :component="LogoGithub" aria-hidden="true" />
-            </template>
-            Sponsor on GitHub
-          </NButton>
-          <NButton :loading="opening" @click="openSupportLink('kofi')">
-            <template #icon>
-              <NIcon :component="HeartOutline" aria-hidden="true" />
-            </template>
-            Support on Ko-fi
-          </NButton>
-        </div>
+        <iframe
+          :src="GITHUB_SPONSORS_CARD_URL"
+          title="GitHub Sponsors card for oscar-renteria"
+          width="600"
+          height="225"
+          loading="lazy"
+          class="block h-[225px] w-full max-w-[600px] border-0"
+        />
+        <p class="text-xs text-text-secondary">
+          If the embedded card is unavailable, you can
+          <a
+            :href="GITHUB_SPONSORS_URL"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="rounded-sm text-primary underline underline-offset-2 hover:text-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            open GitHub Sponsors in your browser </a
+          >.
+        </p>
       </div>
 
       <NSpin :show="aiSettingsStore.loading">
