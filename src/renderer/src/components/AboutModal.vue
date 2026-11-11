@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { NButton, NIcon, NModal } from 'naive-ui'
-import { HeartOutline, LogoGithub } from '@vicons/ionicons5'
+import { LogoGithub } from '@vicons/ionicons5'
 import { useAppInfo } from '@renderer/composables/useAppInfo'
 import { useSupportLink } from '@renderer/composables/useSupportLink'
 
@@ -17,6 +17,10 @@ const { opening, openSupportLink } = useSupportLink()
 
 function close(): void {
   emit('update:show', false)
+}
+
+async function handleSupportClick(): Promise<void> {
+  await openSupportLink('github-sponsors')
 }
 </script>
 
@@ -56,17 +60,16 @@ function close(): void {
           Contributions are voluntary, do not unlock features, and are not tax-deductible.
         </p>
         <div class="flex flex-wrap gap-2">
-          <NButton type="primary" :loading="opening" @click="openSupportLink('github-sponsors')">
+          <NButton
+            type="primary"
+            :loading="opening"
+            :disabled="opening"
+            @click="handleSupportClick"
+          >
             <template #icon>
               <NIcon :component="LogoGithub" aria-hidden="true" />
             </template>
             Sponsor on GitHub
-          </NButton>
-          <NButton :loading="opening" @click="openSupportLink('kofi')">
-            <template #icon>
-              <NIcon :component="HeartOutline" aria-hidden="true" />
-            </template>
-            Support on Ko-fi
           </NButton>
         </div>
       </section>

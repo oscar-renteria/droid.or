@@ -1,10 +1,12 @@
 # Feature Specification: Developer Support and Voluntary Contributions ("Donate")
 
 **Target Application:** `droid.or` (Cross-platform Desktop Application for Android Device Management)  
-**Document Version:** 1.0.0  
-**Status:** Review / Proposal  
-**Assessment Date:** October 29, 2026  
+**Document Version:** 1.1.0<br>
+**Status:** Implemented; account onboarding still requires verification<br>
+**Assessment Date:** November 1, 2026<br>
 **Decision Gate Status:** **CONDITIONAL GO**
+
+> **Current decision:** The support feature uses GitHub Sponsors only. Settings embeds the GitHub-hosted card and always provides a direct external link; About remains a compact entry point. Ko-fi was removed. Section 24 is the current implementation record and supersedes conflicting provider, UI, and next-action proposals in Sections 1–23, which preserve the original assessment history.
 
 ---
 
@@ -28,7 +30,7 @@ The implementation of a voluntary contribution feature is **technically feasible
 
 - **Prerequisite 1 (Licensing):** The repository is currently unlicensed (`"license": "UNLICENSED"`, `private: true`). Prior to public release and soliciting financial contributions, an explicit open-source license (such as MIT or Apache-2.0) or commercial terms must be formally adopted to establish copyright, usage rights, and liability disclaimers.
 - **Prerequisite 2 (Patronage vs. Tax-Exempt Status):** The developer/maintainer is an individual or commercial software entity, not a recognized 501(c)(3) or tax-exempt charitable institution. The feature must be explicitly labeled as **"Support Development"**, **"Tip"**, or **"Sponsorship"**, and accompanied by clear disclosures that contributions are **not tax-deductible charitable donations** and **grant no digital perks, feature unlocks, or contractual warranties**.
-- **Prerequisite 3 (Zero In-App Financial Data / External Redirection):** The desktop application must not integrate payment processing SDKs, collect cardholder data, or embed secret API keys. Payment processing must occur entirely outside the application via an approved secure browser redirection (`shell.openExternal`) to established creator sponsorship platforms (**GitHub Sponsors**, **Ko-fi**, or **Stripe Payment Links**).
+- **Prerequisite 3 (Zero In-App Financial Data / External Processing):** The desktop application must not integrate payment processing SDKs, collect cardholder data, or embed secret API keys. GitHub hosts the sponsorship card and processes any sponsorship externally; the app only embeds that card and provides a direct browser link. The app does not collect or store payment or donor data.
 
 ---
 
@@ -56,7 +58,7 @@ The implementation of a voluntary contribution feature is **technically feasible
 ### In-Scope
 
 - Designing a non-intrusive, compliant UI entry point for voluntary developer contributions within `droid.or` (Settings view and About dialog).
-- Selecting and integrating external payment and sponsorship platforms (GitHub Sponsors, Ko-fi, Stripe Payment Links).
+- Integrating the GitHub Sponsors card with a direct external-link fallback.
 - Establishing technical safeguards (IPC validation, strict HTTPS URL domain whitelisting, OS browser launching).
 - Drafting transparent user-facing notices, tax disclosures, refund policies, and disclaimer texts.
 - Defining automated and manual verification plans.
@@ -470,7 +472,7 @@ export interface DroidorApi {
 import type { DonationProviderId } from '@shared/validation/support.schema'
 
 export const DONATION_URLS: Record<DonationProviderId, string> = {
-  'github-sponsors': 'https://github.com/sponsors/droid-or',
+  'github-sponsors': 'https://github.com/sponsors/oscar-renteria',
   kofi: 'https://ko-fi.com/droid_or'
 }
 
@@ -900,15 +902,15 @@ To allow work to pause, resume, and switch between agents or context windows sea
 ##### [DONE] TSK-15: Add "Support Development" Card to Settings View
 - **Status:** `[DONE]`
 - **Target Files:** `src/renderer/src/views/SettingsView.vue`
-- **Description:** Add card matching existing settings style: title, explanation of voluntary support, non-tax-deductible disclaimer, and two buttons ("Sponsor on GitHub", "Support on Ko-fi") wired to `useSupportLink`.
-- **Ponytail Check:** Uses existing styling (`rounded-lg border border-border p-4`) and existing Ionicons (`LogoGithub`, `HeartOutline`).
+- **Description:** Add a responsive GitHub Sponsors card embed, voluntary-support disclaimer, and an always-visible direct-link fallback.
+- **Ponytail Check:** Reuses the existing Settings card styling and keeps the fallback available if the embed cannot load.
 - **Verification Command:** `npm run typecheck:web`
 - **Dependencies:** TSK-14
 
 ##### [DONE] TSK-16: Build `AboutModal.vue` Component
 - **Status:** `[DONE]`
 - **Target Files:** `src/renderer/src/components/AboutModal.vue` (New file)
-- **Description:** Modal dialog displaying application name, version (via `useAppInfo`), MIT license notice, Google/Android non-affiliation disclaimer, and the two support buttons wired to `useSupportLink`.
+- **Description:** Modal dialog displaying application name, version (via `useAppInfo`), MIT license notice, Google/Android non-affiliation disclaimer, and a compact GitHub Sponsors link.
 - **Ponytail Check:** Uses Naive UI `NModal`, `NCard`, `NButton`; encapsulated and clean.
 - **Verification Command:** `npm run typecheck:web`
 - **Dependencies:** TSK-14
@@ -948,12 +950,12 @@ To allow work to pause, resume, and switch between agents or context windows sea
 Before tagging and releasing a build containing the Donate feature, the release manager must verify:
 
 - [ ] **License Landed:** Root `LICENSE` file is present and `package.json` license identifier is set to `MIT`.
-- [ ] **Public Profile Active:** Developer GitHub Sponsors page (`https://github.com/sponsors/<username>`) or Ko-fi page (`https://ko-fi.com/<username>`) is active and verified.
-- [ ] **Destination URLs Verified:** Production URLs in `src/main/support/support-config.ts` are live, correct, and resolve to HTTP 200/302.
-- [ ] **Disclaimers Present:** UI visibly states contributions are voluntary, non-deductible, and do not unlock digital perks.
-- [ ] **Trademark Compliance:** UI includes non-affiliation notice regarding Google LLC and Android.
-- [ ] **Zero Sensitive Storage:** Verified that no donor data, payment tokens, or API secrets are written to local SQLite database or log files.
-- [ ] **Quality Gates Green:** `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm run test`, and `npm run build` all exit with code 0.
+- [ ] **Account Onboarding Verified:** Confirm the GitHub Sponsors profile, payout setup, and sponsorship tiers are fully configured; a publicly rendered card alone does not verify payout readiness.
+- [x] **Destination URLs Verified:** The configured Sponsors page and card URL resolve and the public card renders.
+- [x] **Disclaimers Present:** UI states contributions are voluntary, non-deductible, and do not unlock digital perks.
+- [x] **Trademark Compliance:** About includes the Google LLC / Android non-affiliation notice.
+- [x] **Zero Sensitive Storage:** This change adds no donor data, payment tokens, or API secrets to SQLite or logs.
+- [x] **Quality Gates Green:** Typecheck, lint, formatting, all tests, and production build pass; see Section 24.
 
 ---
 
@@ -998,4 +1000,71 @@ All findings and policy evaluations in this document are grounded in official do
 
 #### Required Next Action
 
-Proceed to **Phase 1 (TSK-01)**: Add the `LICENSE` file, update project metadata, and finalize the developer's public GitHub Sponsors / Ko-fi profile before implementing the UI and IPC contracts.
+The code implementation is complete. Before release, confirm GitHub Sponsors account onboarding and payout readiness; see Section 24.
+
+---
+
+## 24. Reassessment and Current Implementation
+
+### 24.1 Decisions and Rationale
+
+The original multi-provider proposal was reassessed after confirming that the maintainer had not completed donation-platform setup. The current implementation deliberately uses one provider and does not claim that account onboarding or payouts are complete.
+
+| Decision | Current choice | Rationale |
+|---|---|---|
+| Provider | GitHub Sponsors only | The chosen destination is the maintainer's GitHub Sponsors page; no Ko-fi account or URL was configured. |
+| Settings experience | Embed `https://github.com/sponsors/oscar-renteria/card` | Makes the sponsor card discoverable in Settings without requiring an extra click. |
+| Fallback | Always-visible link to `https://github.com/sponsors/oscar-renteria` | Remains usable if the embedded card is blocked, unavailable, or inconvenient. |
+| About entry | Keep one compact external link | Preserves the low-friction entry point without duplicating an embed. |
+| Ko-fi | Remove from UI, validation, and support URL allowlist | Avoids presenting an unconfigured provider or leaving a stale supported path. |
+| Payment and donor data | Keep entirely outside the app | No payment SDK, donor form, payment credentials, or donor-data persistence is added. |
+
+### 24.2 Review of Existing Tasks
+
+The completed TSK-01–TSK-19 foundation remains in place. The following updates clarify which parts of the original multi-provider proposal remain applicable:
+
+| Task | Current disposition |
+|---|---|
+| TSK-01 | Retained: the MIT license prerequisite is satisfied in the repository. |
+| TSK-02 | Retained: project metadata continues to identify the MIT license. |
+| TSK-03 | Retained: user-facing copy describes voluntary support and disclaims tax deductibility and feature unlocks. |
+| TSK-03B | Retained: the Android/Google non-affiliation notice remains in About. |
+| TSK-04 | Retained with narrowed scope: URL validation supports GitHub Sponsors only. |
+| TSK-05 | Retained with narrowed scope: only the GitHub Sponsors destination is configured. |
+| TSK-06 | Retained: the IPC contract uses the supported provider schema. |
+| TSK-07 | Retained: renderer-to-main support IPC remains in use for the About action. |
+| TSK-08 | Retained: external links are opened through the existing safe OS-browser path. |
+| TSK-09 | Retained: the support preload API remains typed and exposed. |
+| TSK-10 | Retained with narrowed scope: support URL configuration contains only GitHub Sponsors. |
+| TSK-11 | Retained: the support IPC handler remains registered. |
+| TSK-12 | Retained: the handler remains wired into the main IPC registry. |
+| TSK-13 | Retained and extended: handler tests cover GitHub-only provider behavior and reject Ko-fi. |
+| TSK-14 | Retained for the About action; the Settings embed and direct fallback are links rather than provider buttons. |
+| TSK-15 | Revised: Settings contains the responsive card embed and always-visible fallback, not two provider buttons. |
+| TSK-16 | Revised: About contains one compact GitHub Sponsors link, not two provider buttons. |
+| TSK-17 | Retained: the footer continues to open About. |
+| TSK-18 | Retained and updated: composable tests use the canonical GitHub Sponsors destination. |
+| TSK-19 | Retained: repository quality checks remain required and are rerun for this revision. |
+
+### 24.3 Reassessment Work and Acceptance Criteria
+
+The following implementation tasks complete the provider and UI reassessment:
+
+| Task | Status | Acceptance criteria |
+|---|---|---|
+| TSK-20: Embed GitHub Sponsors in Settings | Complete | The card uses the canonical GitHub Sponsors card URL, has an accessible title, scales to the available content width, and has a visible direct-link fallback. |
+| TSK-21: Remove unconfigured Ko-fi support | Complete | Ko-fi is absent from the UI and support configuration; schema, handler, and configuration tests reject it. |
+| TSK-22: Update specification and verify | Complete | This document records the new decisions, release limitation, and verification results; focused and repository-wide checks pass. |
+
+The embed is constrained by the renderer Content Security Policy to `https://github.com`. The card is hosted by GitHub and is cross-origin; the app cannot style its contents or reliably detect every load failure, so the direct link is always rendered. No new dependency or permission is required.
+
+### 24.4 Verification and Operational Limitations
+
+- The public card URL was opened successfully and rendered a Sponsor action. This confirms the public page responds, but does **not** verify the maintainer's payout configuration, account eligibility, or sponsorship-tier setup.
+- The public card page was checked in a browser at 390px and 1280px widths without horizontal overflow. The Settings view itself was not visually inspected inside the shipped Electron app.
+- Focused support tests passed (4 files, 21 tests); the full suite passed (72 files, 444 tests). Typecheck, lint, formatting, and the production build passed.
+- The production build reports existing Rollup annotation warnings in dependency files under `node_modules/zod`; these are non-fatal and outside this feature's source changes.
+- GitHub controls card availability and contents. Network restrictions, content blocking, or a future GitHub change may prevent the embed from rendering; the direct link is the fallback.
+- GitHub receives the network request needed to render its embedded card. Users who open the direct link navigate to GitHub under GitHub's privacy practices.
+- No payment flow, donor-data collection, or donor-data persistence is implemented in `droid.or`.
+- Release readiness remains conditional on confirming the GitHub Sponsors account onboarding and payout setup.

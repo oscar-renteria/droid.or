@@ -28,7 +28,7 @@ describe('useSupportLink', () => {
   it('opens the requested provider and reports success', async () => {
     const openDonationLink = vi.fn<DroidorApi['openDonationLink']>().mockResolvedValue({
       success: true,
-      urlOpened: 'https://github.com/sponsors/droid-or',
+      urlOpened: 'https://github.com/sponsors/oscar-renteria',
       error: null
     })
     stubDonationLink(openDonationLink)
@@ -48,7 +48,7 @@ describe('useSupportLink', () => {
   })
 
   it('warns and copies the URL when the browser cannot open it', async () => {
-    const url = 'https://ko-fi.com/droid_or'
+    const url = 'https://github.com/sponsors/oscar-renteria'
     const openDonationLink = vi.fn<DroidorApi['openDonationLink']>().mockResolvedValue({
       success: false,
       urlOpened: url,
@@ -59,7 +59,7 @@ describe('useSupportLink', () => {
     vi.stubGlobal('navigator', { clipboard: { writeText } })
 
     const { openSupportLink } = useSupportLink(messageApi)
-    await openSupportLink('kofi')
+    await openSupportLink('github-sponsors')
 
     expect(messageApi.warning).toHaveBeenCalledWith('blocked by pop-up blocker')
     expect(writeText).toHaveBeenCalledWith(url)
@@ -74,7 +74,7 @@ describe('useSupportLink', () => {
     stubDonationLink(openDonationLink)
 
     const { openSupportLink } = useSupportLink(messageApi)
-    await openSupportLink('kofi')
+    await openSupportLink('github-sponsors')
 
     expect(messageApi.warning).toHaveBeenCalledWith(
       'Could not open the browser. Link copied to clipboard.'
@@ -93,7 +93,7 @@ describe('useSupportLink', () => {
 
     const { opening, openSupportLink } = useSupportLink(messageApi)
     const request = openSupportLink('github-sponsors')
-    await openSupportLink('kofi')
+    await openSupportLink('github-sponsors')
 
     expect(openDonationLink).toHaveBeenCalledTimes(1)
     expect(opening.value).toBe(true)
@@ -102,7 +102,7 @@ describe('useSupportLink', () => {
 
     await vi.advanceTimersByTimeAsync(1000)
     openDonationLink.mockRejectedValueOnce(new Error('bridge unavailable'))
-    await openSupportLink('kofi')
+    await openSupportLink('github-sponsors')
 
     expect(messageApi.error).toHaveBeenCalledWith('Failed to open the donation link.')
   })
