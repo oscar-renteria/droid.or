@@ -1,11 +1,11 @@
 import type { DonationProviderId } from '@shared/validation/support.schema'
+import { GITHUB_SPONSORS_URL } from '@shared/constants/support'
 
 export const DONATION_URLS: Record<DonationProviderId, string> = {
-  'github-sponsors': 'https://github.com/sponsors/droid-or',
-  kofi: 'https://ko-fi.com/droid_or'
+  'github-sponsors': GITHUB_SPONSORS_URL
 }
 
-const ALLOWED_DOMAINS = new Set(['github.com', 'ko-fi.com'])
+const ALLOWED_DOMAINS = new Set(['github.com'])
 
 export function validateSafeExternalUrl(rawUrl: string): boolean {
   try {

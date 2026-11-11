@@ -48,12 +48,21 @@ describe('registerSupportHandlers', () => {
     expect(mocks.openExternal).not.toHaveBeenCalled()
   })
 
+  it('rejects the retired Ko-fi provider without opening a browser', async () => {
+    await expect(getHandler()(undefined, 'kofi')).resolves.toEqual({
+      success: false,
+      urlOpened: null,
+      error: 'Invalid donation provider.'
+    })
+    expect(mocks.openExternal).not.toHaveBeenCalled()
+  })
+
   it('returns a failed launch result when the browser cannot open', async () => {
     mocks.openExternal.mockRejectedValue(new Error('No browser configured'))
 
-    await expect(getHandler()(undefined, 'kofi')).resolves.toEqual({
+    await expect(getHandler()(undefined, 'github-sponsors')).resolves.toEqual({
       success: false,
-      urlOpened: DONATION_URLS.kofi,
+      urlOpened: DONATION_URLS['github-sponsors'],
       error: 'No browser configured'
     })
   })
