@@ -4,14 +4,14 @@ import type { Component } from 'vue'
 
 withDefaults(
   defineProps<{
-    icon?: Component
+    icon?: Component | undefined
     title: string
-    description?: string
+    description?: string | undefined
     /** 1 when the empty state stands in for the whole page (DeviceGate), so
      *  the page still has its h1; 2 for an empty section under a PageHeader. */
     headingLevel?: 1 | 2
   }>(),
-  { headingLevel: 2 }
+  { icon: undefined, description: undefined, headingLevel: 2 }
 )
 </script>
 
