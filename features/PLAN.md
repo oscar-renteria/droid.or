@@ -151,7 +151,7 @@ flowchart TD
 | :------: | :------------ | :------------------------------------------- | :------------------------------------------------------------------------------------------------ |
 | `[COMPLETED]` | **TSK-P4-01** | Full repository quality gate                 | All gates passed: typecheck, lint, format check, 72 test files / 444 tests, and production build. |
 | `[COMPLETED]` | **TSK-P4-02** | Merge `feature/donation-support` to `master` | Switch to `master`, merge `feature/donation-support`, verify clean working tree.                  |
-| `[TODO]` | **TSK-P4-03** | Maintainer GitHub Sponsors onboarding        | Finalize GitHub Sponsors payout and tier configuration out-of-band.                               |
+| `[COMPLETED]` | **TSK-P4-03** | Maintainer GitHub Sponsors onboarding        | Finalize GitHub Sponsors payout and tier configuration out-of-band.                               |
 
 ---
 
