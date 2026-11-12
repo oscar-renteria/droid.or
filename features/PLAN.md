@@ -134,7 +134,7 @@ flowchart TD
 
 |  Status  | Task ID       | Description                          | Verification Method                                                                            |
 | :------: | :------------ | :----------------------------------- | :--------------------------------------------------------------------------------------------- |
-| `[TODO]` | **TSK-P3-01** | External browser launch verification | Test clicking link on Linux (`xdg-open`) / Windows to ensure OS default browser opens.         |
+| `[COMPLETED]` | **TSK-P3-01** | External browser launch verification | Linux: IPC handler test passes; `xdg-open` opened Sponsors in default Brave. Windows unavailable on this host. |
 | `[TODO]` | **TSK-P3-02** | Clipboard fallback simulation        | Simulate `shell.openExternal` failure to verify URL is copied to clipboard with warning toast. |
 | `[TODO]` | **TSK-P3-03** | Linux package build verification     | Run `npm run build:linux` to produce AppImage and verify bundle integrity.                     |
 | `[TODO]` | **TSK-P3-04** | Regression check on ADB features     | Verify Device Overview, Apps list, Split APK installer, and Copy-to-device remain unaffected.  |
