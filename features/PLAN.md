@@ -135,9 +135,9 @@ flowchart TD
 |  Status  | Task ID       | Description                          | Verification Method                                                                            |
 | :------: | :------------ | :----------------------------------- | :--------------------------------------------------------------------------------------------- |
 | `[COMPLETED]` | **TSK-P3-01** | External browser launch verification | Linux: IPC handler test passes; `xdg-open` opened Sponsors in default Brave. Windows unavailable on this host. |
-| `[TODO]` | **TSK-P3-02** | Clipboard fallback simulation        | Simulate `shell.openExternal` failure to verify URL is copied to clipboard with warning toast. |
-| `[TODO]` | **TSK-P3-03** | Linux package build verification     | Run `npm run build:linux` to produce AppImage and verify bundle integrity.                     |
-| `[TODO]` | **TSK-P3-04** | Regression check on ADB features     | Verify Device Overview, Apps list, Split APK installer, and Copy-to-device remain unaffected.  |
+| `[COMPLETED]` | **TSK-P3-02** | Clipboard fallback simulation        | Mocked browser-launch failure; IPC returns the URL and renderer warns and copies it. `npx vitest run tests/main/ipc/support.handler.test.ts tests/renderer/composables/useSupportLink.test.ts` |
+| `[COMPLETED]` | **TSK-P3-03** | Linux package build verification     | `npm run build:linux` passed; `release/droid.or-0.1.0.AppImage` is executable, reports a valid AppImage runtime, and contains a valid SquashFS filesystem (x64). |
+| `[COMPLETED]` | **TSK-P3-04** | Regression check on ADB features     | 10 targeted dashboard, package, split-install, APK-install, and device-transfer test files passed (96 tests). No Android device was attached for a hardware smoke test. |
 
 ---
 
@@ -149,7 +149,7 @@ flowchart TD
 
 |  Status  | Task ID       | Description                                  | Action                                                                                            |
 | :------: | :------------ | :------------------------------------------- | :------------------------------------------------------------------------------------------------ |
-| `[TODO]` | **TSK-P4-01** | Full repository quality gate                 | Run `npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build`. |
+| `[COMPLETED]` | **TSK-P4-01** | Full repository quality gate                 | All gates passed: typecheck, lint, format check, 72 test files / 444 tests, and production build. |
 | `[TODO]` | **TSK-P4-02** | Merge `feature/donation-support` to `master` | Switch to `master`, merge `feature/donation-support`, verify clean working tree.                  |
 | `[TODO]` | **TSK-P4-03** | Maintainer GitHub Sponsors onboarding        | Finalize GitHub Sponsors payout and tier configuration out-of-band.                               |
 
