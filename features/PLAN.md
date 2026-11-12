@@ -32,7 +32,7 @@
 
 ### 1.3 Uncommitted Working Tree (Reassessment Phase) [COMPLETED]
 
-On November 1, 2026, a reassessment was conducted (documented in Section 24 of [`donation_functionality_specification.md`](file:///features/donation_functionality_specification.md)):
+On November 1, 2026, a reassessment was conducted:
 
 - **Decision:** Simplified from multi-provider to **GitHub Sponsors only** for `@oscar-renteria` (`https://github.com/sponsors/oscar-renteria`). Removed unconfigured Ko-fi routes.
 - **Settings Embed:** Added responsive GitHub Sponsors card iframe embed with direct fallback link in [`SettingsView.vue`](file:///src/renderer/src/views/SettingsView.vue) and CSP update (`frame-src https://github.com`) in [`index.html`](file:///src/renderer/index.html).
@@ -93,7 +93,7 @@ flowchart TD
 | `[COMPLETED]` | **TSK-P1-03** | Commit canonical URLs & schema pruning         | `src/shared/constants/support.ts`, `src/shared/validation/support.schema.ts`, `tests/shared/support.schema.test.ts`         | `npx vitest run tests/shared/support.schema.test.ts`                                        |
 | `[COMPLETED]` | **TSK-P1-04** | Commit main process whitelist & handler tests  | `src/main/support/support-config.ts`, `tests/main/support/support-config.test.ts`, `tests/main/ipc/support.handler.test.ts` | `npx vitest run tests/main/`                                                                |
 | `[COMPLETED]` | **TSK-P1-05** | Commit Settings card iframe embed & CSP        | `src/renderer/src/views/SettingsView.vue`, `src/renderer/index.html`                                                        | `npm run build`                                                                             |
-| `[COMPLETED]` | **TSK-P1-06** | Commit About modal update & specification sync | `src/renderer/src/components/AboutModal.vue`, `features/donation_functionality_specification.md`                            | `npm run typecheck && npm run test`                                                         |
+| `[COMPLETED]` | **TSK-P1-06** | Commit About modal update & specification sync | `src/renderer/src/components/AboutModal.vue`                                                                                | `npm run typecheck && npm run test`                                                         |
 
 ---
 
