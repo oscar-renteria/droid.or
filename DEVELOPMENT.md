@@ -118,7 +118,7 @@ tests/          # Mirrors src/
 npm run build         # type-check + bundle (out/)
 npm run build:linux   # + electron-builder --linux  (AppImage)
 npm run build:win     # + electron-builder --win    (NSIS installer + portable .exe)
-npm run build:mac     # + electron-builder --mac    (dmg + zip)
+npm run build:mac     # + electron-builder --mac    (arm64 dmg)
 ```
 
 All three platforms have real settings configured in `electron-builder.yml`
@@ -138,7 +138,7 @@ locally, for reasons specific to this dev machine rather than the config:
   dev machine, and not worth installing just for this when CI already
   builds on a real Windows runner anyway.
 - **macOS**: electron-builder can only produce a macOS build (`.app`,
-  `dmg`, `zip`) on macOS itself — a hard restriction of electron-builder,
+  `dmg`) on macOS itself — a hard restriction of electron-builder,
   unrelated to the native-module point above.
 
 ### CI builds (`.github/workflows/build.yml`)
@@ -147,21 +147,22 @@ Every push to `master` builds all three platforms on their own native
 GitHub-hosted runner (`ubuntu-latest`/`windows-latest`/`macos-latest`), so
 neither limitation above applies there — each OS uses its own prebuilt
 native binary and its own real toolchain, no Wine or cross-compilation
-involved. Artifacts (the AppImage, the NSIS installer + portable `.exe`,
-the dmg + zip) are uploaded as workflow artifacts, downloadable from that
-run's Actions page. Can also be triggered manually (`workflow_dispatch`)
+involved. The macOS job builds an arm64 DMG and verifies the app's ad-hoc
+signature with `codesign` before uploading it. Artifacts (the AppImage, the
+NSIS installer + portable `.exe`, and the arm64 DMG) are uploaded as
+workflow artifacts, downloadable from that run's Actions page. Can also be triggered manually (`workflow_dispatch`)
 without a push. This requires the repository to actually be on GitHub with
 Actions enabled — pushing to a purely local `master` does nothing.
 
 ### Code signing and notarization
 
-Every artifact this project produces — locally or via CI — is deliberately
-**unsigned**. That's an accepted trade-off, not an oversight: an unsigned
-Windows installer/portable `.exe` triggers a Windows SmartScreen warning
-("Run anyway" bypasses it), and an unsigned/unnotarized macOS app is
-blocked by Gatekeeper (right-click → Open bypasses it) — packaging format
-doesn't change either of those, only real signing credentials do, and this
-project doesn't have any. If that changes:
+No Developer ID or Authenticode certificate is configured. Windows
+installers remain unsigned and trigger a SmartScreen warning. The macOS
+arm64 app is ad-hoc signed (`identity: '-'`) so its code signature can be
+verified, but an ad-hoc signature is not trusted by Gatekeeper and the app
+is not notarized. The macOS CI job verifies the signature; neither
+packaging format nor an ad-hoc signature removes the first-run warning.
+If real signing credentials become available:
 
 - **Windows**: a code-signing certificate (a paid Authenticode certificate
   from a CA). electron-builder picks it up automatically from the

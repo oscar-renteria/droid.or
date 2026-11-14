@@ -54,18 +54,14 @@ nsis:
 portable:
   artifactName: ${productName}-${version}-${arch}-portable.${ext}
 
-# Cannot be built or verified from this project's (Linux) dev environment —
-# electron-builder can only produce a macOS build on macOS itself. Config
-# below is correct per electron-builder's own docs but unverified in
-# practice; build and test on a real Mac before distributing. See
-# DEVELOPMENT.md for what code signing/notarization actually requires
-# beyond this file (a paid Apple Developer account - this config alone
-# does not provide either).
+# macOS is arm64-only and distributed as a DMG. `'-'` requests an ad-hoc
+# signature, not a Developer ID certificate; CI verifies the packaged app.
 mac:
+  identity: '-'
   category: public.app-category.utilities
   target:
     - target: dmg
-    - target: zip
+      arch: arm64
   hardenedRuntime: true
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist

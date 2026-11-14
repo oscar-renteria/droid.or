@@ -8,14 +8,9 @@ name: Build
 # electron-builder never needs Wine to touch a Windows/macOS artifact it's
 # building on that same OS.
 #
-# Every artifact here is unsigned by design (see DEVELOPMENT.md) - no
-# code-signing certificate exists for this project. Windows SmartScreen and
-# macOS Gatekeeper will warn on first run; that's an accepted trade-off,
-# not a bug in this workflow. Signing later needs no workflow change: add
-# CSC_LINK/CSC_KEY_PASSWORD (and, for macOS notarization,
-# APPLE_ID/APPLE_APP_SPECIFIC_PASSWORD/APPLE_TEAM_ID) as repository
-# secrets, then reference them via `env:` on the build step below -
-# electron-builder picks them up automatically.
+# No platform has a Developer ID/Authenticode certificate. Windows remains
+# unsigned; macOS uses an ad-hoc signature required by Apple Silicon and
+# verifies it below. Neither is trusted by Gatekeeper/SmartScreen.
 
 on:
   push:
@@ -40,9 +35,7 @@ jobs:
           - os: macos-latest
             build_script: build:mac
             artifact_name: macos
-            artifact_path: |
-              release/*.dmg
-              release/*.zip
+            artifact_path: release/*.dmg
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -59,6 +52,17 @@ jobs:
       - run: npm run test
 
       - run: npm run ${{ matrix.build_script }}
+
+      - name: Verify macOS ad-hoc signature
+        if: matrix.os == 'macos-latest'
+        run: |
+          app_path="$(find release -type d -name '*.app' -print -quit)"
+          if [ -z "$app_path" ]; then
+            echo "No packaged macOS app found under release/."
+            exit 1
+          fi
+          codesign --verify --deep --strict --verbose=2 "$app_path"
+          codesign --display --verbose=2 "$app_path" 2>&1 | grep -Fx "Signature=adhoc"
 
       - uses: actions/upload-artifact@v4
         with:
