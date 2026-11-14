@@ -152,6 +152,8 @@ native binary and its own real toolchain, no Wine or cross-compilation
 involved. The Linux job verifies the deterministic x64 AppImage name; the
 Windows job verifies the x64 NSIS and portable `.exe` names and their
 product, version, copyright, company, and trademark metadata before upload;
+both Linux and Windows CI also smoke-test opening a database from the
+packaged Electron runtime;
 the macOS job builds an arm64 DMG and verifies the app's ad-hoc signature
 with `codesign`. Artifacts (the x64 AppImage, the x64 NSIS
 installer + portable `.exe`, and the arm64 DMG) are uploaded as workflow
