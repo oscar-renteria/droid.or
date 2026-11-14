@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Node.js (a current LTS release) and npm
+- Node.js 22 (the version CI uses is pinned in `.nvmrc`; `nvm use` picks it up) and npm
 - No Android device is required for most development — see
   [Developing without a device](#developing-without-a-device) below
 
