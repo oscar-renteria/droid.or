@@ -146,30 +146,30 @@ the About dialog.
   `dmg`) on macOS itself — a hard restriction of electron-builder,
   unrelated to the native-module point above.
 
-### CI builds (`.github/workflows/build.yml`)
+### CI builds
 
-Pull requests and pushes to `master` also run `.github/workflows/ci.yml`:
-Ubuntu runs type-checking and lint, while Ubuntu and Windows run the test
-suite.
+`.github/workflows/ci.yml` runs on every pull request and push to
+`master`: actionlint checks the workflow files, Ubuntu runs type-checking
+and lint, and Ubuntu and Windows run the test suite.
 
-Every push to `master` builds all three platforms on their own native
-GitHub-hosted runner (`ubuntu-latest`/`windows-latest`/`macos-latest`), so
-neither limitation above applies there — each OS uses its own prebuilt
+`.github/workflows/build.yml` packages all three platforms on their own
+native GitHub-hosted runner (`ubuntu-latest`/`windows-latest`/`macos-latest`),
+so neither limitation above applies there — each OS uses its own prebuilt
 native binary and its own real toolchain, no Wine or cross-compilation
-involved. The Linux job verifies the deterministic x64 AppImage name; the
-Windows job verifies the x64 NSIS and portable `.exe` names and their
-product, version, copyright, company, and trademark metadata before upload;
-both Linux and Windows CI also smoke-test opening a database from the
-packaged Electron runtime;
-Linux CI verifies `app.asar` contains only the app output, package metadata,
-and production dependencies, with tests and app source maps excluded, and
-checks the generated third-party notices resource;
-the macOS job builds an arm64 DMG and verifies the app's ad-hoc signature
-with `codesign`. Artifacts (the x64 AppImage, the x64 NSIS
-installer + portable `.exe`, and the arm64 DMG) are uploaded as workflow
-artifacts, downloadable from that run's Actions page. Can also be triggered manually (`workflow_dispatch`)
-without a push. This requires the repository to actually be on GitHub with
-Actions enabled — pushing to a purely local `master` does nothing.
+involved. It does not run on push; it runs when started manually
+(Actions → Build → Run workflow) for a snapshot build, and as the build
+stage of the release workflow.
+
+The Linux job verifies the deterministic x64 AppImage name; the Windows job
+verifies the x64 NSIS and portable `.exe` names and their product, version,
+copyright, company, and trademark metadata; both smoke-test opening a
+database from the packaged Electron runtime. Linux also verifies `app.asar`
+contains only the app output, package metadata, and production
+dependencies (no tests or app source maps) and checks the generated
+third-party notices resource. The macOS job builds an arm64 DMG and
+verifies the app's ad-hoc signature with `codesign`. Artifacts (the x64
+AppImage, the x64 NSIS installer + portable `.exe`, and the arm64 DMG) are
+uploaded as workflow artifacts on that run's Actions page.
 
 ### Code signing and notarization
 

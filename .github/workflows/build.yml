@@ -1,27 +1,32 @@
 name: Build
 
-# Builds and packages droid.or for all three platforms on every push to
-# master. Each OS builds on its own native GitHub-hosted runner, so the
-# problems that make cross-building Windows/macOS from this project's own
-# (Linux) dev machine impractical don't apply here: better-sqlite3's
-# prebuilt native binary for that exact platform is used directly, and
-# electron-builder never needs Wine to touch a Windows/macOS artifact it's
-# building on that same OS.
+# Builds, verifies and uploads the distributables for all three platforms.
+# Not triggered by pushes: `ci.yml` covers every push/PR, and this workflow
+# runs either on demand (snapshot builds via workflow_dispatch) or as the
+# build stage of `release.yml` (workflow_call), so the release ships exactly
+# what these verification steps checked.
+#
+# Each OS builds on its own native GitHub-hosted runner, so the problems
+# that make cross-building Windows/macOS from a Linux machine impractical
+# don't apply: better-sqlite3's prebuilt native binary for that exact
+# platform is used directly, and electron-builder never needs Wine.
 #
 # No platform has a Developer ID/Authenticode certificate. Windows remains
 # unsigned; macOS uses an ad-hoc signature required by Apple Silicon and
 # verifies it below. Neither is trusted by Gatekeeper/SmartScreen.
 
 on:
-  push:
-    branches: [master]
   workflow_dispatch: {}
+  workflow_call: {}
 
 permissions:
   contents: read
 
+# Fixed prefix instead of github.workflow: when called from release.yml,
+# github.workflow is the caller's name, and sharing the caller's group would
+# make this workflow cancel the very run that called it.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -54,10 +59,8 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm run test
-
+      # Type-checking is part of every build:<os> script; lint and tests run
+      # in ci.yml and in release.yml's verify job before this is called.
       - run: npm run ${{ matrix.build_script }}
 
       - name: Build unpacked Windows app for native module smoke test
