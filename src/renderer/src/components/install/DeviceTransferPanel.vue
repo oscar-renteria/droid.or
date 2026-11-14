@@ -110,6 +110,7 @@ function chooseAnotherApp(): void {
         :options="sourceDeviceOptions"
         placeholder="Choose a connected source device"
         aria-label="Source device"
+        :disabled="transferStore.busy"
       />
       <p class="text-sm text-text-secondary">
         Apps will be copied from this device to {{ targetDeviceName }}.
@@ -123,7 +124,13 @@ function chooseAnotherApp(): void {
       v-if="selectedPackage && sourceDeviceId && targetDeviceId"
       class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto"
     >
-      <NButton class="self-start" size="small" quaternary @click="chooseAnotherApp">
+      <NButton
+        class="self-start"
+        size="small"
+        quaternary
+        :disabled="transferStore.busy"
+        @click="chooseAnotherApp"
+      >
         Choose another app
       </NButton>
       <DeviceTransferReview

@@ -3,6 +3,8 @@ import type { KnownDevice } from '@shared/types/device'
 import type { DroidorApi } from '@shared/types/droidor-api'
 import type { DeviceTransferPackage } from '@shared/types/device-transfer'
 import type { SplitInstallAnalysis } from '@shared/types/split-install'
+import type { OperationResult } from '@shared/types/operation'
+import type { DeviceTransferProgressUpdate } from '@shared/validation/device-transfer.schema'
 import { NInput, NSelect } from 'naive-ui'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
@@ -143,9 +145,19 @@ describe('DeviceTransferPanel', () => {
   it('opens the shared review workflow for a selected source app', async () => {
     const getDeviceTransferPackages = vi.fn().mockResolvedValue(SOURCE_PACKAGES)
     const analyzeDeviceTransfer = vi.fn().mockResolvedValue(ANALYSIS)
-    const performDeviceTransfer = vi
-      .fn()
-      .mockResolvedValue({ success: true, message: 'Installed', rawOutput: 'Success' })
+    let resolveTransfer: ((result: OperationResult) => void) | undefined
+    const performDeviceTransfer = vi.fn(
+      (
+        _sourceDeviceId: string,
+        _targetDeviceId: string,
+        _packageName: string,
+        _expectedVersionCode: number | null,
+        _onProgress?: (progress: DeviceTransferProgressUpdate) => void
+      ) =>
+        new Promise<OperationResult>((resolve) => {
+          resolveTransfer = resolve
+        })
+    )
     vi.stubGlobal(
       'window',
       Object.assign(Object.create(window), {
@@ -179,7 +191,25 @@ describe('DeviceTransferPanel', () => {
     await compatibilityButton?.trigger('click')
     await flushPromises()
 
-    expect(analyzeDeviceTransfer).toHaveBeenCalledWith(SOURCE.id, TARGET.id, 'com.example.reader')
+    expect(analyzeDeviceTransfer.mock.calls[0]?.slice(0, 3)).toEqual([
+      SOURCE.id,
+      TARGET.id,
+      'com.example.reader'
+    ])
     expect(wrapper.text()).toContain('New install')
+
+    const installButton = wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('Copy & install'))
+    await installButton?.trigger('click')
+    await wrapper.vm.$nextTick()
+    const chooseAnotherButton = wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('Choose another app'))
+
+    expect(chooseAnotherButton?.attributes('disabled')).toBeDefined()
+
+    resolveTransfer?.({ success: true, message: 'Installed', rawOutput: 'Success' })
+    await flushPromises()
   })
 })

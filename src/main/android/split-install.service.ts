@@ -355,7 +355,8 @@ export async function performSplitInstall(
   sourcePaths: string[],
   selectedFileNames: string[],
   parseApk?: ParseApkFn,
-  historyNote?: string
+  historyNote?: string,
+  onInstallStart?: () => void
 ): Promise<OperationResult> {
   const { parts: rawParts, cleanupDir } = await resolveSplitSource(
     sourceKind,
@@ -404,6 +405,7 @@ export async function performSplitInstall(
       iconDataUrl: base.iconDataUrl
     })
 
+    onInstallStart?.()
     const mutation = await adbClient.installMultipleApks(
       serial,
       orderedParts.map((part) => part.filePath)

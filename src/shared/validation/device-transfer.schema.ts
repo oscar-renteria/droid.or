@@ -28,19 +28,52 @@ const deviceTransferTargetSchema = z.object({
   packageName: z.string().min(1)
 })
 
+export type DeviceTransferProgressUpdate =
+  | {
+      phase: 'pulling'
+      fileName: string
+      fileNumber: number
+      totalFiles: number
+    }
+  | { phase: 'checking' }
+  | { phase: 'installing'; fileCount: number }
+
+const transferIdSchema = z.string().uuid()
+
+export const deviceTransferProgressEventSchema = z.discriminatedUnion('phase', [
+  z.object({
+    transferId: transferIdSchema,
+    phase: z.literal('pulling'),
+    fileName: z.string().min(1),
+    fileNumber: z.number().int().positive(),
+    totalFiles: z.number().int().positive()
+  }),
+  z.object({
+    transferId: transferIdSchema,
+    phase: z.literal('checking')
+  }),
+  z.object({
+    transferId: transferIdSchema,
+    phase: z.literal('installing'),
+    fileCount: z.number().int().positive()
+  })
+])
+
+export type DeviceTransferProgressEvent = z.infer<typeof deviceTransferProgressEventSchema>
+
 const distinctDevices = {
   check: (request: { sourceDeviceId: string; targetDeviceId: string }) =>
     request.sourceDeviceId !== request.targetDeviceId,
   message: 'The source and target device must be different.'
 }
 
-export const analyzeDeviceTransferRequestSchema = deviceTransferTargetSchema.refine(
-  distinctDevices.check,
-  distinctDevices.message
-)
+export const analyzeDeviceTransferRequestSchema = deviceTransferTargetSchema
+  .extend({ transferId: transferIdSchema })
+  .refine(distinctDevices.check, distinctDevices.message)
 
 export const performDeviceTransferRequestSchema = deviceTransferTargetSchema
   .extend({
+    transferId: transferIdSchema,
     /** The version code the user reviewed in the analysis — the install is
      *  refused if a fresh pull from the source no longer matches it. */
     expectedVersionCode: z.number().int().nullable()

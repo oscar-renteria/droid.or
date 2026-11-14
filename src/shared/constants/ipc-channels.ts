@@ -52,5 +52,6 @@ export enum IpcChannel {
  * rather than in response to a renderer-initiated invoke() call.
  */
 export enum IpcEventChannel {
-  DevicesChanged = 'device:list-changed'
+  DevicesChanged = 'device:list-changed',
+  DeviceTransferProgress = 'transfer:progress'
 }

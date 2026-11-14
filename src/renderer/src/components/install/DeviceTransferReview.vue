@@ -36,6 +36,20 @@ const totalSizeBytes = computed(
   () => transferStore.analysis?.parts.reduce((sum, part) => sum + part.fileSizeBytes, 0) ?? 0
 )
 
+const progressMessage = computed(() => {
+  const progress = transferStore.progress
+  if (progress?.phase === 'pulling') {
+    return `Copying file ${progress.fileNumber} of ${progress.totalFiles} from the source: ${progress.fileName}`
+  }
+  if (progress?.phase === 'checking') {
+    return 'Checking the copied files against the target device…'
+  }
+  if (progress?.phase === 'installing') {
+    return `Installing ${progress.fileCount} file(s) on the target device…`
+  }
+  return 'Copying files from the source device… this can take a minute for large apps.'
+})
+
 function issueTitle(issue: SplitInstallIssue): string {
   if (issue.severity === 'error') return 'This will likely fail'
   if (issue.severity === 'warning') return 'Heads up'
@@ -60,8 +74,12 @@ function confirmCopy(): void {
 <template>
   <div class="flex flex-col gap-3">
     <NSpin v-if="transferStore.loading" :show="true">
-      <div class="flex h-24 items-center justify-center text-sm text-text-muted">
-        Copying files from the source device… this can take a minute for large apps.
+      <div
+        class="flex h-24 items-center justify-center text-sm text-text-muted"
+        role="status"
+        aria-live="polite"
+      >
+        {{ progressMessage }}
       </div>
     </NSpin>
 
@@ -120,8 +138,12 @@ function confirmCopy(): void {
       </ul>
 
       <NSpin v-if="transferStore.installing" :show="true">
-        <div class="flex h-16 items-center justify-center text-sm text-text-muted">
-          Copying from the source and installing on the target…
+        <div
+          class="flex h-16 items-center justify-center text-sm text-text-muted"
+          role="status"
+          aria-live="polite"
+        >
+          {{ progressMessage }}
         </div>
       </NSpin>
 
@@ -139,6 +161,7 @@ function confirmCopy(): void {
         v-if="!analysisMatchesSelection"
         type="primary"
         :loading="transferStore.loading"
+        :disabled="transferStore.busy"
         @click="checkCompatibility"
       >
         Check compatibility
@@ -146,7 +169,7 @@ function confirmCopy(): void {
       <NButton
         v-else-if="!transferStore.result?.success"
         type="primary"
-        :disabled="!transferStore.analysis?.canInstall"
+        :disabled="!transferStore.analysis?.canInstall || transferStore.busy"
         :loading="transferStore.installing"
         @click="confirmCopy"
       >

@@ -1,6 +1,7 @@
 import type { OperationResult } from '@shared/types/operation'
 import type { SplitInstallAnalysis } from '@shared/types/split-install'
 import type { DeviceTransferPackage } from '@shared/types/device-transfer'
+import type { DeviceTransferProgressUpdate } from '@shared/validation/device-transfer.schema'
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { useDevicesStore } from '@renderer/stores/devices.store'
@@ -24,6 +25,7 @@ export const useDeviceTransferStore = defineStore('deviceTransfer', () => {
 
   const installing = ref(false)
   const result = ref<OperationResult | null>(null)
+  const progress = ref<DeviceTransferProgressUpdate | null>(null)
   const activeSourceId = ref<string | null>(null)
   const activeTargetId = ref<string | null>(null)
 
@@ -106,6 +108,7 @@ export const useDeviceTransferStore = defineStore('deviceTransfer', () => {
     errorMessage.value = null
     installing.value = false
     result.value = null
+    progress.value = null
     activeSourceId.value = null
     activeTargetId.value = null
   }
@@ -127,7 +130,12 @@ export const useDeviceTransferStore = defineStore('deviceTransfer', () => {
       const response = await window.droidor.analyzeDeviceTransfer(
         sourceDeviceId,
         targetDeviceId,
-        packageName
+        packageName,
+        (update) => {
+          if (requestGeneration === generation) {
+            progress.value = update
+          }
+        }
       )
       if (requestGeneration !== generation) {
         return
@@ -161,6 +169,7 @@ export const useDeviceTransferStore = defineStore('deviceTransfer', () => {
   async function confirm(): Promise<void> {
     if (
       !window.droidor ||
+      installing.value ||
       !analysis.value?.canInstall ||
       analyzedSourceId.value === null ||
       analyzedTargetId.value === null ||
@@ -171,13 +180,19 @@ export const useDeviceTransferStore = defineStore('deviceTransfer', () => {
     const requestGeneration = generation
     installing.value = true
     result.value = null
+    progress.value = null
     let outcome: OperationResult
     try {
       outcome = await window.droidor.performDeviceTransfer(
         analyzedSourceId.value,
         analyzedTargetId.value,
         analyzedPackageName.value,
-        analysis.value.versionCode
+        analysis.value.versionCode,
+        (update) => {
+          if (requestGeneration === generation) {
+            progress.value = update
+          }
+        }
       )
     } catch (error) {
       outcome = {
@@ -206,6 +221,7 @@ export const useDeviceTransferStore = defineStore('deviceTransfer', () => {
     errorMessage,
     installing,
     result,
+    progress,
     busy,
     reset,
     analyze,

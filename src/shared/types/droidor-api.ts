@@ -9,6 +9,7 @@ import type { DeviceChanges } from './recovery'
 import type { ApkInspectionResult } from './apk-install'
 import type { SplitInstallAnalysis, SplitSourceKind } from './split-install'
 import type { DeviceTransferPackage } from './device-transfer'
+import type { DeviceTransferProgressUpdate } from '../validation/device-transfer.schema'
 import type { PackageBackupResult } from './apk-backup'
 import type { SecurityReviewResult } from './security-review'
 import type { AdbCommandLogEntry } from './logs'
@@ -152,7 +153,8 @@ export interface DroidorApi {
   analyzeDeviceTransfer: (
     sourceDeviceId: string,
     targetDeviceId: string,
-    packageName: string
+    packageName: string,
+    onProgress?: (progress: DeviceTransferProgressUpdate) => void
   ) => Promise<SplitInstallAnalysis>
   /** Pulls the app from the source again and installs every one of its
    *  APK files on the target via `adb install-multiple`. Refuses (rejects)
@@ -162,7 +164,8 @@ export interface DroidorApi {
     sourceDeviceId: string,
     targetDeviceId: string,
     packageName: string,
-    expectedVersionCode: number | null
+    expectedVersionCode: number | null,
+    onProgress?: (progress: DeviceTransferProgressUpdate) => void
   ) => Promise<OperationResult>
   /** Two read-only signals for a human to review — which apps hold Device
    *  Admin, and which hold an enabled Accessibility Service. This is

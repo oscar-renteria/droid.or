@@ -2,6 +2,8 @@
 import type { DroidorApi } from '@shared/types/droidor-api'
 import type { SplitInstallAnalysis } from '@shared/types/split-install'
 import type { KnownDevice } from '@shared/types/device'
+import type { OperationResult } from '@shared/types/operation'
+import type { DeviceTransferProgressUpdate } from '@shared/validation/device-transfer.schema'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -57,9 +59,22 @@ describe('DeviceTransferReview', () => {
 
   it('checks compatibility, reviews the result, and installs the reviewed app', async () => {
     const analyzeDeviceTransfer = vi.fn().mockResolvedValue(ANALYSIS)
-    const performDeviceTransfer = vi
-      .fn()
-      .mockResolvedValue({ success: true, message: 'Installed', rawOutput: 'Success' })
+    let reportProgress: ((progress: DeviceTransferProgressUpdate) => void) | undefined
+    let resolveInstall: ((result: OperationResult) => void) | undefined
+    const performDeviceTransfer = vi.fn(
+      (
+        _sourceDeviceId: string,
+        _targetDeviceId: string,
+        _packageName: string,
+        _expectedVersionCode: number | null,
+        onProgress?: (progress: DeviceTransferProgressUpdate) => void
+      ) => {
+        reportProgress = onProgress
+        return new Promise<OperationResult>((resolve) => {
+          resolveInstall = resolve
+        })
+      }
+    )
     vi.stubGlobal(
       'window',
       Object.assign(Object.create(window), {
@@ -79,14 +94,34 @@ describe('DeviceTransferReview', () => {
     await wrapper.get('button').trigger('click')
     await flushPromises()
 
-    expect(analyzeDeviceTransfer).toHaveBeenCalledWith(SOURCE, TARGET, PACKAGE_NAME)
+    expect(analyzeDeviceTransfer.mock.calls[0]?.slice(0, 3)).toEqual([SOURCE, TARGET, PACKAGE_NAME])
     expect(wrapper.text()).toContain('Example App')
     expect(wrapper.text()).toContain('New install')
 
     await wrapper.get('button').trigger('click')
+    reportProgress?.({
+      phase: 'pulling',
+      fileName: 'split_config.arm64_v8a.apk',
+      fileNumber: 2,
+      totalFiles: 3
+    })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.text()).toContain(
+      'Copying file 2 of 3 from the source: split_config.arm64_v8a.apk'
+    )
+
+    reportProgress?.({ phase: 'installing', fileCount: 3 })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.text()).toContain('Installing 3 file(s) on the target device')
+    resolveInstall?.({ success: true, message: 'Installed', rawOutput: 'Success' })
     await flushPromises()
 
-    expect(performDeviceTransfer).toHaveBeenCalledWith(SOURCE, TARGET, PACKAGE_NAME, 7)
+    expect(performDeviceTransfer.mock.calls[0]?.slice(0, 4)).toEqual([
+      SOURCE,
+      TARGET,
+      PACKAGE_NAME,
+      7
+    ])
     expect(wrapper.text()).toContain('Copied')
     expect(wrapper.text()).toContain('Installed')
   })

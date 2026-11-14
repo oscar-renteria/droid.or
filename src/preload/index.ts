@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron'
+import { randomUUID } from 'node:crypto'
 import { IpcChannel, IpcEventChannel } from '@shared/constants/ipc-channels'
 import { appInfoSchema } from '@shared/validation/app-info.schema'
 import {
@@ -17,7 +18,12 @@ import { deviceChangesSchema } from '@shared/validation/recovery.schema'
 import { adbStatusSchema } from '@shared/validation/adb-settings.schema'
 import { apkInspectionResultSchema } from '@shared/validation/apk-install.schema'
 import { splitInstallAnalysisSchema } from '@shared/validation/split-install.schema'
-import { deviceTransferPackageListSchema } from '@shared/validation/device-transfer.schema'
+import {
+  deviceTransferPackageListSchema,
+  deviceTransferProgressEventSchema,
+  type DeviceTransferProgressEvent,
+  type DeviceTransferProgressUpdate
+} from '@shared/validation/device-transfer.schema'
 import { z } from 'zod'
 import { packageBackupResultSchema } from '@shared/validation/apk-backup.schema'
 import { securityReviewResultSchema } from '@shared/validation/security-review.schema'
@@ -26,6 +32,39 @@ import { safetyDisclaimerStatusSchema } from '@shared/validation/safety-disclaim
 import { aiAnalysisResultSchema, aiSettingsSchema } from '@shared/validation/ai-settings.schema'
 import { openDonationLinkResultSchema } from '@shared/validation/support.schema'
 import type { DroidorApi } from '@shared/types/droidor-api'
+
+function toProgressUpdate(event: DeviceTransferProgressEvent): DeviceTransferProgressUpdate {
+  switch (event.phase) {
+    case 'pulling':
+      return {
+        phase: event.phase,
+        fileName: event.fileName,
+        fileNumber: event.fileNumber,
+        totalFiles: event.totalFiles
+      }
+    case 'checking':
+      return { phase: event.phase }
+    case 'installing':
+      return { phase: event.phase, fileCount: event.fileCount }
+  }
+}
+
+function listenForTransferProgress(
+  transferId: string,
+  callback?: (progress: DeviceTransferProgressUpdate) => void
+): () => void {
+  if (!callback) {
+    return () => {}
+  }
+  const listener = (_event: IpcRendererEvent, payload: unknown): void => {
+    const progress = deviceTransferProgressEventSchema.parse(payload)
+    if (progress.transferId === transferId) {
+      callback(toProgressUpdate(progress))
+    }
+  }
+  ipcRenderer.on(IpcEventChannel.DeviceTransferProgress, listener)
+  return () => ipcRenderer.removeListener(IpcEventChannel.DeviceTransferProgress, listener)
+}
 
 /**
  * The only surface the renderer ever sees. Each function forwards to exactly
@@ -203,28 +242,43 @@ const droidorApi: DroidorApi = {
     return z.array(packageBackupResultSchema).parse(result)
   },
 
-  analyzeDeviceTransfer: async (sourceDeviceId, targetDeviceId, packageName) => {
-    const result = await ipcRenderer.invoke(IpcChannel.AnalyzeDeviceTransfer, {
-      sourceDeviceId,
-      targetDeviceId,
-      packageName
-    })
-    return splitInstallAnalysisSchema.parse(result)
+  analyzeDeviceTransfer: async (sourceDeviceId, targetDeviceId, packageName, onProgress) => {
+    const transferId = randomUUID()
+    const removeProgressListener = listenForTransferProgress(transferId, onProgress)
+    try {
+      const result = await ipcRenderer.invoke(IpcChannel.AnalyzeDeviceTransfer, {
+        sourceDeviceId,
+        targetDeviceId,
+        packageName,
+        transferId
+      })
+      return splitInstallAnalysisSchema.parse(result)
+    } finally {
+      removeProgressListener()
+    }
   },
 
   performDeviceTransfer: async (
     sourceDeviceId,
     targetDeviceId,
     packageName,
-    expectedVersionCode
+    expectedVersionCode,
+    onProgress
   ) => {
-    const result = await ipcRenderer.invoke(IpcChannel.PerformDeviceTransfer, {
-      sourceDeviceId,
-      targetDeviceId,
-      packageName,
-      expectedVersionCode
-    })
-    return operationResultSchema.parse(result)
+    const transferId = randomUUID()
+    const removeProgressListener = listenForTransferProgress(transferId, onProgress)
+    try {
+      const result = await ipcRenderer.invoke(IpcChannel.PerformDeviceTransfer, {
+        sourceDeviceId,
+        targetDeviceId,
+        packageName,
+        expectedVersionCode,
+        transferId
+      })
+      return operationResultSchema.parse(result)
+    } finally {
+      removeProgressListener()
+    }
   },
 
   getDeviceTransferPackages: async (sourceDeviceId) => {

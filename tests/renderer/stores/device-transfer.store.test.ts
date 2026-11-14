@@ -3,6 +3,7 @@ import type { DroidorApi } from '@shared/types/droidor-api'
 import type { SplitInstallAnalysis } from '@shared/types/split-install'
 import type { DeviceTransferPackage } from '@shared/types/device-transfer'
 import type { KnownDevice } from '@shared/types/device'
+import type { DeviceTransferProgressUpdate } from '@shared/validation/device-transfer.schema'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -109,15 +110,51 @@ describe('useDeviceTransferStore', () => {
 
   it('analyzes and then performs exactly the analyzed transfer', async () => {
     const { store, wrapper } = mountProbe()
+    analyzeDeviceTransfer.mockImplementationOnce(
+      async (
+        _sourceDeviceId: string,
+        _targetDeviceId: string,
+        _packageName: string,
+        onProgress?: (progress: DeviceTransferProgressUpdate) => void
+      ) => {
+        onProgress?.({
+          phase: 'pulling',
+          fileName: 'base.apk',
+          fileNumber: 1,
+          totalFiles: 3
+        })
+        return analysis()
+      }
+    )
 
     await store.analyze(SOURCE, TARGET, PKG)
     await wrapper.vm.$nextTick()
     expect(wrapper.find('.version').text()).toBe('7')
-    expect(analyzeDeviceTransfer).toHaveBeenCalledWith(SOURCE, TARGET, PKG)
+    expect(store.progress).toEqual({
+      phase: 'pulling',
+      fileName: 'base.apk',
+      fileNumber: 1,
+      totalFiles: 3
+    })
+    expect(analyzeDeviceTransfer.mock.calls[0]?.slice(0, 3)).toEqual([SOURCE, TARGET, PKG])
+
+    performDeviceTransfer.mockImplementationOnce(
+      async (
+        _sourceDeviceId: string,
+        _targetDeviceId: string,
+        _packageName: string,
+        _expectedVersionCode: number | null,
+        onProgress?: (progress: DeviceTransferProgressUpdate) => void
+      ) => {
+        onProgress?.({ phase: 'installing', fileCount: 3 })
+        return { success: true, message: 'Installed', rawOutput: 'Success' }
+      }
+    )
 
     await store.confirm()
     await wrapper.vm.$nextTick()
-    expect(performDeviceTransfer).toHaveBeenCalledWith(SOURCE, TARGET, PKG, 7)
+    expect(performDeviceTransfer.mock.calls[0]?.slice(0, 4)).toEqual([SOURCE, TARGET, PKG, 7])
+    expect(store.progress).toEqual({ phase: 'installing', fileCount: 3 })
     expect(wrapper.find('.result').text()).toBe('Installed')
   })
 

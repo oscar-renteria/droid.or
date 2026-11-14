@@ -1,6 +1,7 @@
-import { ipcMain } from 'electron'
-import { IpcChannel } from '@shared/constants/ipc-channels'
+import { ipcMain, type IpcMainInvokeEvent } from 'electron'
+import { IpcChannel, IpcEventChannel } from '@shared/constants/ipc-channels'
 import type { KnownDevice } from '@shared/validation/device.schema'
+import type { DeviceTransferProgressUpdate } from '@shared/validation/device-transfer.schema'
 import {
   getDeviceTransferPackagesRequestSchema,
   analyzeDeviceTransferRequestSchema,
@@ -57,8 +58,8 @@ export function registerDeviceTransferHandlers(
     }
   }
 
-  ipcMain.handle(IpcChannel.AnalyzeDeviceTransfer, async (_event, payload: unknown) => {
-    const { sourceDeviceId, targetDeviceId, packageName } =
+  ipcMain.handle(IpcChannel.AnalyzeDeviceTransfer, async (event, payload: unknown) => {
+    const { sourceDeviceId, targetDeviceId, packageName, transferId } =
       analyzeDeviceTransferRequestSchema.parse(payload)
     if (!isValidPackageName(packageName)) {
       throw new Error(`Refusing to copy an invalid package name: "${packageName}"`)
@@ -67,12 +68,19 @@ export function registerDeviceTransferHandlers(
     requireConnectedDevice(targetDeviceId, 'target')
 
     return withLock(`${sourceDeviceId}:${targetDeviceId}:${packageName}`, () =>
-      analyzeDeviceTransfer(adbClient, sourceDeviceId, targetDeviceId, packageName)
+      analyzeDeviceTransfer(
+        adbClient,
+        sourceDeviceId,
+        targetDeviceId,
+        packageName,
+        undefined,
+        (progress) => sendProgress(event, transferId, progress)
+      )
     )
   })
 
-  ipcMain.handle(IpcChannel.PerformDeviceTransfer, async (_event, payload: unknown) => {
-    const { sourceDeviceId, targetDeviceId, packageName, expectedVersionCode } =
+  ipcMain.handle(IpcChannel.PerformDeviceTransfer, async (event, payload: unknown) => {
+    const { sourceDeviceId, targetDeviceId, packageName, expectedVersionCode, transferId } =
       performDeviceTransferRequestSchema.parse(payload)
     if (!isValidPackageName(packageName)) {
       throw new Error(`Refusing to copy an invalid package name: "${packageName}"`)
@@ -88,8 +96,20 @@ export function registerDeviceTransferHandlers(
         targetDeviceId,
         packageName,
         expectedVersionCode,
-        `Copied from ${describeDevice(source)}.`
+        `Copied from ${describeDevice(source)}.`,
+        undefined,
+        (progress) => sendProgress(event, transferId, progress)
       )
     )
   })
+
+  function sendProgress(
+    event: IpcMainInvokeEvent,
+    transferId: string,
+    progress: DeviceTransferProgressUpdate
+  ): void {
+    if (!event.sender.isDestroyed()) {
+      event.sender.send(IpcEventChannel.DeviceTransferProgress, { transferId, ...progress })
+    }
+  }
 }
