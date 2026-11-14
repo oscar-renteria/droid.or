@@ -53,6 +53,21 @@ jobs:
 
       - run: npm run ${{ matrix.build_script }}
 
+      - name: Verify Windows artifacts
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $version = node -p "require('./package.json').version"
+          $expectedFiles = @(
+            "release/droid.or-$version-x64-portable.exe",
+            "release/droid.or-$version-x64-setup.exe"
+          )
+          foreach ($path in $expectedFiles) {
+            if (-not (Test-Path $path)) {
+              throw "Missing expected Windows artifact: $path"
+            }
+          }
+
       - name: Verify macOS ad-hoc signature
         if: matrix.os == 'macos-latest'
         run: |

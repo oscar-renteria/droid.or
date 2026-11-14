@@ -117,7 +117,7 @@ tests/          # Mirrors src/
 ```bash
 npm run build         # type-check + bundle (out/)
 npm run build:linux   # + electron-builder --linux  (AppImage)
-npm run build:win     # + electron-builder --win    (NSIS installer + portable .exe)
+npm run build:win     # + electron-builder --win    (x64 NSIS installer + portable .exe)
 npm run build:mac     # + electron-builder --mac    (arm64 dmg)
 ```
 
@@ -147,10 +147,11 @@ Every push to `master` builds all three platforms on their own native
 GitHub-hosted runner (`ubuntu-latest`/`windows-latest`/`macos-latest`), so
 neither limitation above applies there — each OS uses its own prebuilt
 native binary and its own real toolchain, no Wine or cross-compilation
-involved. The macOS job builds an arm64 DMG and verifies the app's ad-hoc
-signature with `codesign` before uploading it. Artifacts (the AppImage, the
-NSIS installer + portable `.exe`, and the arm64 DMG) are uploaded as
-workflow artifacts, downloadable from that run's Actions page. Can also be triggered manually (`workflow_dispatch`)
+involved. The Windows job verifies the x64 NSIS and portable `.exe` names
+before upload; the macOS job builds an arm64 DMG and verifies the app's
+ad-hoc signature with `codesign`. Artifacts (the AppImage, the x64 NSIS
+installer + portable `.exe`, and the arm64 DMG) are uploaded as workflow
+artifacts, downloadable from that run's Actions page. Can also be triggered manually (`workflow_dispatch`)
 without a push. This requires the repository to actually be on GitHub with
 Actions enabled — pushing to a purely local `master` does nothing.
 
