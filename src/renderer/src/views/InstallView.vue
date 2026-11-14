@@ -71,8 +71,9 @@ async function browseApkFiles(): Promise<void> {
 
 <template>
   <DeviceGate
-    requirement="Installing an APK requires an authorized, connected device."
-    no-device-text="Select a device from the sidebar to install an APK onto it."
+    requirement="Reconnect the phone over USB and make sure USB debugging is enabled."
+    no-device-title="Waiting for device…"
+    no-device-text="Connect an Android phone over USB, enable Developer options and USB debugging in Settings, then approve the prompt on the phone. If already connected, select it in the sidebar."
   >
     <div class="flex h-full flex-col gap-3">
       <TargetDeviceStrip />
