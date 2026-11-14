@@ -8,6 +8,7 @@ import { FileLogger } from './logging/file-logger'
 import { registerIpcHandlers } from './ipc/register-ipc-handlers'
 import { cleanupStaleSplitInstallTempDirs } from './android/split-install-temp-cleanup'
 import { isSmokeTest, runSmokeTest } from './smoke-test'
+import { blockWebviews, hardenWindow } from './window-security'
 
 // A smoke test (see smoke-test.ts) runs against a throwaway profile, so it
 // never touches a real user's database and never collides with a running
@@ -20,6 +21,8 @@ if (smokeTest) {
 
 const logger = new FileLogger(join(app.getPath('userData'), 'logs'))
 let context: AppContext | null = null
+
+blockWebviews(app)
 
 const handleFatalError = installCrashHandlers(process, {
   logger,
@@ -62,7 +65,12 @@ function createMainWindow(): BrowserWindow {
       preload: join(__dirname, '../preload/index.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true
+      sandbox: true,
+      // Electron's secure defaults, stated so a future edit can't silently
+      // weaken them.
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      webviewTag: false
     }
   })
 
@@ -72,18 +80,19 @@ function createMainWindow(): BrowserWindow {
     }
   })
 
-  // Any link the renderer tries to open in a new window is handed to the
-  // OS browser instead of spawning an unrestricted second Electron window.
-  mainWindow.webContents.setWindowOpenHandler((details) => {
-    void shell.openExternal(details.url)
-    return { action: 'deny' }
+  const rendererIndexPath = join(__dirname, '../renderer/index.html')
+  hardenWindow(mainWindow, {
+    rendererIndexPath,
+    devServerUrl: process.env['ELECTRON_RENDERER_URL'],
+    openExternal: (url) => shell.openExternal(url),
+    onBlocked: (what) => logger.warn(`Blocked ${what}`)
   })
 
   const rendererDevServerUrl = process.env['ELECTRON_RENDERER_URL']
   if (rendererDevServerUrl) {
     void mainWindow.loadURL(rendererDevServerUrl)
   } else {
-    void mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    void mainWindow.loadFile(rendererIndexPath)
   }
   return mainWindow
 }

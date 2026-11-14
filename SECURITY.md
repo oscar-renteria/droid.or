@@ -13,13 +13,39 @@ webPreferences: {
   preload: join(__dirname, '../preload/index.cjs'),
   contextIsolation: true,
   nodeIntegration: false,
-  sandbox: true
+  sandbox: true,
+  webSecurity: true,
+  allowRunningInsecureContent: false,
+  webviewTag: false
 }
 ```
 
 The renderer has no Node.js, no `require`, and no filesystem access of its
 own. Its only capability beyond standard web APIs is whatever the preload
-script explicitly exposes.
+script explicitly exposes. Because the preload is sandboxed it cannot import
+Node built-ins either; a test (`tests/preload/sandbox-imports.test.ts`)
+enforces that.
+
+### Hardening checklist
+
+Implemented in `src/main/window-security.ts`, following Electron's security
+recommendations:
+
+- [x] Context isolation on, Node integration off, renderer sandboxed
+- [x] `webSecurity` on, no insecure content, `<webview>` disabled — and any
+      attempt to attach one is blocked app-wide (`will-attach-webview`)
+- [x] Navigation restricted: `will-navigate` blocks every URL except the
+      bundled renderer page (or the Vite dev server in development)
+- [x] No new windows: `window.open`/`target="_blank"` is always denied; only
+      `https` URLs on the allow-list (`github.com`, `paypal.me`) are handed to
+      the system browser, anything else is dropped
+- [x] Permissions denied by default: request and check handlers allow only
+      `clipboard-sanitized-write` (copy-link fallback); camera, microphone,
+      notifications, geolocation, USB/HID/serial etc. are refused
+- [x] Content-Security-Policy in `src/renderer/index.html` limits scripts and
+      network connections to the app itself
+- [x] Every IPC payload validated with Zod in the main process (see below)
+- [x] Blocked attempts are written to the log file as warnings
 
 ## What state this app keeps locally
 
