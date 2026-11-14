@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const donationProviderIdSchema = z.enum(['github-sponsors'])
+export const donationProviderIdSchema = z.enum(['github-sponsors', 'paypal'])
 export type DonationProviderId = z.infer<typeof donationProviderIdSchema>
 
 export const openDonationLinkResultSchema = z.object({

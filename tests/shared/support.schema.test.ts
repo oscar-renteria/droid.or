@@ -7,9 +7,10 @@ import {
 describe('support schemas', () => {
   it('accepts the approved donation providers', () => {
     expect(donationProviderIdSchema.safeParse('github-sponsors').success).toBe(true)
+    expect(donationProviderIdSchema.safeParse('paypal').success).toBe(true)
   })
 
-  it.each(['kofi', 'paypal', 'unknown', ''])('rejects %j as a donation provider', (provider) => {
+  it.each(['kofi', 'unknown', ''])('rejects %j as a donation provider', (provider) => {
     expect(donationProviderIdSchema.safeParse(provider).success).toBe(false)
   })
 

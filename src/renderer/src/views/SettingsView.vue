@@ -13,7 +13,6 @@ import {
 } from 'naive-ui'
 import { computed, onMounted, ref, watch } from 'vue'
 import PageHeader from '@renderer/components/ui/PageHeader.vue'
-import { GITHUB_SPONSORS_CARD_URL, GITHUB_SPONSORS_URL } from '@shared/constants/support'
 import { useAdbSettingsStore } from '@renderer/stores/adb-settings.store'
 import { useAiSettingsStore } from '@renderer/stores/ai-settings.store'
 import { useSettingsStore, type ThemeMode } from '@renderer/stores/settings.store'
@@ -269,41 +268,6 @@ async function downloadPlatformTools(): Promise<void> {
             </NRadioButton>
           </NRadioGroup>
         </div>
-      </div>
-
-      <div class="flex flex-col gap-3 rounded-lg border border-border p-4">
-        <h2 class="text-sm font-semibold text-text">Support Development</h2>
-        <p class="text-xs text-text-muted">
-          droid.or is free and open source. Optional contributions help fund ongoing maintenance,
-          device testing, and development.
-        </p>
-        <NAlert type="info" :show-icon="true">
-          Contributions are voluntary personal gifts. They do not unlock features and are not
-          tax-deductible.
-        </NAlert>
-        <div
-          class="w-full max-w-[600px] overflow-hidden rounded-md border border-border bg-surface p-2"
-        >
-          <iframe
-            :src="GITHUB_SPONSORS_CARD_URL"
-            title="GitHub Sponsors card for oscar-renteria"
-            width="600"
-            height="225"
-            loading="lazy"
-            class="block aspect-[8/3] h-auto w-full max-w-full border-0"
-          />
-        </div>
-        <p class="text-xs text-text-secondary">
-          If the embedded card is unavailable, you can
-          <a
-            :href="GITHUB_SPONSORS_URL"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="support-fallback-link rounded-sm text-primary underline underline-offset-2 hover:text-primary-hover"
-          >
-            open GitHub Sponsors in your browser </a
-          >.
-        </p>
       </div>
 
       <NSpin :show="aiSettingsStore.loading">

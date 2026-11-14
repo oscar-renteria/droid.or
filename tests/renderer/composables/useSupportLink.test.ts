@@ -47,6 +47,21 @@ describe('useSupportLink', () => {
     expect(opening.value).toBe(false)
   })
 
+  it('opens PayPal through the donation bridge', async () => {
+    const openDonationLink = vi.fn<DroidorApi['openDonationLink']>().mockResolvedValue({
+      success: true,
+      urlOpened: 'https://paypal.me/ORenteriaQuevedo',
+      error: null
+    })
+    stubDonationLink(openDonationLink)
+
+    const { openSupportLink } = useSupportLink(messageApi)
+    await openSupportLink('paypal')
+
+    expect(openDonationLink).toHaveBeenCalledWith('paypal')
+    expect(messageApi.info).toHaveBeenCalledWith('Opening link in your browser…')
+  })
+
   it('warns and copies the URL when the browser cannot open it', async () => {
     const url = 'https://github.com/sponsors/oscar-renteria'
     const openDonationLink = vi.fn<DroidorApi['openDonationLink']>().mockResolvedValue({

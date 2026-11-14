@@ -17,6 +17,7 @@ import type { Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAdbAvailability } from '@renderer/composables/useAdbAvailability'
 import { useAppInfo } from '@renderer/composables/useAppInfo'
+import { useSupportLink } from '@renderer/composables/useSupportLink'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { deviceDisplayName } from '@renderer/utils/device-display-name'
 import { getDeviceStateMeta } from '@renderer/utils/device-state-meta'
@@ -27,8 +28,13 @@ const route = useRoute()
 const router = useRouter()
 const { appInfo } = useAppInfo()
 const { adbAvailability } = useAdbAvailability()
+const { opening: openingSupportLink, openSupportLink } = useSupportLink()
 const devicesStore = useDevicesStore()
 const showAboutModal = ref(false)
+
+async function handlePayPalClick(): Promise<void> {
+  await openSupportLink('paypal')
+}
 
 onMounted(() => {
   void devicesStore.initialize()
@@ -91,6 +97,26 @@ const navGroups: Array<Array<{ name: string; label: string; icon: Component }>> 
         </span>
       </div>
       <div class="flex items-center gap-2 shrink-0">
+        <NButton
+          size="small"
+          type="primary"
+          secondary
+          class="app-shell-support-action"
+          :loading="openingSupportLink"
+          @click="openSupportLink('github-sponsors')"
+        >
+          Sponsor on GitHub
+        </NButton>
+        <NButton
+          size="small"
+          type="primary"
+          secondary
+          class="app-shell-support-action"
+          :loading="openingSupportLink"
+          @click="handlePayPalClick"
+        >
+          Donate with PayPal
+        </NButton>
         <NButton
           size="small"
           quaternary
@@ -186,3 +212,18 @@ const navGroups: Array<Array<{ name: string; label: string; icon: Component }>> 
     </footer>
   </div>
 </template>
+
+<style>
+.n-button.app-shell-support-action > .n-button__content {
+  color: var(--color-primary-pressed);
+}
+
+:root.dark .n-button.app-shell-support-action > .n-button__content {
+  color: var(--color-primary);
+}
+
+.n-button.app-shell-support-action:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+</style>

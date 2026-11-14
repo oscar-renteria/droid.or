@@ -39,8 +39,19 @@ describe('registerSupportHandlers', () => {
     expect(mocks.openExternal).toHaveBeenCalledWith(DONATION_URLS['github-sponsors'])
   })
 
-  it('rejects an unknown provider without opening a browser', async () => {
+  it('opens the configured PayPal URL for the PayPal provider', async () => {
+    mocks.openExternal.mockResolvedValue(undefined)
+
     await expect(getHandler()(undefined, 'paypal')).resolves.toEqual({
+      success: true,
+      urlOpened: DONATION_URLS.paypal,
+      error: null
+    })
+    expect(mocks.openExternal).toHaveBeenCalledWith(DONATION_URLS.paypal)
+  })
+
+  it('rejects an unknown provider without opening a browser', async () => {
+    await expect(getHandler()(undefined, 'unknown')).resolves.toEqual({
       success: false,
       urlOpened: null,
       error: 'Invalid donation provider.'
@@ -63,6 +74,16 @@ describe('registerSupportHandlers', () => {
     await expect(getHandler()(undefined, 'github-sponsors')).resolves.toEqual({
       success: false,
       urlOpened: DONATION_URLS['github-sponsors'],
+      error: 'No browser configured'
+    })
+  })
+
+  it('returns a failed launch result for PayPal when the browser cannot open', async () => {
+    mocks.openExternal.mockRejectedValue(new Error('No browser configured'))
+
+    await expect(getHandler()(undefined, 'paypal')).resolves.toEqual({
+      success: false,
+      urlOpened: DONATION_URLS.paypal,
       error: 'No browser configured'
     })
   })
