@@ -42,7 +42,11 @@ jobs:
           - os: windows-latest
             build_script: build:win
             artifact_name: windows
-            artifact_path: release/droid.or-*-x64-*.exe
+            # Exact names: electron-builder also leaves a
+            # `*-setup.__uninstaller.exe` in release/ that must not ship.
+            artifact_path: |
+              release/droid.or-*-x64-setup.exe
+              release/droid.or-*-x64-portable.exe
           - os: macos-latest
             build_script: build:mac
             artifact_name: macos
@@ -113,7 +117,7 @@ jobs:
           ELECTRON_RUN_AS_NODE: '1'
         shell: pwsh
         run: |
-          $executable = "release/win-unpacked/droid-or.exe"
+          $executable = "release/win-unpacked/droid.or.exe"
           if (-not (Test-Path $executable)) {
             throw "Missing unpacked Windows app executable: $executable"
           }
@@ -219,10 +223,10 @@ jobs:
           if ($install.ExitCode -ne 0) {
             throw "Silent install failed with exit code $($install.ExitCode)"
           }
-          $installed = Get-ChildItem -Path "$env:LOCALAPPDATA\Programs" -Recurse -Filter 'droid-or.exe' |
+          $installed = Get-ChildItem -Path "$env:LOCALAPPDATA\Programs" -Recurse -Filter 'droid.or.exe' |
             Select-Object -First 1
           if (-not $installed) {
-            throw "Installed droid-or.exe not found under $env:LOCALAPPDATA\Programs"
+            throw "Installed droid.or.exe not found under $env:LOCALAPPDATA\Programs"
           }
           Invoke-SmokeTest $installed.FullName
 
