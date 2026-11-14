@@ -90,6 +90,12 @@ const MIGRATIONS: Migration[] = [
         )
       `)
     }
+  },
+  {
+    version: 7,
+    up: (db) => {
+      db.exec('ALTER TABLE operation_history ADD COLUMN source_device_id TEXT')
+    }
   }
 ]
 

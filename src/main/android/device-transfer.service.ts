@@ -201,7 +201,8 @@ export async function performDeviceTransfer(
       analysis.parts.map((part) => part.fileName),
       parseApk,
       historyNote,
-      () => onProgress?.({ phase: 'installing', fileCount: analysis.parts.length })
+      () => onProgress?.({ phase: 'installing', fileCount: analysis.parts.length }),
+      sourceSerial
     )
   } finally {
     await rm(stagingDir, { recursive: true, force: true })

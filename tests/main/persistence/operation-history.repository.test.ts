@@ -2,6 +2,7 @@ import Database from 'better-sqlite3'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { runMigrations } from '@main/persistence/migrations'
 import {
+  getOperationHistory,
   getLatestSuccessfulOperationPerPackage,
   recordOperation
 } from '@main/persistence/operation-history.repository'
@@ -18,6 +19,27 @@ describe('getLatestSuccessfulOperationPerPackage', () => {
 
   afterEach(() => {
     db.close()
+  })
+
+  it('stores the source device for transfer history entries', () => {
+    recordOperation(db, {
+      deviceId: 'TARGET_SERIAL',
+      sourceDeviceId: 'SOURCE_SERIAL',
+      packageName: 'com.example.a',
+      operation: 'split-install',
+      previousState: 'not installed',
+      newState: 'version code 8',
+      success: true,
+      rawOutput: 'Copied from source'
+    })
+
+    expect(getOperationHistory(db, 'TARGET_SERIAL')).toMatchObject([
+      {
+        deviceId: 'TARGET_SERIAL',
+        sourceDeviceId: 'SOURCE_SERIAL',
+        operation: 'split-install'
+      }
+    ])
   })
 
   it('returns only the most recent successful entry for each package', () => {

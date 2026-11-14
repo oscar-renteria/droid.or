@@ -281,11 +281,13 @@ describe('performDeviceTransfer', () => {
 
     const history = db.prepare('SELECT * FROM operation_history').all() as Array<{
       device_id: string
+      source_device_id: string | null
       operation: string
       raw_output: string
     }>
     expect(history).toHaveLength(1)
     expect(history[0]?.device_id).toBe(TARGET)
+    expect(history[0]?.source_device_id).toBe(SOURCE)
     expect(history[0]?.operation).toBe('split-install')
     expect(history[0]?.raw_output).toMatch(/^Copied from samsung SM-F766B \(SOURCE01\)\./)
   })

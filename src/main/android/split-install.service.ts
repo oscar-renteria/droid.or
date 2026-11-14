@@ -356,7 +356,8 @@ export async function performSplitInstall(
   selectedFileNames: string[],
   parseApk?: ParseApkFn,
   historyNote?: string,
-  onInstallStart?: () => void
+  onInstallStart?: () => void,
+  historySourceDeviceId?: string
 ): Promise<OperationResult> {
   const { parts: rawParts, cleanupDir } = await resolveSplitSource(
     sourceKind,
@@ -431,6 +432,7 @@ export async function performSplitInstall(
 
     recordOperation(db, {
       deviceId: serial,
+      sourceDeviceId: historySourceDeviceId ?? null,
       packageName,
       operation: 'split-install',
       previousState:
