@@ -125,7 +125,9 @@ All three platforms have real settings configured in `electron-builder.yml`
 (installer behavior, categories, entitlements). **Only the Linux target has
 actually been built and run from this project's own (Linux) dev
 environment** — the other two are built by CI instead (see below), not
-locally, for reasons specific to this dev machine rather than the config:
+locally, for reasons specific to this dev machine rather than the config.
+electron-builder publishing is disabled in config; release publication is
+handled separately by the workflow.
 
 - **Windows**: native modules aren't actually the blocker they first
   appear to be — `better-sqlite3` ships prebuilt binaries for every

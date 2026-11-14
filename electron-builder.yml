@@ -6,6 +6,7 @@ directories:
 files:
   - out/**/*
   - package.json
+publish: null
 # A single 1024x1024 source (build/icon.png) — electron-builder derives
 # the platform-specific .ico/.icns from it itself for every target below.
 # Verified for Linux (the AppImage embeds and displays it correctly); the
