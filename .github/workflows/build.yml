@@ -175,6 +175,70 @@ jobs:
           codesign --verify --deep --strict --verbose=2 "$app_path"
           codesign --display --verbose=2 "$app_path" 2>&1 | grep -Fx "Signature=adhoc"
 
+      # Launch smoke tests: each distributable starts with `--smoke-test`
+      # (src/main/smoke-test.ts), which opens the database, waits for the
+      # renderer and preload to come up, and exits 0 — or 1 on failure.
+      - name: Smoke-test Linux AppImage
+        if: matrix.os == 'ubuntu-latest'
+        timeout-minutes: 5
+        env:
+          # The runner has no libfuse2; extracting avoids the FUSE mount.
+          APPIMAGE_EXTRACT_AND_RUN: '1'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -yq xvfb
+          version="$(node -p 'require("./package.json").version')"
+          appimage="release/droid.or-${version}-x86_64.AppImage"
+          chmod +x "$appimage"
+          # --no-sandbox: Ubuntu 24.04 runners restrict unprivileged user
+          # namespaces, which Chromium's sandbox needs. Whether end users on
+          # 24.04 hit the same restriction is checked manually (QA-03).
+          xvfb-run -a "$appimage" --smoke-test --no-sandbox
+
+      - name: Smoke-test Windows portable and installed app
+        if: matrix.os == 'windows-latest'
+        timeout-minutes: 10
+        shell: pwsh
+        run: |
+          $version = node -p "require('./package.json').version"
+          function Invoke-SmokeTest([string]$Path) {
+            $process = Start-Process -FilePath $Path -ArgumentList '--smoke-test' -PassThru
+            if (-not $process.WaitForExit(180000)) {
+              Stop-Process -Id $process.Id -Force
+              throw "Smoke test timed out: $Path"
+            }
+            if ($process.ExitCode -ne 0) {
+              throw "Smoke test failed with exit code $($process.ExitCode): $Path"
+            }
+            Write-Host "Smoke test passed: $Path"
+          }
+
+          Invoke-SmokeTest (Resolve-Path "release/droid.or-$version-x64-portable.exe")
+
+          $installer = Resolve-Path "release/droid.or-$version-x64-setup.exe"
+          $install = Start-Process -FilePath $installer -ArgumentList '/S' -Wait -PassThru
+          if ($install.ExitCode -ne 0) {
+            throw "Silent install failed with exit code $($install.ExitCode)"
+          }
+          $installed = Get-ChildItem -Path "$env:LOCALAPPDATA\Programs" -Recurse -Filter 'droid-or.exe' |
+            Select-Object -First 1
+          if (-not $installed) {
+            throw "Installed droid-or.exe not found under $env:LOCALAPPDATA\Programs"
+          }
+          Invoke-SmokeTest $installed.FullName
+
+      - name: Smoke-test macOS app from DMG
+        if: matrix.os == 'macos-latest'
+        timeout-minutes: 5
+        run: |
+          dmg="$(find release -maxdepth 1 -name '*.dmg' -print -quit)"
+          mount_point="$(mktemp -d)"
+          hdiutil attach -nobrowse -readonly -mountpoint "$mount_point" "$dmg"
+          trap 'hdiutil detach "$mount_point"' EXIT
+          app_path="$(find "$mount_point" -maxdepth 1 -name '*.app' -print -quit)"
+          executable="$(find "$app_path/Contents/MacOS" -maxdepth 1 -type f -perm -u+x -print -quit)"
+          "$executable" --smoke-test
+
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: droid-or-${{ matrix.artifact_name }}

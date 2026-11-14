@@ -1,8 +1,20 @@
 import { app, BrowserWindow, shell } from 'electron'
+import { mkdtempSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createAppContext } from './app-context'
 import { registerIpcHandlers } from './ipc/register-ipc-handlers'
 import { cleanupStaleSplitInstallTempDirs } from './android/split-install-temp-cleanup'
+import { isSmokeTest, runSmokeTest } from './smoke-test'
+
+// A smoke test (see smoke-test.ts) runs against a throwaway profile, so it
+// never touches a real user's database and never collides with a running
+// instance's single-instance lock. Must happen before anything reads
+// userData — including requestSingleInstanceLock below.
+const smokeTest = isSmokeTest(process.argv)
+if (smokeTest) {
+  app.setPath('userData', mkdtempSync(join(tmpdir(), 'droid-or-smoke-')))
+}
 
 // A second launch (e.g. double-clicking the app while it's already running)
 // should focus the existing window rather than spawn a second ADB-owning
@@ -14,7 +26,7 @@ if (!gotSingleInstanceLock) {
 
 let mainWindow: BrowserWindow | null = null
 
-function createMainWindow(): void {
+function createMainWindow(): BrowserWindow {
   mainWindow = new BrowserWindow({
     width: 1360,
     height: 800,
@@ -38,7 +50,9 @@ function createMainWindow(): void {
   })
 
   mainWindow.once('ready-to-show', () => {
-    mainWindow?.show()
+    if (!smokeTest) {
+      mainWindow?.show()
+    }
   })
 
   // Any link the renderer tries to open in a new window is handed to the
@@ -54,6 +68,33 @@ function createMainWindow(): void {
   } else {
     void mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+  return mainWindow
+}
+
+/** Resolves once the page has loaded, the preload bridge is exposed, and
+ *  the Vue app has rendered into #app — i.e. the renderer bundle and the
+ *  preload script both work from inside the packaged archive. */
+function waitForRendererReady(window: BrowserWindow): Promise<void> {
+  const { webContents } = window
+  return new Promise((resolve, reject) => {
+    webContents.once('did-fail-load', (_event, code, description) => {
+      reject(new Error(`did-fail-load: ${code} ${description}`))
+    })
+    webContents.once('render-process-gone', (_event, details) => {
+      reject(new Error(`render-process-gone: ${details.reason}`))
+    })
+    webContents.once('did-finish-load', () => {
+      const poll = (): void => {
+        webContents
+          .executeJavaScript(
+            "typeof window.droidor === 'object' && (document.querySelector('#app')?.childElementCount ?? 0) > 0"
+          )
+          .then((ready: boolean) => (ready ? resolve() : setTimeout(poll, 250)))
+          .catch(reject)
+      }
+      poll()
+    })
+  })
 }
 
 app.on('second-instance', () => {
@@ -68,6 +109,27 @@ app.on('second-instance', () => {
 app.whenReady().then(() => {
   const context = createAppContext()
   registerIpcHandlers(context)
+
+  if (smokeTest) {
+    // No device polling: the smoke test must not start an ADB server.
+    const window = createMainWindow()
+    void runSmokeTest({
+      checkDatabase: () => {
+        const row = context.db.prepare('SELECT 1 AS ok').get() as { ok: number } | undefined
+        if (row?.ok !== 1) {
+          throw new Error('database query returned an unexpected result')
+        }
+      },
+      waitForRenderer: () => waitForRendererReady(window),
+      log: (message) => console.log(message),
+      exit: (code) => {
+        context.db.close()
+        app.exit(code)
+      }
+    })
+    return
+  }
+
   context.deviceRegistry.start()
   createMainWindow()
   // Fire-and-forget: sweeps up any split-install temp directory a prior
