@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { NAlert, NInput, NSelect } from 'naive-ui'
+import { NAlert, NButton, NInput, NSelect } from 'naive-ui'
 import { computed, ref, watch } from 'vue'
 import AppIdentity from '@renderer/components/ui/AppIdentity.vue'
 import EmptyState from '@renderer/components/ui/EmptyState.vue'
+import DeviceTransferReview from '@renderer/components/install/DeviceTransferReview.vue'
+import type { DeviceTransferPackage } from '@shared/types/device-transfer'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { useDeviceTransferStore } from '@renderer/stores/device-transfer.store'
 import { deviceDisplayName } from '@renderer/utils/device-display-name'
@@ -10,7 +12,9 @@ import { deviceDisplayName } from '@renderer/utils/device-display-name'
 const devicesStore = useDevicesStore()
 const transferStore = useDeviceTransferStore()
 const sourceDeviceId = ref<string | null>(null)
+const selectedPackageName = ref<string | null>(null)
 const searchText = ref('')
+const targetDeviceId = computed(() => devicesStore.selectedDevice?.id ?? null)
 
 const connectedDevices = computed(() =>
   devicesStore.devices.filter((device) => device.connectionState === 'device')
@@ -22,6 +26,11 @@ const sourceDeviceOptions = computed(() =>
 )
 const targetDeviceName = computed(() =>
   devicesStore.selectedDevice ? deviceDisplayName(devicesStore.selectedDevice) : 'the target device'
+)
+const selectedPackage = computed(
+  () =>
+    transferStore.sourcePackages.find((pkg) => pkg.packageName === selectedPackageName.value) ??
+    null
 )
 const filteredPackages = computed(() => {
   const query = searchText.value.trim().toLowerCase()
@@ -38,12 +47,24 @@ const filteredPackages = computed(() => {
 
 watch(sourceDeviceId, (deviceId) => {
   searchText.value = ''
+  selectedPackageName.value = null
+  transferStore.reset()
   if (deviceId) {
     void transferStore.loadSourcePackages(deviceId)
   } else {
     transferStore.resetSourcePackages()
   }
 })
+
+function selectPackage(pkg: DeviceTransferPackage): void {
+  transferStore.reset()
+  selectedPackageName.value = pkg.packageName
+}
+
+function chooseAnotherApp(): void {
+  transferStore.reset()
+  selectedPackageName.value = null
+}
 </script>
 
 <template>
@@ -73,7 +94,21 @@ watch(sourceDeviceId, (deviceId) => {
       Only user-installed apps are listed. App data, accounts, and logins are not copied. Google
       Play licensing or integrity checks may prevent an app from running on the target.
     </NAlert>
-    <section class="flex min-h-0 flex-1 flex-col gap-3" aria-label="Apps from source device">
+    <div
+      v-if="selectedPackage && sourceDeviceId && targetDeviceId"
+      class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto"
+    >
+      <NButton class="self-start" size="small" quaternary @click="chooseAnotherApp">
+        Choose another app
+      </NButton>
+      <DeviceTransferReview
+        :source-device-id="sourceDeviceId"
+        :target-device-id="targetDeviceId"
+        :package-name="selectedPackage.packageName"
+        :display-name="selectedPackage.displayName"
+      />
+    </div>
+    <section v-else class="flex min-h-0 flex-1 flex-col gap-3" aria-label="Apps from source device">
       <NInput
         v-model:value="searchText"
         clearable
@@ -114,19 +149,21 @@ watch(sourceDeviceId, (deviceId) => {
         class="min-h-0 flex-1"
       />
       <ul v-else class="min-h-0 flex-1 divide-y divide-divider overflow-y-auto">
-        <li
-          v-for="pkg in filteredPackages"
-          :key="pkg.packageName"
-          class="flex items-center justify-between gap-4 py-2"
-        >
-          <AppIdentity
-            :label="pkg.displayName ?? pkg.packageName"
-            :package-name="pkg.packageName"
-          />
-          <span class="shrink-0 text-right text-xs tabular-nums text-text-muted">
-            {{ pkg.versionName ?? 'Unknown version' }}
-            <template v-if="pkg.versionCode !== null"> · {{ pkg.versionCode }}</template>
-          </span>
+        <li v-for="pkg in filteredPackages" :key="pkg.packageName">
+          <button
+            type="button"
+            class="flex w-full items-center justify-between gap-4 py-2 text-left hover:bg-surface-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            @click="selectPackage(pkg)"
+          >
+            <AppIdentity
+              :label="pkg.displayName ?? pkg.packageName"
+              :package-name="pkg.packageName"
+            />
+            <span class="shrink-0 text-right text-xs tabular-nums text-text-muted">
+              {{ pkg.versionName ?? 'Unknown version' }}
+              <template v-if="pkg.versionCode !== null"> · {{ pkg.versionCode }}</template>
+            </span>
+          </button>
         </li>
       </ul>
     </section>

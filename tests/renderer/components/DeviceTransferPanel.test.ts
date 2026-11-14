@@ -2,6 +2,7 @@
 import type { KnownDevice } from '@shared/types/device'
 import type { DroidorApi } from '@shared/types/droidor-api'
 import type { DeviceTransferPackage } from '@shared/types/device-transfer'
+import type { SplitInstallAnalysis } from '@shared/types/split-install'
 import { NInput, NSelect } from 'naive-ui'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
@@ -50,6 +51,22 @@ const SOURCE_PACKAGES: DeviceTransferPackage[] = [
     versionCode: 24
   }
 ]
+
+const ANALYSIS: SplitInstallAnalysis = {
+  sourceKind: 'directory',
+  sourcePaths: ['/tmp/source-app'],
+  packageName: 'com.example.reader',
+  versionName: '1.2.0',
+  versionCode: 12,
+  label: 'Example Reader',
+  iconDataUrl: null,
+  devicePrimaryAbi: 'arm64-v8a',
+  deviceDensityBucket: null,
+  parts: [],
+  issues: [],
+  canInstall: true,
+  plan: { operation: 'fresh-install', currentVersionCode: null }
+}
 
 describe('DeviceTransferPanel', () => {
   beforeEach(() => {
@@ -121,5 +138,48 @@ describe('DeviceTransferPanel', () => {
 
     expect(wrapper.text()).toContain('Example Chat')
     expect(wrapper.text()).not.toContain('Example Reader')
+  })
+
+  it('opens the shared review workflow for a selected source app', async () => {
+    const getDeviceTransferPackages = vi.fn().mockResolvedValue(SOURCE_PACKAGES)
+    const analyzeDeviceTransfer = vi.fn().mockResolvedValue(ANALYSIS)
+    const performDeviceTransfer = vi
+      .fn()
+      .mockResolvedValue({ success: true, message: 'Installed', rawOutput: 'Success' })
+    vi.stubGlobal(
+      'window',
+      Object.assign(Object.create(window), {
+        droidor: {
+          getDeviceTransferPackages,
+          analyzeDeviceTransfer,
+          performDeviceTransfer
+        } as unknown as DroidorApi
+      })
+    )
+    const devicesStore = useDevicesStore()
+    devicesStore.$patch({
+      devices: [TARGET, SOURCE],
+      selectedDeviceId: TARGET.id
+    })
+
+    const wrapper = mount(DeviceTransferPanel)
+    wrapper.getComponent(NSelect).vm.$emit('update:value', SOURCE.id)
+    await flushPromises()
+    const appButton = wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('Example Reader'))
+    expect(appButton).toBeDefined()
+    await appButton?.trigger('click')
+    await wrapper.vm.$nextTick()
+
+    const compatibilityButton = wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('Check compatibility'))
+    expect(compatibilityButton).toBeDefined()
+    await compatibilityButton?.trigger('click')
+    await flushPromises()
+
+    expect(analyzeDeviceTransfer).toHaveBeenCalledWith(SOURCE.id, TARGET.id, 'com.example.reader')
+    expect(wrapper.text()).toContain('New install')
   })
 })
