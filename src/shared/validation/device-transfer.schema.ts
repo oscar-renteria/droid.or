@@ -1,5 +1,27 @@
 import { z } from 'zod'
 
+const deviceSerialSchema = z
+  .string()
+  .min(1)
+  .max(256)
+  .refine((serial) => !/\s/.test(serial), 'Device serial must not contain whitespace.')
+
+export const getDeviceTransferPackagesRequestSchema = z.object({
+  sourceDeviceId: deviceSerialSchema
+})
+
+export const deviceTransferPackageSchema = z.object({
+  packageName: z.string().min(1),
+  /** From the curated known-package names table; null falls back to the package name. */
+  displayName: z.string().nullable(),
+  versionName: z.string().nullable(),
+  versionCode: z.number().int().nullable()
+})
+
+export const deviceTransferPackageListSchema = z.array(deviceTransferPackageSchema)
+
+export type DeviceTransferPackage = z.infer<typeof deviceTransferPackageSchema>
+
 const deviceTransferTargetSchema = z.object({
   sourceDeviceId: z.string().min(1),
   targetDeviceId: z.string().min(1),

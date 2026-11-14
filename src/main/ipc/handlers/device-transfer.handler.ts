@@ -2,6 +2,7 @@ import { ipcMain } from 'electron'
 import { IpcChannel } from '@shared/constants/ipc-channels'
 import type { KnownDevice } from '@shared/validation/device.schema'
 import {
+  getDeviceTransferPackagesRequestSchema,
   analyzeDeviceTransferRequestSchema,
   performDeviceTransferRequestSchema
 } from '@shared/validation/device-transfer.schema'
@@ -9,7 +10,11 @@ import type Database from 'better-sqlite3'
 import type { AdbClient } from '../../adb/adb-client'
 import { isValidPackageName } from '../../adb/android-package-name'
 import type { DeviceRegistry } from '../../android/device-registry'
-import { analyzeDeviceTransfer, performDeviceTransfer } from '../../android/device-transfer.service'
+import {
+  analyzeDeviceTransfer,
+  getDeviceTransferPackages,
+  performDeviceTransfer
+} from '../../android/device-transfer.service'
 
 function describeDevice(device: KnownDevice): string {
   const name =
@@ -33,6 +38,12 @@ export function registerDeviceTransferHandlers(
     }
     return device
   }
+
+  ipcMain.handle(IpcChannel.GetDeviceTransferPackages, async (_event, payload: unknown) => {
+    const { sourceDeviceId } = getDeviceTransferPackagesRequestSchema.parse(payload)
+    requireConnectedDevice(sourceDeviceId, 'source')
+    return getDeviceTransferPackages(adbClient, sourceDeviceId)
+  })
 
   async function withLock<T>(key: string, run: () => Promise<T>): Promise<T> {
     if (transfersInFlight.has(key)) {

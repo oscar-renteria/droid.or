@@ -8,6 +8,7 @@ import type { MutatingOperationType, OperationHistoryEntry, OperationResult } fr
 import type { DeviceChanges } from './recovery'
 import type { ApkInspectionResult } from './apk-install'
 import type { SplitInstallAnalysis, SplitSourceKind } from './split-install'
+import type { DeviceTransferPackage } from './device-transfer'
 import type { PackageBackupResult } from './apk-backup'
 import type { SecurityReviewResult } from './security-review'
 import type { AdbCommandLogEntry } from './logs'
@@ -140,6 +141,9 @@ export interface DroidorApi {
     packageNames: string[],
     destDir: string
   ) => Promise<PackageBackupResult[]>
+  /** Lists user-installed packages and versions from a connected source
+   *  device, without changing the currently selected target device. */
+  getDeviceTransferPackages: (sourceDeviceId: string) => Promise<DeviceTransferPackage[]>
   /** Pulls every APK file of an app from the source device and reports
    *  what installing that exact set would do on the target device.
    *  Changes neither device. Rejects if either device isn't connected and

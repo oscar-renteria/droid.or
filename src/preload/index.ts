@@ -17,6 +17,7 @@ import { deviceChangesSchema } from '@shared/validation/recovery.schema'
 import { adbStatusSchema } from '@shared/validation/adb-settings.schema'
 import { apkInspectionResultSchema } from '@shared/validation/apk-install.schema'
 import { splitInstallAnalysisSchema } from '@shared/validation/split-install.schema'
+import { deviceTransferPackageListSchema } from '@shared/validation/device-transfer.schema'
 import { z } from 'zod'
 import { packageBackupResultSchema } from '@shared/validation/apk-backup.schema'
 import { securityReviewResultSchema } from '@shared/validation/security-review.schema'
@@ -224,6 +225,13 @@ const droidorApi: DroidorApi = {
       expectedVersionCode
     })
     return operationResultSchema.parse(result)
+  },
+
+  getDeviceTransferPackages: async (sourceDeviceId) => {
+    const result = await ipcRenderer.invoke(IpcChannel.GetDeviceTransferPackages, {
+      sourceDeviceId
+    })
+    return deviceTransferPackageListSchema.parse(result)
   },
 
   getSecurityReview: async (deviceId) => {

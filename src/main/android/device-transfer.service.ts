@@ -4,11 +4,36 @@ import { basename, join, posix } from 'node:path'
 import type Database from 'better-sqlite3'
 import type { OperationResult } from '@shared/validation/operation.schema'
 import type { SplitInstallAnalysis } from '@shared/validation/split-install.schema'
+import type { DeviceTransferPackage } from '@shared/types/device-transfer'
 import type { AdbClient } from '../adb/adb-client'
 import { isValidPackageName } from '../adb/android-package-name'
+import { parsePackageDump } from '../adb/parsers/package-dump-parser'
 import { parsePackagePaths } from '../adb/parsers/package-path-parser'
+import { parsePackageNameList } from '../adb/parsers/package-list-parser'
+import { KNOWN_PACKAGE_NAMES } from './known-package-names'
 import { SPLIT_INSTALL_TEMP_DIR_PREFIX, type ParseApkFn } from './split-apk-inspector'
 import { buildSplitInstallAnalysis, performSplitInstall } from './split-install.service'
+
+export async function getDeviceTransferPackages(
+  adbClient: AdbClient,
+  sourceSerial: string
+): Promise<DeviceTransferPackage[]> {
+  const [packageListOutput, packageDumpOutput] = await Promise.all([
+    adbClient.shellCommand(sourceSerial, ['pm', 'list', 'packages', '-3']),
+    adbClient.shellCommand(sourceSerial, ['dumpsys', 'package', 'packages'])
+  ])
+  const packageDetails = parsePackageDump(packageDumpOutput)
+
+  return parsePackageNameList(packageListOutput).map((packageName) => {
+    const details = packageDetails.get(packageName)
+    return {
+      packageName,
+      displayName: KNOWN_PACKAGE_NAMES.get(packageName) ?? null,
+      versionName: details?.versionName ?? null,
+      versionCode: details?.versionCode ?? null
+    }
+  })
+}
 
 /** Adopted storage (an SD card formatted as internal storage) moves user
  *  apps to /mnt/expand/<volume-uuid>/app/ instead of /data/app/. */
