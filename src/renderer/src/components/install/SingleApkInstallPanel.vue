@@ -91,14 +91,19 @@ async function confirmInstallAll(): Promise<void> {
         />
 
         <div class="min-w-0 flex-1">
-          <template v-if="item.status === 'error'">
+          <p v-if="item.status === 'inspecting'" class="mt-1 text-sm text-text-secondary">
+            Reading {{ rowLabel(item.filePath) }}…
+          </p>
+          <template v-else-if="item.status === 'error'">
+            <NTag size="small" type="error">Can't read file</NTag>
             <div class="truncate font-medium text-text">
               {{ item.filePath }}
             </div>
             <p class="mt-1 text-sm text-danger">{{ item.message }}</p>
           </template>
           <template v-else-if="item.info">
-            <div class="flex flex-wrap items-center gap-2">
+            <!-- Polite live region: "Installed"/"Failed" is announced when it appears. -->
+            <div class="flex flex-wrap items-center gap-2" aria-live="polite">
               <NTag v-if="item.plan" size="small" :type="PLAN_META[item.plan.operation].tagType">
                 {{ PLAN_META[item.plan.operation].label }}
               </NTag>
@@ -113,7 +118,12 @@ async function confirmInstallAll(): Promise<void> {
               v-if="item.plan?.operation === 'downgrade-attempt'"
               class="mt-1 flex items-start gap-1 text-xs text-warning"
             >
-              <NIcon :component="WarningOutline" :size="14" class="mt-0.5 shrink-0" />
+              <NIcon
+                :component="WarningOutline"
+                :size="14"
+                class="mt-0.5 shrink-0"
+                aria-hidden="true"
+              />
               <span>
                 The installed version (code {{ item.plan.currentVersionCode }}) is newer than this
                 file. Android will likely refuse this install.
@@ -130,7 +140,12 @@ async function confirmInstallAll(): Promise<void> {
         </div>
 
         <div class="flex shrink-0 items-center gap-2">
-          <NButton v-if="item.status === 'ready'" size="small" @click="installOne(item.filePath)">
+          <NButton
+            v-if="item.status === 'ready'"
+            size="small"
+            :aria-label="`Install ${rowLabel(item.filePath)}`"
+            @click="installOne(item.filePath)"
+          >
             Install
           </NButton>
           <NButton v-if="item.status === 'installing'" size="small" :loading="true" disabled>
@@ -140,6 +155,7 @@ async function confirmInstallAll(): Promise<void> {
             v-if="item.status !== 'installing'"
             size="small"
             quaternary
+            :aria-label="`Remove ${rowLabel(item.filePath)} from the list`"
             @click="apkInstallStore.removeItem(item.filePath)"
           >
             Remove

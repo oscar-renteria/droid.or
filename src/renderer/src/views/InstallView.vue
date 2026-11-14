@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NTabPane, NTabs, useMessage } from 'naive-ui'
+import { NRadioButton, NRadioGroup, useMessage } from 'naive-ui'
 import { computed } from 'vue'
 import DeviceGate from '@renderer/components/ui/DeviceGate.vue'
 import PageHeader from '@renderer/components/ui/PageHeader.vue'
@@ -86,17 +86,19 @@ async function browseApkFiles(): Promise<void> {
         @drop="handleDrop"
         @activate="browseApkFiles"
       />
-      <NTabs v-model:value="activeTab" type="segment" size="small" animated class="shrink-0">
-        <NTabPane name="single">
-          <template #tab>From file</template>
-        </NTabPane>
-        <NTabPane name="split">
-          <template #tab>Split / Bundle</template>
-        </NTabPane>
-        <NTabPane name="device">
-          <template #tab>From another device</template>
-        </NTabPane>
-      </NTabs>
+      <!-- Native radios (not NTabs): Naive's tabs aren't keyboard-focusable;
+           these get Tab + arrow-key navigation for free. -->
+      <NRadioGroup
+        v-model:value="activeTab"
+        size="small"
+        role="radiogroup"
+        aria-label="Install source"
+        class="shrink-0 self-start"
+      >
+        <NRadioButton value="single">From file</NRadioButton>
+        <NRadioButton value="split">Split / Bundle</NRadioButton>
+        <NRadioButton value="device">From another device</NRadioButton>
+      </NRadioGroup>
       <div class="min-h-0 flex-1">
         <SingleApkInstallPanel v-if="activeTab === 'single'" />
         <SplitApkInstallPanel v-else-if="activeTab === 'split'" />

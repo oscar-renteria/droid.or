@@ -184,7 +184,7 @@ function chooseAnotherApp(): void {
         <li v-for="pkg in filteredPackages" :key="pkg.packageName">
           <button
             type="button"
-            class="flex w-full items-center justify-between gap-4 py-2 text-left hover:bg-surface-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            class="flex w-full items-center justify-between gap-4 py-2 text-left hover:bg-surface focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
             @click="selectPackage(pkg)"
           >
             <AppIdentity

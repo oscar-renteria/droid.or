@@ -124,6 +124,7 @@ const columns = computed<DataTableColumns<SplitApkPart>>(() => [
       h(NCheckbox, {
         checked: part.role === 'base' || splitInstallStore.selectedFileNames.has(part.fileName),
         disabled: part.role === 'base' || !part.deviceCompatible,
+        'aria-label': `Include ${part.fileName}`,
         'onUpdate:checked': () => splitInstallStore.toggleFileName(part.fileName)
       })
   },

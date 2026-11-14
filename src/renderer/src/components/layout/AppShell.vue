@@ -192,22 +192,22 @@ const navGroups = [
               :key="tab.name"
               :to="{ name: tab.name }"
               :aria-current="isActive(tab.name) ? 'page' : undefined"
-              class="relative inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              class="relative inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2"
               :class="
                 tab.name === 'install'
-                  ? `rounded-md ${
+                  ? `rounded-md focus-visible:outline-on-primary ${
                       isActive(tab.name)
-                        ? 'bg-primary-pressed text-on-primary'
+                        ? 'bg-primary-pressed text-on-primary after:absolute after:inset-x-3 after:bottom-0.5 after:h-0.5 after:bg-on-primary after:content-[\'\']'
                         : 'bg-primary text-on-primary hover:bg-primary-hover'
                     }`
-                  : `rounded-t-md ${
+                  : `rounded-t-md focus-visible:outline-primary ${
                       isActive(tab.name)
                         ? 'text-primary after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-primary after:content-[\'\']'
                         : 'text-text-secondary hover:bg-surface hover:text-text'
                     }`
               "
             >
-              <NIcon :component="tab.icon" :size="14" />
+              <NIcon :component="tab.icon" :size="14" aria-hidden="true" />
               {{ tab.label }}
             </RouterLink>
             <div
