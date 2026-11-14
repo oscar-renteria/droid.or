@@ -3,8 +3,8 @@ import { NTabPane, NTabs, useMessage } from 'naive-ui'
 import { computed } from 'vue'
 import DeviceGate from '@renderer/components/ui/DeviceGate.vue'
 import PageHeader from '@renderer/components/ui/PageHeader.vue'
-import EmptyState from '@renderer/components/ui/EmptyState.vue'
 import DropZone from '@renderer/components/ui/DropZone.vue'
+import DeviceTransferPanel from '@renderer/components/install/DeviceTransferPanel.vue'
 import SingleApkInstallPanel from '@renderer/components/install/SingleApkInstallPanel.vue'
 import SplitApkInstallPanel from '@renderer/components/install/SplitApkInstallPanel.vue'
 import TargetDeviceStrip from '@renderer/components/install/TargetDeviceStrip.vue'
@@ -100,12 +100,7 @@ async function browseApkFiles(): Promise<void> {
       <div class="min-h-0 flex-1">
         <SingleApkInstallPanel v-if="activeTab === 'single'" />
         <SplitApkInstallPanel v-else-if="activeTab === 'split'" />
-        <EmptyState
-          v-else
-          title="Device-to-device install is coming soon"
-          description="For now, install from a file or split bundle."
-          class="min-h-0 flex-1"
-        />
+        <DeviceTransferPanel v-else />
       </div>
     </div>
   </DeviceGate>
