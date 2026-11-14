@@ -1,12 +1,12 @@
 import type Database from 'better-sqlite3'
 
-interface Migration {
+export interface Migration {
   /** Target `PRAGMA user_version`. Must be sequential starting at 1. */
   version: number
   up: (db: Database.Database) => void
 }
 
-const MIGRATIONS: Migration[] = [
+export const MIGRATIONS: Migration[] = [
   {
     version: 1,
     up: (db) => {
@@ -104,10 +104,13 @@ const MIGRATIONS: Migration[] = [
  * PRAGMA user_version, in order, each in its own transaction. Safe to call
  * on every app startup: a fully up-to-date database runs zero migrations.
  */
-export function runMigrations(db: Database.Database): void {
-  const currentVersion = db.pragma('user_version', { simple: true }) as number
+export function runMigrations(
+  db: Database.Database,
+  migrations: readonly Migration[] = MIGRATIONS
+): void {
+  const currentVersion = getSchemaVersion(db)
 
-  for (const migration of MIGRATIONS) {
+  for (const migration of migrations) {
     if (migration.version <= currentVersion) {
       continue
     }
@@ -117,4 +120,16 @@ export function runMigrations(db: Database.Database): void {
     })
     applyMigration()
   }
+}
+
+export function getSchemaVersion(db: Database.Database): number {
+  return db.pragma('user_version', { simple: true }) as number
+}
+
+export function hasPendingMigrations(
+  db: Database.Database,
+  migrations: readonly Migration[] = MIGRATIONS
+): boolean {
+  const currentVersion = getSchemaVersion(db)
+  return migrations.some((migration) => migration.version > currentVersion)
 }
