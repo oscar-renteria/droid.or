@@ -1,12 +1,15 @@
 {
   "name": "droid-or",
   "version": "0.1.0",
-  "description": "Cross-platform desktop application for inspecting, analyzing and debloating non-rooted Android devices over ADB.",
+  "description": "Install APKs and transfer apps between Android devices over ADB.",
   "private": true,
   "type": "module",
   "main": "./out/main/index.cjs",
   "desktopName": "droid.or.desktop",
-  "author": "",
+  "author": {
+    "name": "Óscar . Rentería Quevedo",
+    "email": "rakzox@gmail.com"
+  },
   "license": "MIT",
   "scripts": {
     "dev": "node scripts/run-electron-vite.mjs dev",
@@ -63,5 +66,13 @@
     "vitest": "5.0.0",
     "vue-tsc": "3.3.11",
     "yazl": "3.3.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oscar-renteria/droid.or.git"
+  },
+  "homepage": "https://github.com/oscar-renteria/droid.or#readme",
+  "bugs": {
+    "url": "https://github.com/oscar-renteria/droid.or/issues"
   }
 }
