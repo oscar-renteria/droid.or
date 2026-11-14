@@ -42,8 +42,7 @@ jobs:
           - os: windows-latest
             build_script: build:win
             artifact_name: windows
-            artifact_path: |
-              release/*.exe
+            artifact_path: release/droid.or-*-x64-*.exe
           - os: macos-latest
             build_script: build:mac
             artifact_name: macos
