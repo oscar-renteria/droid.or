@@ -68,9 +68,27 @@ jobs:
             "release/droid.or-$version-x64-portable.exe",
             "release/droid.or-$version-x64-setup.exe"
           )
+          $author = node -p "require('./package.json').author.name"
+          $expectedCopyright = "Copyright © $((Get-Date).Year) $author"
           foreach ($path in $expectedFiles) {
             if (-not (Test-Path $path)) {
               throw "Missing expected Windows artifact: $path"
+            }
+            $versionInfo = (Get-Item $path).VersionInfo
+            if ($versionInfo.ProductName -ne "droid.or") {
+              throw "Unexpected product name in $path`: $($versionInfo.ProductName)"
+            }
+            if ($versionInfo.ProductVersion -notlike "$version*") {
+              throw "Unexpected product version in $path`: $($versionInfo.ProductVersion)"
+            }
+            if ($versionInfo.LegalCopyright -ne $expectedCopyright) {
+              throw "Unexpected copyright in $path`: $($versionInfo.LegalCopyright)"
+            }
+            if ($versionInfo.CompanyName -ne $author) {
+              throw "Unexpected company name in $path`: $($versionInfo.CompanyName)"
+            }
+            if ($versionInfo.LegalTrademarks -ne "droid.or") {
+              throw "Unexpected legal trademarks in $path`: $($versionInfo.LegalTrademarks)"
             }
           }
 

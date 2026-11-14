@@ -45,6 +45,7 @@ linux:
 # machine it installs to, matching the rest of this app's
 # confirm-before-acting philosophy.
 win:
+  legalTrademarks: droid.or
   target:
     - target: nsis
       arch: x64
