@@ -16,6 +16,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import PageHeader from '@renderer/components/ui/PageHeader.vue'
 import { useAdbSettingsStore } from '@renderer/stores/adb-settings.store'
 import { useAiSettingsStore } from '@renderer/stores/ai-settings.store'
+import { useOnboardingStore } from '@renderer/stores/onboarding.store'
 import { useSettingsStore, type ThemeMode } from '@renderer/stores/settings.store'
 import { useUpdateStore } from '@renderer/stores/update.store'
 
@@ -23,6 +24,7 @@ const adbSettingsStore = useAdbSettingsStore()
 const aiSettingsStore = useAiSettingsStore()
 const settingsStore = useSettingsStore()
 const updateStore = useUpdateStore()
+const onboardingStore = useOnboardingStore()
 const updateToggleBusy = ref(false)
 const message = useMessage()
 
@@ -191,7 +193,12 @@ async function downloadPlatformTools(): Promise<void> {
 
       <NSpin :show="adbSettingsStore.loading">
         <div class="flex flex-col gap-3 rounded-lg border border-border p-4">
-          <h2 class="text-sm font-semibold text-text">ADB Connection</h2>
+          <div class="flex items-center justify-between gap-2">
+            <h2 class="text-sm font-semibold text-text">ADB Connection</h2>
+            <NButton size="small" quaternary @click="onboardingStore.open()">
+              Show setup guide
+            </NButton>
+          </div>
 
           <NAlert v-if="adbSettingsStore.errorMessage" type="error" closable>
             {{ adbSettingsStore.errorMessage }}

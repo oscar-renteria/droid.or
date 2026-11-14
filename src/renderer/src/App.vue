@@ -4,6 +4,7 @@ import { onMounted } from 'vue'
 import { useResolvedTheme } from '@renderer/composables/useResolvedTheme'
 import AppShell from '@renderer/components/layout/AppShell.vue'
 import ErrorToaster from '@renderer/components/ui/ErrorToaster.vue'
+import OnboardingModal from '@renderer/components/OnboardingModal.vue'
 import SafetyDisclaimerModal from '@renderer/components/SafetyDisclaimerModal.vue'
 import { useSafetyDisclaimerStore } from '@renderer/stores/safety-disclaimer.store'
 
@@ -22,6 +23,7 @@ onMounted(() => {
         <NMessageProvider>
           <AppShell />
           <SafetyDisclaimerModal />
+          <OnboardingModal />
           <ErrorToaster />
         </NMessageProvider>
       </NDialogProvider>
