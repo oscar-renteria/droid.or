@@ -1,6 +1,7 @@
 # droid.or — Roadmap to Production
 
-**Assessment date:** 2026-11-14 · **Baseline:** `master` @ `b515d4b` (+ uncommitted PayPal work) · **Version:** `0.1.0`
+**Assessment date:** 2026-11-14 · **Baseline:** `master` @ `2d9cba8` · **Version:** `0.1.0`
+**Implementation branch:** `feature/roadmap-to-production`
 
 **Target state:** A public GitHub repository where pushing a version tag runs a
 pipeline that builds, verifies and publishes to GitHub Releases:
@@ -103,7 +104,7 @@ is the acceptance criterion. Quality gate =
 
 | ID    | Task                                                                                                                                            | Files                                                                                                | Done when                                                 |
 | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| P0-01 | Review and commit the PayPal donation work (D10)                                                                                                | `src/main/support/*`, `src/shared/constants/support.ts`, `AppShell.vue`, `SettingsView.vue`, 4 tests | `git status` shows no modified tracked files; tests green |
+| **[DONE] P0-01** | Review and commit the PayPal donation work (D10)                                                                                                | `src/main/support/*`, `src/shared/constants/support.ts`, `AppShell.vue`, `SettingsView.vue`, 4 tests | Committed as `2d9cba8`; tests and production build green |
 | P0-02 | Exclude tool output from the repo: add `.impeccable/` to `.gitignore` and `.prettierignore`                                                     | `.gitignore`, `.prettierignore`                                                                      | `npm run format:check` passes                             |
 | P0-03 | Archive finished plans: move `features/PLAN.md`, `features/paypal_donation_button.md` to `docs/archive/` (or delete)                            | `features/`, `docs/archive/`                                                                         | `features/` holds only open work                          |
 | P0-04 | Pin `yauzl`, `yazl`, `@types/yauzl`, `@types/yazl` to exact versions like the rest                                                              | `package.json`, `package-lock.json`                                                                  | No `^` in `package.json`; `npm ci` succeeds               |
