@@ -14,7 +14,10 @@ files:
 icon: build/icon.png
 
 linux:
-  target: AppImage
+  target:
+    - target: AppImage
+      arch: x64
+  artifactName: ${productName}-${version}-x86_64.${ext}
   category: Utility
   # Makes the installed .desktop filename (and Electron's app_id/WM_CLASS)
   # derive from `desktopName` in package.json instead of a generic

@@ -26,7 +26,7 @@ jobs:
           - os: ubuntu-latest
             build_script: build:linux
             artifact_name: linux-appimage
-            artifact_path: release/*.AppImage
+            artifact_path: release/droid.or-*-x86_64.AppImage
           - os: windows-latest
             build_script: build:win
             artifact_name: windows
@@ -52,6 +52,12 @@ jobs:
       - run: npm run test
 
       - run: npm run ${{ matrix.build_script }}
+
+      - name: Verify Linux artifact
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          version=$(node -p 'require("./package.json").version')
+          test -f "release/droid.or-${version}-x86_64.AppImage"
 
       - name: Verify Windows artifacts
         if: matrix.os == 'windows-latest'
