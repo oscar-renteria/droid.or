@@ -243,7 +243,7 @@ async function confirmInstall(): Promise<void> {
         </NButton>
       </div>
 
-      <p class="text-xs text-text-muted">For a single .apk file, use the Single APK tab instead.</p>
+      <p class="text-xs text-text-muted">For a single .apk file, use the From file tab instead.</p>
     </template>
 
     <template v-else>
