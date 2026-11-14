@@ -154,6 +154,8 @@ Windows job verifies the x64 NSIS and portable `.exe` names and their
 product, version, copyright, company, and trademark metadata before upload;
 both Linux and Windows CI also smoke-test opening a database from the
 packaged Electron runtime;
+Linux CI verifies `app.asar` contains only the app output, package metadata,
+and production dependencies, with tests and app source maps excluded;
 the macOS job builds an arm64 DMG and verifies the app's ad-hoc signature
 with `codesign`. Artifacts (the x64 AppImage, the x64 NSIS
 installer + portable `.exe`, and the arm64 DMG) are uploaded as workflow

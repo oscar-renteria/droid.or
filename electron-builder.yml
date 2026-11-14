@@ -6,6 +6,10 @@ directories:
 files:
   - out/**/*
   - package.json
+  - '!**/node_modules/**/test/**'
+  - '!**/node_modules/**/tests/**'
+  - '!**/node_modules/**/__tests__/**'
+  - '!**/node_modules/**/*.{test,spec}.*'
 publish: null
 # A single 1024x1024 source (build/icon.png) — electron-builder derives
 # the platform-specific .ico/.icns from it itself for every target below.
