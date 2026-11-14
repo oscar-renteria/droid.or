@@ -5,6 +5,7 @@ import DeviceGate from '@renderer/components/ui/DeviceGate.vue'
 import PageHeader from '@renderer/components/ui/PageHeader.vue'
 import SingleApkInstallPanel from '@renderer/components/install/SingleApkInstallPanel.vue'
 import SplitApkInstallPanel from '@renderer/components/install/SplitApkInstallPanel.vue'
+import TargetDeviceStrip from '@renderer/components/install/TargetDeviceStrip.vue'
 
 const activeTab = ref<'single' | 'split'>('single')
 </script>
@@ -15,6 +16,7 @@ const activeTab = ref<'single' | 'split'>('single')
     no-device-text="Select a device from the sidebar to install an APK onto it."
   >
     <div class="flex h-full flex-col gap-3">
+      <TargetDeviceStrip />
       <PageHeader title="Install" />
       <NTabs v-model:value="activeTab" type="segment" size="small" animated class="shrink-0">
         <NTabPane name="single">
