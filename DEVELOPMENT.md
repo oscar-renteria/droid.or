@@ -148,6 +148,10 @@ the About dialog.
 
 ### CI builds (`.github/workflows/build.yml`)
 
+Pull requests and pushes to `master` also run `.github/workflows/ci.yml`:
+Ubuntu runs type-checking and lint, while Ubuntu and Windows run the test
+suite.
+
 Every push to `master` builds all three platforms on their own native
 GitHub-hosted runner (`ubuntu-latest`/`windows-latest`/`macos-latest`), so
 neither limitation above applies there — each OS uses its own prebuilt
