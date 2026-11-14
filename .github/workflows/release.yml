@@ -53,3 +53,8 @@ jobs:
       - run: npm run lint
       - run: npm run format:check
       - run: npm test
+
+  build:
+    name: Build
+    needs: verify
+    uses: ./.github/workflows/build.yml

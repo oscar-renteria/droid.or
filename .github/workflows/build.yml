@@ -48,7 +48,11 @@ jobs:
             build_script: build:mac
             artifact_name: macos
             artifact_path: release/*.dmg
+            # Experimental (D1): unsigned, untested by the maintainer. A
+            # failure is reported but never blocks Windows/Linux releases.
+            experimental: true
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental == true }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
