@@ -56,6 +56,31 @@ watch(sourceDeviceId, (deviceId) => {
   }
 })
 
+watch(
+  () => [sourceDeviceOptions.value, transferStore.busy, transferStore.result] as const,
+  ([options, busy, result]) => {
+    if (
+      !busy &&
+      !result &&
+      sourceDeviceId.value &&
+      !options.some((option) => option.value === sourceDeviceId.value)
+    ) {
+      sourceDeviceId.value = null
+    }
+  },
+  { flush: 'sync' }
+)
+
+watch(
+  targetDeviceId,
+  () => {
+    if (selectedPackageName.value) {
+      transferStore.reset()
+    }
+  },
+  { flush: 'sync' }
+)
+
 function selectPackage(pkg: DeviceTransferPackage): void {
   transferStore.reset()
   selectedPackageName.value = pkg.packageName

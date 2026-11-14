@@ -2,15 +2,31 @@
 import type { DroidorApi } from '@shared/types/droidor-api'
 import type { SplitInstallAnalysis } from '@shared/types/split-install'
 import type { DeviceTransferPackage } from '@shared/types/device-transfer'
+import type { KnownDevice } from '@shared/types/device'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, nextTick } from 'vue'
 import { useDeviceTransferStore } from '@renderer/stores/device-transfer.store'
+import { useDevicesStore } from '@renderer/stores/devices.store'
 
 const SOURCE = 'SOURCE01'
 const TARGET = 'TARGET02'
 const PKG = 'com.example.app'
+
+function device(id: string): KnownDevice {
+  return {
+    id,
+    nickname: null,
+    manufacturer: 'Google',
+    model: id,
+    androidVersion: '15',
+    sdkVersion: 35,
+    connectionState: 'device',
+    firstSeenAt: '2026-10-10T10:00:00.000Z',
+    lastConnectedAt: '2026-10-10T10:00:00.000Z'
+  }
+}
 
 function analysis(overrides: Partial<SplitInstallAnalysis> = {}): SplitInstallAnalysis {
   return {
@@ -71,6 +87,10 @@ describe('useDeviceTransferStore', () => {
 
   beforeEach(() => {
     setActivePinia(createPinia())
+    useDevicesStore().$patch({
+      devices: [device(SOURCE), device(TARGET)],
+      selectedDeviceId: TARGET
+    })
     analyzeDeviceTransfer = vi.fn().mockResolvedValue(analysis())
     performDeviceTransfer = vi
       .fn()
@@ -134,6 +154,45 @@ describe('useDeviceTransferStore', () => {
     expect(performDeviceTransfer).not.toHaveBeenCalled()
     expect(store.analyzedTargetId).toBeNull()
     expect(wrapper.find('.version').exists()).toBe(false)
+  })
+
+  it.each([SOURCE, TARGET])('discards analysis when device %s disconnects', async (deviceId) => {
+    const { store } = mountProbe()
+
+    await store.analyze(SOURCE, TARGET, PKG)
+    const devicesStore = useDevicesStore()
+    devicesStore.devices = devicesStore.devices.map((item) =>
+      item.id === deviceId ? { ...item, connectionState: 'disconnected' } : item
+    )
+    await nextTick()
+
+    expect(store.analysis).toBeNull()
+    expect(store.analyzedSourceId).toBeNull()
+    expect(store.analyzedTargetId).toBeNull()
+    await store.confirm()
+    expect(performDeviceTransfer).not.toHaveBeenCalled()
+  })
+
+  it('ignores analysis that finishes after a device disconnects', async () => {
+    let resolveLate: (value: SplitInstallAnalysis) => void = () => {}
+    analyzeDeviceTransfer.mockReturnValueOnce(
+      new Promise<SplitInstallAnalysis>((resolve) => {
+        resolveLate = resolve
+      })
+    )
+    const { store } = mountProbe()
+    const pending = store.analyze(SOURCE, TARGET, PKG)
+    const devicesStore = useDevicesStore()
+
+    devicesStore.devices = devicesStore.devices.map((item) =>
+      item.id === SOURCE ? { ...item, connectionState: 'disconnected' } : item
+    )
+    resolveLate(analysis())
+    await pending
+
+    expect(store.analysis).toBeNull()
+    expect(store.loading).toBe(false)
+    expect(store.errorMessage).toBeNull()
   })
 
   it('ignores an analysis that resolves after a reset', async () => {

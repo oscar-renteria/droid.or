@@ -2,9 +2,11 @@ import type { OperationResult } from '@shared/types/operation'
 import type { SplitInstallAnalysis } from '@shared/types/split-install'
 import type { DeviceTransferPackage } from '@shared/types/device-transfer'
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useDevicesStore } from '@renderer/stores/devices.store'
 
 export const useDeviceTransferStore = defineStore('deviceTransfer', () => {
+  const devicesStore = useDevicesStore()
   const sourcePackages = ref<DeviceTransferPackage[]>([])
   const loadingSourcePackages = ref(false)
   const sourcePackagesErrorMessage = ref<string | null>(null)
@@ -22,6 +24,8 @@ export const useDeviceTransferStore = defineStore('deviceTransfer', () => {
 
   const installing = ref(false)
   const result = ref<OperationResult | null>(null)
+  const activeSourceId = ref<string | null>(null)
+  const activeTargetId = ref<string | null>(null)
 
   const busy = computed(() => loading.value || installing.value)
 
@@ -30,11 +34,38 @@ export const useDeviceTransferStore = defineStore('deviceTransfer', () => {
   let generation = 0
   let sourcePackagesGeneration = 0
 
+  watch(
+    () => ({
+      sourceId: activeSourceId.value,
+      targetId: activeTargetId.value,
+      connectedIds: devicesStore.devices
+        .filter((device) => device.connectionState === 'device')
+        .map((device) => device.id)
+    }),
+    ({ sourceId, targetId, connectedIds }) => {
+      if (
+        !busy.value &&
+        !result.value &&
+        ((sourceId !== null && !connectedIds.includes(sourceId)) ||
+          (targetId !== null && !connectedIds.includes(targetId)))
+      ) {
+        reset()
+      }
+    },
+    { flush: 'sync' }
+  )
+
   function resetSourcePackages(): void {
     sourcePackagesGeneration += 1
     sourcePackages.value = []
     loadingSourcePackages.value = false
     sourcePackagesErrorMessage.value = null
+  }
+
+  function isDeviceConnected(id: string): boolean {
+    return devicesStore.devices.some(
+      (device) => device.id === id && device.connectionState === 'device'
+    )
   }
 
   async function loadSourcePackages(sourceDeviceId: string): Promise<void> {
@@ -75,6 +106,8 @@ export const useDeviceTransferStore = defineStore('deviceTransfer', () => {
     errorMessage.value = null
     installing.value = false
     result.value = null
+    activeSourceId.value = null
+    activeTargetId.value = null
   }
 
   async function analyze(
@@ -87,6 +120,8 @@ export const useDeviceTransferStore = defineStore('deviceTransfer', () => {
     }
     reset()
     const requestGeneration = generation
+    activeSourceId.value = sourceDeviceId
+    activeTargetId.value = targetDeviceId
     loading.value = true
     try {
       const response = await window.droidor.analyzeDeviceTransfer(
@@ -97,14 +132,24 @@ export const useDeviceTransferStore = defineStore('deviceTransfer', () => {
       if (requestGeneration !== generation) {
         return
       }
+      if (!isDeviceConnected(sourceDeviceId) || !isDeviceConnected(targetDeviceId)) {
+        reset()
+        return
+      }
       analysis.value = response
       analyzedSourceId.value = sourceDeviceId
       analyzedTargetId.value = targetDeviceId
       analyzedPackageName.value = packageName
     } catch (error) {
       if (requestGeneration === generation) {
-        errorMessage.value =
-          error instanceof Error ? error.message : 'Failed to copy this app from the source device.'
+        if (!isDeviceConnected(sourceDeviceId) || !isDeviceConnected(targetDeviceId)) {
+          reset()
+        } else {
+          errorMessage.value =
+            error instanceof Error
+              ? error.message
+              : 'Failed to copy this app from the source device.'
+        }
       }
     } finally {
       if (requestGeneration === generation) {
