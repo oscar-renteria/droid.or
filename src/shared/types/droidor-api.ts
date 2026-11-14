@@ -16,6 +16,7 @@ import type { AdbCommandLogEntry } from './logs'
 import type { SafetyDisclaimerStatus } from './safety-disclaimer'
 import type { AiAnalysisResult, AiProviderId, AiSettings } from './ai-settings'
 import type { DonationProviderId, OpenDonationLinkResult } from '../validation/support.schema'
+import type { UpdateStatus } from '../validation/update.schema'
 
 /**
  * Contract for the API the preload script exposes on window.droidor.
@@ -26,6 +27,12 @@ export interface DroidorApi {
   getAppInfo: () => Promise<AppInfo>
   openDonationLink: (provider: DonationProviderId) => Promise<OpenDonationLinkResult>
   openThirdPartyNotices: () => Promise<void>
+  /** Cached at most daily in the main process; never rejects on network
+   *  failure (returns the last known result instead). */
+  getUpdateStatus: () => Promise<UpdateStatus>
+  /** Opens the newest release's page in the system browser. The URL is
+   *  resolved in the main process — the renderer can't choose it. */
+  openReleasePage: () => Promise<void>
   getAdbAvailability: () => Promise<AdbAvailability>
   /** Full picture of where the effective adb command came from and what
    *  else is available (a managed download, a configured custom path). */

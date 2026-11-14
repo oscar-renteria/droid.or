@@ -35,6 +35,7 @@ import { adbCommandLogListSchema } from '@shared/validation/logs.schema'
 import { safetyDisclaimerStatusSchema } from '@shared/validation/safety-disclaimer.schema'
 import { aiAnalysisResultSchema, aiSettingsSchema } from '@shared/validation/ai-settings.schema'
 import { openDonationLinkResultSchema } from '@shared/validation/support.schema'
+import { updateStatusSchema } from '@shared/validation/update.schema'
 import type { DroidorApi } from '@shared/types/droidor-api'
 
 function toProgressUpdate(event: DeviceTransferProgressEvent): DeviceTransferProgressUpdate {
@@ -89,6 +90,15 @@ const droidorApi: DroidorApi = {
 
   openThirdPartyNotices: async () => {
     await ipcRenderer.invoke(IpcChannel.OpenThirdPartyNotices)
+  },
+
+  getUpdateStatus: async () => {
+    const result = await ipcRenderer.invoke(IpcChannel.GetUpdateStatus)
+    return updateStatusSchema.parse(result)
+  },
+
+  openReleasePage: async () => {
+    await ipcRenderer.invoke(IpcChannel.OpenReleasePage)
   },
 
   getAdbAvailability: async () => {

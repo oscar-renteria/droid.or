@@ -8,6 +8,8 @@ import { LoggingAdbClient } from './adb/logging-adb-client'
 import { AppMetadataService } from './android/app-metadata.service'
 import { DeviceRegistry } from './android/device-registry'
 import { openDatabase } from './persistence/database'
+import { getJson } from './update/http-get-json'
+import { UpdateCheckService } from './update/update-check.service'
 
 export interface AppContext {
   db: Database.Database
@@ -16,6 +18,7 @@ export interface AppContext {
   deviceRegistry: DeviceRegistry
   appMetadataService: AppMetadataService
   adbSettingsService: AdbSettingsService
+  updateCheckService: UpdateCheckService
 }
 
 /**
@@ -35,5 +38,15 @@ export function createAppContext(): AppContext {
   const appMetadataService = new AppMetadataService(db, adbClient)
   const adbSettingsService = new AdbSettingsService(db, adbClient, deviceRegistry, userDataDir)
 
-  return { db, adbClient, adbCommandLog, deviceRegistry, appMetadataService, adbSettingsService }
+  const updateCheckService = new UpdateCheckService(db, getJson, app.getVersion())
+
+  return {
+    db,
+    adbClient,
+    adbCommandLog,
+    deviceRegistry,
+    appMetadataService,
+    adbSettingsService,
+    updateCheckService
+  }
 }
