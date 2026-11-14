@@ -2,6 +2,7 @@
 import { NAlert, NButton, NIcon } from 'naive-ui'
 import {
   AnalyticsOutline,
+  ArrowUpCircleOutline,
   AppsOutline,
   ArrowUndoOutline,
   DocumentTextOutline,
@@ -19,6 +20,7 @@ import { useAdbAvailability } from '@renderer/composables/useAdbAvailability'
 import { useAppInfo } from '@renderer/composables/useAppInfo'
 import { useSupportLink } from '@renderer/composables/useSupportLink'
 import { useDevicesStore } from '@renderer/stores/devices.store'
+import { useUpdateStore } from '@renderer/stores/update.store'
 import { deviceDisplayName } from '@renderer/utils/device-display-name'
 import { getDeviceStateMeta } from '@renderer/utils/device-state-meta'
 import AboutModal from '@renderer/components/AboutModal.vue'
@@ -30,6 +32,7 @@ const { appInfo } = useAppInfo()
 const { adbAvailability } = useAdbAvailability()
 const { opening: openingSupportLink, openSupportLink } = useSupportLink()
 const devicesStore = useDevicesStore()
+const updateStore = useUpdateStore()
 const showAboutModal = ref(false)
 
 async function handlePayPalClick(): Promise<void> {
@@ -38,6 +41,7 @@ async function handlePayPalClick(): Promise<void> {
 
 onMounted(() => {
   void devicesStore.initialize()
+  void updateStore.load()
 })
 onUnmounted(() => {
   devicesStore.dispose()
@@ -95,6 +99,19 @@ const navGroups = [
         </span>
       </div>
       <div class="flex items-center gap-2 shrink-0">
+        <NButton
+          v-if="updateStore.updateAvailable"
+          size="small"
+          type="info"
+          quaternary
+          :title="`droid.or ${updateStore.latestVersion} is available — opens the release page in your browser`"
+          @click="updateStore.openReleasePage()"
+        >
+          <template #icon>
+            <NIcon :component="ArrowUpCircleOutline" :size="14" />
+          </template>
+          Update {{ updateStore.latestVersion }}
+        </NButton>
         <NButton
           size="small"
           type="primary"
