@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { NTabPane, NTabs, useMessage } from 'naive-ui'
-import { ref } from 'vue'
+import { computed } from 'vue'
 import DeviceGate from '@renderer/components/ui/DeviceGate.vue'
 import PageHeader from '@renderer/components/ui/PageHeader.vue'
 import EmptyState from '@renderer/components/ui/EmptyState.vue'
@@ -8,16 +8,21 @@ import DropZone from '@renderer/components/ui/DropZone.vue'
 import SingleApkInstallPanel from '@renderer/components/install/SingleApkInstallPanel.vue'
 import SplitApkInstallPanel from '@renderer/components/install/SplitApkInstallPanel.vue'
 import TargetDeviceStrip from '@renderer/components/install/TargetDeviceStrip.vue'
-import { useApkInstallStore } from '@renderer/stores/apk-install.store'
+import { useApkInstallStore, type InstallSourceTab } from '@renderer/stores/apk-install.store'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { useSplitInstallStore } from '@renderer/stores/split-install.store'
 import { routeInstallFilePaths } from '@renderer/utils/install-file-routing'
 
-const activeTab = ref<'single' | 'split' | 'device'>('single')
 const devicesStore = useDevicesStore()
 const apkInstallStore = useApkInstallStore()
 const splitInstallStore = useSplitInstallStore()
 const message = useMessage()
+const activeTab = computed({
+  get: () => apkInstallStore.activeSourceTab,
+  set: (tab: InstallSourceTab) => {
+    apkInstallStore.activeSourceTab = tab
+  }
+})
 
 function routePaths(paths: string[]): void {
   const device = devicesStore.selectedDevice

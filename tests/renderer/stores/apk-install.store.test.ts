@@ -119,4 +119,13 @@ describe('useApkInstallStore', () => {
     expect(store.queue).toHaveLength(1)
     expect(inspectApkFile).toHaveBeenCalledTimes(1)
   })
+
+  it('keeps the active source tab when the install queue is reset', () => {
+    const store = useApkInstallStore()
+    store.activeSourceTab = 'split'
+
+    store.reset()
+
+    expect(store.activeSourceTab).toBe('split')
+  })
 })
