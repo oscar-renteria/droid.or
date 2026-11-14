@@ -162,8 +162,11 @@ stage of the release workflow.
 
 The Linux job verifies the deterministic x64 AppImage name; the Windows job
 verifies the x64 NSIS and portable `.exe` names and their product, version,
-copyright, company, and trademark metadata; both smoke-test opening a
-database from the packaged Electron runtime. Linux also verifies `app.asar`
+copyright, company, and trademark metadata. Every platform then launches
+its packaged app with `--smoke-test` (AppImage under Xvfb; Windows portable
+and silently installed NSIS app; macOS app from the mounted DMG), which
+opens the SQLite database, waits for the renderer and preload to load, and
+exits non-zero on any failure. Linux also verifies `app.asar`
 contains only the app output, package metadata, and production
 dependencies (no tests or app source maps) and checks the generated
 third-party notices resource. The macOS job builds an arm64 DMG and

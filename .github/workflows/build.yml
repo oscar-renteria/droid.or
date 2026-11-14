@@ -70,10 +70,6 @@ jobs:
       # in ci.yml and in release.yml's verify job before this is called.
       - run: npm run ${{ matrix.build_script }}
 
-      - name: Build unpacked Windows app for native module smoke test
-        if: matrix.os == 'windows-latest'
-        run: npx electron-builder --win --dir --publish never
-
       - name: Verify Linux artifact
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -111,16 +107,12 @@ jobs:
             exit 1
           fi
 
-      - name: Smoke-test packaged Windows database
+      # The native SQLite module is exercised on Windows by the launch smoke
+      # test below, which opens the database in the portable and installed app.
+      - name: Verify Windows third-party notices
         if: matrix.os == 'windows-latest'
-        env:
-          ELECTRON_RUN_AS_NODE: '1'
         shell: pwsh
         run: |
-          $executable = "release/win-unpacked/droid.or.exe"
-          if (-not (Test-Path $executable)) {
-            throw "Missing unpacked Windows app executable: $executable"
-          }
           $notices = "release/win-unpacked/resources/THIRD_PARTY_NOTICES.txt"
           if (-not (Test-Path $notices)) {
             throw "Missing packaged third-party notices: $notices"
@@ -128,10 +120,6 @@ jobs:
           $noticeText = Get-Content -Raw $notices
           if ($noticeText -notmatch 'Package: better-sqlite3@' -or $noticeText -match 'Package: vitest@') {
             throw "Third-party notices do not contain the expected production dependencies."
-          }
-          & $executable -e 'const Database = require(require("path").join(process.resourcesPath, "app.asar/node_modules/better-sqlite3")); const db = new Database(":memory:"); if (db.prepare("SELECT 1 AS ok").get().ok !== 1) process.exit(1); db.close()'
-          if ($LASTEXITCODE -ne 0) {
-            throw "The packaged Windows app could not open a database."
           }
 
       - name: Verify Windows artifacts
