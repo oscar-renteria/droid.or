@@ -17,6 +17,7 @@ import type { SafetyDisclaimerStatus } from './safety-disclaimer'
 import type { AiAnalysisResult, AiProviderId, AiSettings } from './ai-settings'
 import type { DonationProviderId, OpenDonationLinkResult } from '../validation/support.schema'
 import type { UpdateStatus } from '../validation/update.schema'
+import type { RendererErrorReport } from '../validation/renderer-error.schema'
 
 /**
  * Contract for the API the preload script exposes on window.droidor.
@@ -196,6 +197,8 @@ export interface DroidorApi {
   exportLogs: () => Promise<string | null>
   /** Opens the folder holding the persistent log files (userData/logs). */
   openLogsFolder: () => Promise<void>
+  /** Writes a renderer-side error to the persistent log file. */
+  logRendererError: (report: RendererErrorReport) => Promise<void>
   /** Whether the user has ever clicked through the first-launch safety
    *  disclaimer, and when. Persists across restarts. */
   getSafetyDisclaimerStatus: () => Promise<SafetyDisclaimerStatus>

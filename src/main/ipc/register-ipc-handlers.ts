@@ -47,7 +47,7 @@ export function registerIpcHandlers(context: AppContext): void {
   registerApkBackupHandlers(context.adbClient, context.deviceRegistry)
   registerDeviceTransferHandlers(context.db, context.adbClient, context.deviceRegistry)
   registerSecurityReviewHandlers(context.adbClient, context.deviceRegistry)
-  registerLogsHandlers(context.adbCommandLog, context.logger.directory)
+  registerLogsHandlers(context.adbCommandLog, context.logger)
   registerSafetyDisclaimerHandlers(context.db)
   registerAiHandlers(context.db, context.adbClient, context.deviceRegistry)
 

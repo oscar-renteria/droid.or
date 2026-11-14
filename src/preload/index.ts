@@ -334,6 +334,10 @@ const droidorApi: DroidorApi = {
     await ipcRenderer.invoke(IpcChannel.OpenLogsFolder)
   },
 
+  logRendererError: async (report) => {
+    await ipcRenderer.invoke(IpcChannel.LogRendererError, report)
+  },
+
   getSafetyDisclaimerStatus: async () => {
     const result = await ipcRenderer.invoke(IpcChannel.GetSafetyDisclaimerStatus)
     return safetyDisclaimerStatusSchema.parse(result)

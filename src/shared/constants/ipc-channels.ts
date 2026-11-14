@@ -49,7 +49,8 @@ export enum IpcChannel {
   GetUpdateStatus = 'update:get-status',
   OpenReleasePage = 'update:open-release-page',
   SetUpdateCheckEnabled = 'update:set-check-enabled',
-  OpenLogsFolder = 'logs:open-folder'
+  OpenLogsFolder = 'logs:open-folder',
+  LogRendererError = 'logs:renderer-error'
 }
 
 /**
