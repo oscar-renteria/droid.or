@@ -3,7 +3,6 @@ import { NButton, NIcon, NModal, NSpin, NTag, useMessage } from 'naive-ui'
 import { WarningOutline } from '@vicons/ionicons5'
 import { computed, ref } from 'vue'
 import AppIdentity from '@renderer/components/ui/AppIdentity.vue'
-import DropZone from '@renderer/components/ui/DropZone.vue'
 import { useApkInstallStore } from '@renderer/stores/apk-install.store'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { formatBytes } from '@renderer/utils/format-bytes'
@@ -13,8 +12,6 @@ const devicesStore = useDevicesStore()
 const apkInstallStore = useApkInstallStore()
 const message = useMessage()
 
-const selectedDevice = computed(() => devicesStore.selectedDevice)
-
 /** Fallback label when the APK's metadata hasn't been read yet — mirrors
  *  what the queue row would have hand-rolled before AppIdentity. */
 function rowLabel(filePath: string): string {
@@ -22,31 +19,8 @@ function rowLabel(filePath: string): string {
   return item?.info?.label ?? item?.info?.packageName ?? filePath.split(/[\\/]/).pop() ?? filePath
 }
 
-function handleDrop(files: File[]): void {
-  const device = selectedDevice.value
-  if (!device || !window.droidor) {
-    return
-  }
-  const paths = files.map((file) => window.droidor!.getPathForFile(file))
-  if (paths.length === 0) {
-    return
-  }
-  void apkInstallStore.addFiles(device.id, paths)
-}
-
-async function browseFiles(): Promise<void> {
-  const device = selectedDevice.value
-  if (!device || !window.droidor) {
-    return
-  }
-  const paths = await window.droidor.browseForApkFiles()
-  if (paths.length > 0) {
-    void apkInstallStore.addFiles(device.id, paths)
-  }
-}
-
 async function installOne(filePath: string): Promise<void> {
-  const device = selectedDevice.value
+  const device = devicesStore.selectedDevice
   const item = apkInstallStore.queue.find((entry) => entry.filePath === filePath)
   if (!device || !item) {
     return
@@ -70,7 +44,7 @@ function openBulkConfirm(): void {
 }
 
 async function confirmInstallAll(): Promise<void> {
-  const device = selectedDevice.value
+  const device = devicesStore.selectedDevice
   bulkConfirmVisible.value = false
   if (!device) {
     return
@@ -100,15 +74,6 @@ async function confirmInstallAll(): Promise<void> {
         Install All ({{ readyItems.length }})
       </NButton>
     </div>
-
-    <DropZone
-      clickable
-      title="Drag & drop .apk files here, or click to browse"
-      hint="Only single .apk files are supported here — for a split APK set, an app bundle, or a .apks/.xapk/.apkm archive, use the Split / Bundle tab instead."
-      class="shrink-0"
-      @drop="handleDrop"
-      @activate="browseFiles"
-    />
 
     <div class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
       <div

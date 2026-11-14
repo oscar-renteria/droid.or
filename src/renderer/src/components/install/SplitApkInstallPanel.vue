@@ -14,7 +14,6 @@ import {
 import { ArchiveOutline, DocumentsOutline, FolderOpenOutline } from '@vicons/ionicons5'
 import { computed, h, watch } from 'vue'
 import AppIdentity from '@renderer/components/ui/AppIdentity.vue'
-import DropZone from '@renderer/components/ui/DropZone.vue'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { useSplitInstallStore } from '@renderer/stores/split-install.store'
 import { formatBytes } from '@renderer/utils/format-bytes'
@@ -74,35 +73,6 @@ function analyze(kind: SplitSourceKind, paths: string[]): void {
     return
   }
   void splitInstallStore.analyzeSource(device.id, kind, paths)
-}
-
-function handleDrop(files: File[]): void {
-  if (!window.droidor) {
-    return
-  }
-  const paths = files.map((file) => window.droidor!.getPathForFile(file))
-  if (paths.length === 0) {
-    return
-  }
-
-  if (paths.length === 1 && /\.(apks|xapk|apkm)$/i.test(paths[0] ?? '')) {
-    analyze('archive', paths)
-    return
-  }
-  if (paths.every((path) => /\.apk$/i.test(path))) {
-    analyze('files', paths)
-    return
-  }
-  if (paths.length === 1) {
-    // Most likely a dropped folder of split APKs — the browser's drag-and-
-    // drop API gives no reliable is-directory flag to check for up front,
-    // so this just tries it as a directory source; resolveSplitSource
-    // already validates that for real and surfaces a clear error here if
-    // it isn't one.
-    analyze('directory', paths)
-    return
-  }
-  message.warning('Drop a single .apks/.xapk/.apkm archive, a folder, or one or more .apk files.')
 }
 
 async function browseArchive(): Promise<void> {
@@ -221,13 +191,6 @@ async function confirmInstall(): Promise<void> {
     </div>
 
     <template v-if="!splitInstallStore.sourceKind">
-      <DropZone
-        title="Drag & drop a .apks/.xapk/.apkm archive, a folder, or one or more .apk files"
-        hint="Or choose a source below"
-        class="shrink-0"
-        @drop="handleDrop"
-      />
-
       <div class="flex shrink-0 flex-wrap gap-2">
         <NButton @click="browseArchive">
           <template #icon><NIcon :component="ArchiveOutline" /></template>
