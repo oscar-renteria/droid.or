@@ -44,25 +44,23 @@ onUnmounted(() => {
 })
 
 const tabs: Array<{ name: string; label: string; icon: Component }> = [
+  { name: 'install', label: 'Install', icon: DownloadOutline },
   { name: 'overview', label: 'Overview', icon: HomeOutline },
   { name: 'apps', label: 'Apps', icon: AppsOutline },
-  { name: 'install', label: 'Install', icon: DownloadOutline },
   { name: 'analyzer', label: 'Analyzer', icon: AnalyticsOutline },
   { name: 'profiles', label: 'Profiles', icon: LayersOutline },
-  { name: 'history', label: 'History', icon: TimeOutline },
   { name: 'recovery', label: 'Recovery', icon: ArrowUndoOutline },
-  { name: 'security', label: 'Security', icon: ShieldCheckmarkOutline }
+  { name: 'security', label: 'Security', icon: ShieldCheckmarkOutline },
+  { name: 'history', label: 'History', icon: TimeOutline }
 ]
 
 const isActive = (name: string): boolean => route.name === name
 
-// §3.3 — grouped device-view tabs. Settings and Logs move to the header;
-// route names stay unchanged.
-const navGroups: Array<Array<{ name: string; label: string; icon: Component }>> = [
-  tabs.slice(0, 3),
-  tabs.slice(3, 5),
-  tabs.slice(5, 7),
-  tabs.slice(7)
+const navGroups = [
+  { label: 'Install', tabs: tabs.slice(0, 1) },
+  { label: 'Device views', tabs: tabs.slice(1, 3) },
+  { label: 'Device tools', tabs: tabs.slice(3, 7) },
+  { label: 'History', tabs: tabs.slice(7) }
 ]
 </script>
 
@@ -164,16 +162,32 @@ const navGroups: Array<Array<{ name: string; label: string; icon: Component }>> 
           aria-label="Device views"
           class="flex shrink-0 items-end gap-1 overflow-x-auto overflow-y-hidden border-b border-border px-4 pt-2"
         >
-          <div v-for="(group, gi) in navGroups" :key="gi" class="flex items-end gap-1">
+          <div
+            v-for="(group, gi) in navGroups"
+            :key="group.label"
+            role="group"
+            :aria-label="group.label"
+            class="flex items-end gap-1"
+            :class="gi === 0 ? 'mr-3' : ''"
+          >
             <RouterLink
-              v-for="tab in group"
+              v-for="tab in group.tabs"
               :key="tab.name"
               :to="{ name: tab.name }"
-              class="-mb-px inline-flex items-center gap-1 rounded-t-md border-b-2 px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              :aria-current="isActive(tab.name) ? 'page' : undefined"
+              class="relative inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               :class="
-                isActive(tab.name)
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-text-secondary hover:bg-surface hover:text-text'
+                tab.name === 'install'
+                  ? `rounded-md ${
+                      isActive(tab.name)
+                        ? 'bg-primary-pressed text-on-primary'
+                        : 'bg-primary text-on-primary hover:bg-primary-hover'
+                    }`
+                  : `rounded-t-md ${
+                      isActive(tab.name)
+                        ? 'text-primary after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-primary after:content-[\'\']'
+                        : 'text-text-secondary hover:bg-surface hover:text-text'
+                    }`
               "
             >
               <NIcon :component="tab.icon" :size="14" />
