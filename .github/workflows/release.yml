@@ -97,7 +97,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: |
-          flags=(--draft --verify-tag --generate-notes --title "droid.or ${TAG#v}")
+          version="${TAG#v}"
+          # The rendered template is prepended to GitHub's generated
+          # changelog (gh places --notes text before generated notes).
+          notes="$(sed -e "s|{{VERSION}}|${version}|g" -e "s|{{REPO}}|${GITHUB_REPOSITORY}|g" .github/release-template.md)"
+          flags=(--draft --verify-tag --generate-notes --title "droid.or ${version}" --notes "$notes")
           if [[ "$TAG" == *-* ]]; then
             flags+=(--prerelease)
           fi
