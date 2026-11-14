@@ -19,9 +19,16 @@ export const useUpdateStore = defineStore('update', () => {
     }
   }
 
+  async function setCheckEnabled(enabled: boolean): Promise<void> {
+    const next = await window.droidor?.setUpdateCheckEnabled(enabled)
+    if (next) {
+      status.value = next
+    }
+  }
+
   async function openReleasePage(): Promise<void> {
     await window.droidor?.openReleasePage()
   }
 
-  return { status, updateAvailable, latestVersion, load, openReleasePage }
+  return { status, updateAvailable, latestVersion, load, setCheckEnabled, openReleasePage }
 })

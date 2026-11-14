@@ -40,7 +40,8 @@ describe('UpdateCheckService', () => {
       latestVersion: '1.1.0',
       updateAvailable: true,
       releaseUrl: `${RELEASES}/tag/v1.1.0`,
-      checkedAt: now
+      checkedAt: now,
+      checkEnabled: true
     })
     expect(fetchJson).toHaveBeenCalledExactlyOnceWith(LATEST_RELEASE_API_URL)
   })
@@ -102,5 +103,26 @@ describe('UpdateCheckService', () => {
 
     fetchJson.mockResolvedValueOnce(release('nightly-2026-11-14'))
     expect((await service().getStatus()).latestVersion).toBeNull()
+  })
+
+  it('makes no request and reports no update while disabled', async () => {
+    fetchJson.mockResolvedValue(release('v1.1.0'))
+    await service().getStatus()
+    now += CHECK_INTERVAL_MS
+
+    const disabled = await service().setEnabled(false)
+    expect(disabled).toMatchObject({ checkEnabled: false, updateAvailable: false })
+    await service().getStatus()
+    expect(fetchJson).toHaveBeenCalledOnce()
+  })
+
+  it('checks right away when re-enabled', async () => {
+    await service().setEnabled(false)
+    fetchJson.mockResolvedValue(release('v1.1.0'))
+    await expect(service().setEnabled(true)).resolves.toMatchObject({
+      checkEnabled: true,
+      updateAvailable: true
+    })
+    expect(fetchJson).toHaveBeenCalledOnce()
   })
 })

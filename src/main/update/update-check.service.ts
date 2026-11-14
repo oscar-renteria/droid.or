@@ -9,6 +9,7 @@ export const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000
 
 const LATEST_VERSION_KEY = 'update_check.latest_version'
 const CHECKED_AT_KEY = 'update_check.checked_at'
+const ENABLED_KEY = 'update_check.enabled'
 
 export interface HttpJsonResponse {
   statusCode: number
@@ -36,7 +37,20 @@ export class UpdateCheckService {
     private readonly now: () => number = Date.now
   ) {}
 
+  isEnabled(): boolean {
+    return getSetting(this.db, ENABLED_KEY) !== 'false'
+  }
+
+  /** Turning the check on runs it right away (subject to the daily limit). */
+  async setEnabled(enabled: boolean): Promise<UpdateStatus> {
+    setSetting(this.db, ENABLED_KEY, enabled ? null : 'false')
+    return this.getStatus()
+  }
+
   async getStatus(): Promise<UpdateStatus> {
+    if (!this.isEnabled()) {
+      return this.cachedStatus()
+    }
     const checkedAt = Number(getSetting(this.db, CHECKED_AT_KEY)) || null
     if (checkedAt === null || this.now() - checkedAt >= CHECK_INTERVAL_MS) {
       await this.refresh()
@@ -64,7 +78,9 @@ export class UpdateCheckService {
   private cachedStatus(): UpdateStatus {
     const latestVersion = getSetting(this.db, LATEST_VERSION_KEY)
     const checkedAt = Number(getSetting(this.db, CHECKED_AT_KEY)) || null
+    const checkEnabled = this.isEnabled()
     const updateAvailable =
+      checkEnabled &&
       latestVersion !== null &&
       parseVersion(this.currentVersion) !== null &&
       compareVersions(latestVersion, this.currentVersion) > 0
@@ -74,7 +90,8 @@ export class UpdateCheckService {
       latestVersion,
       updateAvailable,
       releaseUrl: latestVersion ? `${GITHUB_RELEASES_URL}/tag/v${latestVersion}` : null,
-      checkedAt
+      checkedAt,
+      checkEnabled
     }
   }
 }

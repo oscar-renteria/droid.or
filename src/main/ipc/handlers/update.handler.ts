@@ -1,4 +1,5 @@
 import { ipcMain, shell } from 'electron'
+import { z } from 'zod'
 import { IpcChannel } from '@shared/constants/ipc-channels'
 import { updateStatusSchema, type UpdateStatus } from '@shared/validation/update.schema'
 import { validateSafeExternalUrl } from '../../support/support-config'
@@ -7,6 +8,14 @@ import type { UpdateCheckService } from '../../update/update-check.service'
 export function registerUpdateHandlers(updateCheckService: UpdateCheckService): void {
   ipcMain.handle(IpcChannel.GetUpdateStatus, async (): Promise<UpdateStatus> =>
     updateStatusSchema.parse(await updateCheckService.getStatus())
+  )
+
+  ipcMain.handle(
+    IpcChannel.SetUpdateCheckEnabled,
+    async (_event, rawEnabled: unknown): Promise<UpdateStatus> => {
+      const enabled = z.boolean().parse(rawEnabled)
+      return updateStatusSchema.parse(await updateCheckService.setEnabled(enabled))
+    }
   )
 
   // Takes no arguments: the URL comes from the main process's own status,

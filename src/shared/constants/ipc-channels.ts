@@ -47,7 +47,8 @@ export enum IpcChannel {
   OpenDonationLink = 'support:open-donation-link',
   OpenThirdPartyNotices = 'support:open-third-party-notices',
   GetUpdateStatus = 'update:get-status',
-  OpenReleasePage = 'update:open-release-page'
+  OpenReleasePage = 'update:open-release-page',
+  SetUpdateCheckEnabled = 'update:set-check-enabled'
 }
 
 /**

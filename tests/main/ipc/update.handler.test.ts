@@ -17,7 +17,8 @@ const NEWER: UpdateStatus = {
   latestVersion: '1.1.0',
   updateAvailable: true,
   releaseUrl: 'https://github.com/oscar-renteria/droid.or/releases/tag/v1.1.0',
-  checkedAt: 1
+  checkedAt: 1,
+  checkEnabled: true
 }
 
 function handler(channel: IpcChannel): (...args: unknown[]) => Promise<unknown> {
@@ -33,7 +34,8 @@ describe('registerUpdateHandlers', () => {
     vi.clearAllMocks()
     status = NEWER
     registerUpdateHandlers({
-      getStatus: () => Promise.resolve(status)
+      getStatus: () => Promise.resolve(status),
+      setEnabled: (enabled: boolean) => Promise.resolve({ ...status, checkEnabled: enabled })
     } as unknown as UpdateCheckService)
   })
 
@@ -58,5 +60,12 @@ describe('registerUpdateHandlers', () => {
     status = { ...NEWER, releaseUrl: 'http://github.com/oscar-renteria/droid.or/releases' }
     await expect(handler(IpcChannel.OpenReleasePage)(undefined)).rejects.toThrow()
     expect(mocks.openExternal).not.toHaveBeenCalled()
+  })
+
+  it('persists the toggle and rejects non-boolean input', async () => {
+    await expect(
+      handler(IpcChannel.SetUpdateCheckEnabled)(undefined, false)
+    ).resolves.toMatchObject({ checkEnabled: false })
+    await expect(handler(IpcChannel.SetUpdateCheckEnabled)(undefined, 'false')).rejects.toThrow()
   })
 })

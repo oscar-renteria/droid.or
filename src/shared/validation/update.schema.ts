@@ -11,6 +11,9 @@ export const updateStatusSchema = z.object({
    *  releases, built from a validated tag, never taken from the response. */
   releaseUrl: z.string().url().nullable(),
   /** Epoch ms of the last successful check, or null. */
-  checkedAt: z.number().int().nullable()
+  checkedAt: z.number().int().nullable(),
+  /** User setting (default on). When off, no request is made and no
+   *  update is reported. */
+  checkEnabled: z.boolean()
 })
 export type UpdateStatus = z.infer<typeof updateStatusSchema>

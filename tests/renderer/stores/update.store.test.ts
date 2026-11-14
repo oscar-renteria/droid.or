@@ -10,7 +10,8 @@ const STATUS: UpdateStatus = {
   latestVersion: '1.1.0',
   updateAvailable: true,
   releaseUrl: 'https://github.com/oscar-renteria/droid.or/releases/tag/v1.1.0',
-  checkedAt: 1
+  checkedAt: 1,
+  checkEnabled: true
 }
 
 function stubApi(api: Partial<DroidorApi>): void {

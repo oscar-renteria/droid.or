@@ -96,10 +96,21 @@ dialogs are ever reached.
 
 ## Network usage
 
-Every network request this app makes is one the user explicitly triggers.
-There is no telemetry, no analytics, and no background/automatic network
-call anywhere in the codebase.
+There is no telemetry and no analytics. Apart from the update check below —
+the only automatic network request, and one the user can switch off — every
+network request this app makes is one the user explicitly triggers.
 
+- **Update check** (automatic, on by default, Settings → Updates → "Check
+  for updates"): at most once every 24 hours, one unauthenticated `GET` to
+  `https://api.github.com/repos/oscar-renteria/droid.or/releases/latest`
+  with a generic `User-Agent: droid.or-update-check`. Nothing about the user,
+  the machine, or any device is sent; GitHub sees only the request itself
+  (including the IP address, as with any web request). Only the release's
+  version tag is read from the response; the release page link shown to the
+  user is built locally from that validated tag, and nothing is downloaded or
+  installed automatically. When switched off, no request is made at all.
+- **Opening links** (release page, GitHub Sponsors, PayPal): only on click,
+  in the system browser, and only for `https` URLs on an allow-list.
 - **Downloading `platform-tools`**: when the user clicks "Download
   platform-tools" in Settings, having found no usable `adb` otherwise, the
   official package is fetched directly from Google's own distribution

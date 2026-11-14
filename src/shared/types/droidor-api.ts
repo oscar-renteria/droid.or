@@ -30,6 +30,8 @@ export interface DroidorApi {
   /** Cached at most daily in the main process; never rejects on network
    *  failure (returns the last known result instead). */
   getUpdateStatus: () => Promise<UpdateStatus>
+  /** Persists the "Check for updates" setting and returns the new status. */
+  setUpdateCheckEnabled: (enabled: boolean) => Promise<UpdateStatus>
   /** Opens the newest release's page in the system browser. The URL is
    *  resolved in the main process — the renderer can't choose it. */
   openReleasePage: () => Promise<void>

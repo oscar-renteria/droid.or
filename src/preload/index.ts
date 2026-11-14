@@ -97,6 +97,11 @@ const droidorApi: DroidorApi = {
     return updateStatusSchema.parse(result)
   },
 
+  setUpdateCheckEnabled: async (enabled) => {
+    const result = await ipcRenderer.invoke(IpcChannel.SetUpdateCheckEnabled, enabled)
+    return updateStatusSchema.parse(result)
+  },
+
   openReleasePage: async () => {
     await ipcRenderer.invoke(IpcChannel.OpenReleasePage)
   },
