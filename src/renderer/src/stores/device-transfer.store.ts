@@ -1,9 +1,14 @@
 import type { OperationResult } from '@shared/types/operation'
 import type { SplitInstallAnalysis } from '@shared/types/split-install'
+import type { DeviceTransferPackage } from '@shared/types/device-transfer'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
 export const useDeviceTransferStore = defineStore('deviceTransfer', () => {
+  const sourcePackages = ref<DeviceTransferPackage[]>([])
+  const loadingSourcePackages = ref(false)
+  const sourcePackagesErrorMessage = ref<string | null>(null)
+
   const analysis = ref<SplitInstallAnalysis | null>(null)
   /** Which transfer `analysis` describes. confirm() only ever acts on this
    *  exact source/target/package, so a target picked after the check can
@@ -23,6 +28,42 @@ export const useDeviceTransferStore = defineStore('deviceTransfer', () => {
   /** Bumped by reset(), so a request that resolves after its state was
    *  thrown away can't write into (or un-busy) whatever came next. */
   let generation = 0
+  let sourcePackagesGeneration = 0
+
+  function resetSourcePackages(): void {
+    sourcePackagesGeneration += 1
+    sourcePackages.value = []
+    loadingSourcePackages.value = false
+    sourcePackagesErrorMessage.value = null
+  }
+
+  async function loadSourcePackages(sourceDeviceId: string): Promise<void> {
+    if (!window.droidor) {
+      resetSourcePackages()
+      sourcePackagesErrorMessage.value = 'Device transfer is unavailable.'
+      return
+    }
+
+    const requestGeneration = ++sourcePackagesGeneration
+    sourcePackages.value = []
+    loadingSourcePackages.value = true
+    sourcePackagesErrorMessage.value = null
+    try {
+      const response = await window.droidor.getDeviceTransferPackages(sourceDeviceId)
+      if (requestGeneration === sourcePackagesGeneration) {
+        sourcePackages.value = response
+      }
+    } catch (error) {
+      if (requestGeneration === sourcePackagesGeneration) {
+        sourcePackagesErrorMessage.value =
+          error instanceof Error ? error.message : 'Failed to load apps from the source device.'
+      }
+    } finally {
+      if (requestGeneration === sourcePackagesGeneration) {
+        loadingSourcePackages.value = false
+      }
+    }
+  }
 
   function reset(): void {
     generation += 1
@@ -107,6 +148,11 @@ export const useDeviceTransferStore = defineStore('deviceTransfer', () => {
   }
 
   return {
+    sourcePackages,
+    loadingSourcePackages,
+    sourcePackagesErrorMessage,
+    loadSourcePackages,
+    resetSourcePackages,
     analysis,
     analyzedSourceId,
     analyzedTargetId,

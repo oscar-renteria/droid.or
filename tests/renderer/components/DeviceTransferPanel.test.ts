@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 import type { KnownDevice } from '@shared/types/device'
-import { NSelect } from 'naive-ui'
-import { mount } from '@vue/test-utils'
+import type { DroidorApi } from '@shared/types/droidor-api'
+import type { DeviceTransferPackage } from '@shared/types/device-transfer'
+import { NInput, NSelect } from 'naive-ui'
+import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import DeviceTransferPanel from '@renderer/components/install/DeviceTransferPanel.vue'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 
@@ -34,9 +36,28 @@ const DISCONNECTED: KnownDevice = {
   connectionState: 'disconnected'
 }
 
+const SOURCE_PACKAGES: DeviceTransferPackage[] = [
+  {
+    packageName: 'com.example.reader',
+    displayName: 'Example Reader',
+    versionName: '1.2.0',
+    versionCode: 12
+  },
+  {
+    packageName: 'com.example.chat',
+    displayName: 'Example Chat',
+    versionName: '2.4.0',
+    versionCode: 24
+  }
+]
+
 describe('DeviceTransferPanel', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it('asks for a second device when only the target is connected', () => {
@@ -65,5 +86,40 @@ describe('DeviceTransferPanel', () => {
     expect(wrapper.text()).toContain('to Google Pixel 9')
     expect(wrapper.text()).toContain('Only user-installed apps are listed.')
     expect(wrapper.text()).toContain('Google Play licensing or integrity checks')
+  })
+
+  it('loads apps for the chosen source and filters by name, package, or version', async () => {
+    const getDeviceTransferPackages = vi.fn().mockResolvedValue(SOURCE_PACKAGES)
+    vi.stubGlobal('window', {
+      ...window,
+      droidor: { getDeviceTransferPackages } as unknown as DroidorApi
+    })
+    const devicesStore = useDevicesStore()
+    devicesStore.$patch({
+      devices: [TARGET, SOURCE],
+      selectedDeviceId: TARGET.id
+    })
+
+    const wrapper = mount(DeviceTransferPanel)
+    wrapper.getComponent(NSelect).vm.$emit('update:value', SOURCE.id)
+    await flushPromises()
+
+    expect(getDeviceTransferPackages).toHaveBeenCalledWith(SOURCE.id)
+    expect(wrapper.text()).toContain('Example Reader')
+    expect(wrapper.text()).toContain('1.2.0')
+
+    for (const query of ['example reader', 'com.example.reader', '1.2.0']) {
+      wrapper.getComponent(NInput).vm.$emit('update:value', query)
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.text()).toContain('Example Reader')
+      expect(wrapper.text()).not.toContain('Example Chat')
+    }
+
+    wrapper.getComponent(NInput).vm.$emit('update:value', '2.4.0')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.text()).toContain('Example Chat')
+    expect(wrapper.text()).not.toContain('Example Reader')
   })
 })

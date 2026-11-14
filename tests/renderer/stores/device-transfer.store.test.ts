@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import type { DroidorApi } from '@shared/types/droidor-api'
 import type { SplitInstallAnalysis } from '@shared/types/split-install'
+import type { DeviceTransferPackage } from '@shared/types/device-transfer'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -39,6 +40,19 @@ function mountProbe() {
           h('div', [
             store.loading ? h('span', { class: 'loading' }) : null,
             store.errorMessage ? h('p', { class: 'error' }, store.errorMessage) : null,
+            store.loadingSourcePackages
+              ? h('span', { class: 'packages-loading' }, 'Loading packages')
+              : null,
+            store.sourcePackagesErrorMessage
+              ? h('p', { class: 'packages-error' }, store.sourcePackagesErrorMessage)
+              : null,
+            h(
+              'ul',
+              { class: 'source-packages' },
+              store.sourcePackages.map((pkg) =>
+                h('li', { key: pkg.packageName }, pkg.displayName ?? pkg.packageName)
+              )
+            ),
             store.analysis
               ? h('p', { class: 'version' }, String(store.analysis.versionCode))
               : null,
@@ -53,6 +67,7 @@ function mountProbe() {
 describe('useDeviceTransferStore', () => {
   let analyzeDeviceTransfer: ReturnType<typeof vi.fn>
   let performDeviceTransfer: ReturnType<typeof vi.fn>
+  let getDeviceTransferPackages: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -60,7 +75,12 @@ describe('useDeviceTransferStore', () => {
     performDeviceTransfer = vi
       .fn()
       .mockResolvedValue({ success: true, message: 'Installed', rawOutput: 'Success' })
-    window.droidor = { analyzeDeviceTransfer, performDeviceTransfer } as unknown as DroidorApi
+    getDeviceTransferPackages = vi.fn().mockResolvedValue([])
+    window.droidor = {
+      analyzeDeviceTransfer,
+      performDeviceTransfer,
+      getDeviceTransferPackages
+    } as unknown as DroidorApi
   })
 
   afterEach(() => {
@@ -145,5 +165,87 @@ describe('useDeviceTransferStore', () => {
     expect(store.result?.success).toBe(false)
     expect(wrapper.find('.result').text()).toBe('The app changed on the source device')
     expect(store.installing).toBe(false)
+  })
+
+  it('loads source packages and exposes the results reactively', async () => {
+    const app: DeviceTransferPackage = {
+      packageName: PKG,
+      displayName: 'Example App',
+      versionName: '1.0.0',
+      versionCode: 7
+    }
+    let resolvePackages: (packages: DeviceTransferPackage[]) => void = () => {}
+    getDeviceTransferPackages.mockReturnValueOnce(
+      new Promise<DeviceTransferPackage[]>((resolve) => {
+        resolvePackages = resolve
+      })
+    )
+    const { store, wrapper } = mountProbe()
+
+    const loading = store.loadSourcePackages(SOURCE)
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('.packages-loading').text()).toBe('Loading packages')
+
+    resolvePackages([app])
+    await loading
+    await wrapper.vm.$nextTick()
+
+    expect(getDeviceTransferPackages).toHaveBeenCalledWith(SOURCE)
+    expect(wrapper.find('.source-packages').text()).toBe('Example App')
+    expect(store.loadingSourcePackages).toBe(false)
+  })
+
+  it('surfaces source package loading errors and leaves the list empty', async () => {
+    getDeviceTransferPackages.mockRejectedValue(new Error('Source device disconnected.'))
+    const { store, wrapper } = mountProbe()
+
+    await store.loadSourcePackages(SOURCE)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('.packages-error').text()).toBe('Source device disconnected.')
+    expect(wrapper.find('.source-packages').text()).toBe('')
+    expect(store.loadingSourcePackages).toBe(false)
+  })
+
+  it('keeps an empty source response distinct from a loading failure', async () => {
+    const { store, wrapper } = mountProbe()
+
+    await store.loadSourcePackages(SOURCE)
+    await wrapper.vm.$nextTick()
+
+    expect(store.sourcePackages).toEqual([])
+    expect(store.sourcePackagesErrorMessage).toBeNull()
+    expect(wrapper.find('.packages-error').exists()).toBe(false)
+  })
+
+  it('ignores a package response for a source that is no longer selected', async () => {
+    const stalePackage: DeviceTransferPackage = {
+      packageName: 'com.example.stale',
+      displayName: 'Stale App',
+      versionName: '1.0.0',
+      versionCode: 1
+    }
+    const latestPackage: DeviceTransferPackage = {
+      packageName: 'com.example.latest',
+      displayName: 'Latest App',
+      versionName: '2.0.0',
+      versionCode: 2
+    }
+    let resolveStalePackages: (packages: DeviceTransferPackage[]) => void = () => {}
+    getDeviceTransferPackages
+      .mockReturnValueOnce(
+        new Promise<DeviceTransferPackage[]>((resolve) => {
+          resolveStalePackages = resolve
+        })
+      )
+      .mockResolvedValueOnce([latestPackage])
+    const { store } = mountProbe()
+
+    const staleLoad = store.loadSourcePackages('old-source')
+    await store.loadSourcePackages('new-source')
+    resolveStalePackages([stalePackage])
+    await staleLoad
+
+    expect(store.sourcePackages).toEqual([latestPackage])
   })
 })
