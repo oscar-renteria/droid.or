@@ -35,8 +35,14 @@ export class AdbCommandLog {
   private entries: AdbCommandLogEntry[] = []
   private nextId = 1
 
+  /** `sink` additionally receives every entry — used to mirror commands
+   *  into the persistent log file (see logging/file-logger.ts). */
+  constructor(private readonly sink?: (entry: AdbCommandLogEntry) => void) {}
+
   record(input: RecordAdbCommandInput): void {
-    this.entries.push({ id: this.nextId, timestamp: new Date().toISOString(), ...input })
+    const entry = { id: this.nextId, timestamp: new Date().toISOString(), ...input }
+    this.entries.push(entry)
+    this.sink?.(entry)
     this.nextId += 1
     if (this.entries.length > MAX_ENTRIES) {
       this.entries.shift()

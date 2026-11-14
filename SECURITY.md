@@ -23,16 +23,20 @@ script explicitly exposes.
 
 ## What state this app keeps locally
 
-All configuration and records live in a local SQLite database inside
-Electron's `userData` directory: device history, operation history, the
-favorites / ignore list, and settings. Nothing is synced to any remote
-service. `userData` is OS-managed (for example, `~/Library/Application
-Support/*.app/Contents/Resources/app.asar` or the platform `userData`
-folder) and `npm run build` doesn't ship it by default — it's created
-fresh on first run. So future screenshots should show, in this order:
-install the app (`npm run dev` or the packaged binary), open Settings,
-download platform-tools on first use, and check ~3 or more devices in the
-sidebar to get the full picture.
+Everything lives in Electron's per-user `userData` directory
+(`%APPDATA%\droid.or` on Windows, `~/.config/droid.or` on Linux,
+`~/Library/Application Support/droid.or` on macOS), created on first run
+and never shipped inside the app:
+
+- `droid-or.db` — a SQLite database with device history, operation history,
+  the favorites / ignore list, settings, and the cached update-check result.
+- `logs/droid-or.log` (+ up to two rotated files, 1 MB each) — app start
+  lines, errors, and every ADB command run (including device serials and
+  package names), for troubleshooting. Never uploaded; it only leaves the
+  machine if the user attaches it to a bug report.
+- `managed-adb/` — platform-tools, if downloaded from Settings.
+
+Nothing is synced to any remote service.
 
 ## The preload boundary
 

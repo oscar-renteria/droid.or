@@ -1,9 +1,14 @@
-import { BrowserWindow, dialog, ipcMain, type SaveDialogOptions } from 'electron'
+import { BrowserWindow, dialog, ipcMain, shell, type SaveDialogOptions } from 'electron'
 import { writeFile } from 'node:fs/promises'
 import { IpcChannel } from '@shared/constants/ipc-channels'
 import type { AdbCommandLog } from '../../adb/adb-command-log'
 
-export function registerLogsHandlers(log: AdbCommandLog): void {
+export function registerLogsHandlers(log: AdbCommandLog, logsDirectory: string): void {
+  ipcMain.handle(IpcChannel.OpenLogsFolder, async () => {
+    const error = await shell.openPath(logsDirectory)
+    if (error) throw new Error(error)
+  })
+
   ipcMain.handle(IpcChannel.GetLogs, () => log.getAll())
 
   ipcMain.handle(IpcChannel.ClearLogs, () => {

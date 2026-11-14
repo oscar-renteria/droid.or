@@ -48,7 +48,8 @@ export enum IpcChannel {
   OpenThirdPartyNotices = 'support:open-third-party-notices',
   GetUpdateStatus = 'update:get-status',
   OpenReleasePage = 'update:open-release-page',
-  SetUpdateCheckEnabled = 'update:set-check-enabled'
+  SetUpdateCheckEnabled = 'update:set-check-enabled',
+  OpenLogsFolder = 'logs:open-folder'
 }
 
 /**

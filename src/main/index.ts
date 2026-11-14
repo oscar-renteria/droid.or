@@ -3,6 +3,7 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createAppContext } from './app-context'
+import { FileLogger } from './logging/file-logger'
 import { registerIpcHandlers } from './ipc/register-ipc-handlers'
 import { cleanupStaleSplitInstallTempDirs } from './android/split-install-temp-cleanup'
 import { isSmokeTest, runSmokeTest } from './smoke-test'
@@ -107,7 +108,11 @@ app.on('second-instance', () => {
 })
 
 app.whenReady().then(() => {
-  const context = createAppContext()
+  const logger = new FileLogger(join(app.getPath('userData'), 'logs'))
+  logger.info(
+    `droid.or ${app.getVersion()} starting (Electron ${process.versions.electron}, ${process.platform} ${process.arch})`
+  )
+  const context = createAppContext(logger)
   registerIpcHandlers(context)
 
   if (smokeTest) {

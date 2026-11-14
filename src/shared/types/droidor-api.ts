@@ -194,6 +194,8 @@ export interface DroidorApi {
   /** Opens a native save-file dialog and writes the current log as JSON.
    *  Resolves to the chosen path, or null if the user cancels. */
   exportLogs: () => Promise<string | null>
+  /** Opens the folder holding the persistent log files (userData/logs). */
+  openLogsFolder: () => Promise<void>
   /** Whether the user has ever clicked through the first-launch safety
    *  disclaimer, and when. Persists across restarts. */
   getSafetyDisclaimerStatus: () => Promise<SafetyDisclaimerStatus>

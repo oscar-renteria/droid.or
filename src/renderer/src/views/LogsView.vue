@@ -11,7 +11,7 @@ import {
   useMessage,
   type DataTableColumns
 } from 'naive-ui'
-import { RefreshOutline, SaveOutline, TrashOutline } from '@vicons/ionicons5'
+import { FolderOpenOutline, RefreshOutline, SaveOutline, TrashOutline } from '@vicons/ionicons5'
 import { computed, h, onMounted, ref } from 'vue'
 import EmptyState from '@renderer/components/ui/EmptyState.vue'
 import PageHeader from '@renderer/components/ui/PageHeader.vue'
@@ -117,6 +117,14 @@ async function handleClear(): Promise<void> {
   message.success('Logs cleared.')
 }
 
+async function handleOpenLogsFolder(): Promise<void> {
+  try {
+    await logsStore.openLogsFolder()
+  } catch (error) {
+    message.error(error instanceof Error ? error.message : 'Could not open the log folder.')
+  }
+}
+
 async function handleExport(): Promise<void> {
   const path = await logsStore.exportLogs()
   if (path) {
@@ -198,6 +206,12 @@ const columns: DataTableColumns<AdbCommandLogEntry> = [
           </template>
           Export Logs
         </NButton>
+        <NButton size="small" @click="handleOpenLogsFolder">
+          <template #icon>
+            <NIcon :component="FolderOpenOutline" />
+          </template>
+          Open Log Folder
+        </NButton>
         <NButton size="small" type="error" secondary @click="handleClear">
           <template #icon>
             <NIcon :component="TrashOutline" />
@@ -209,7 +223,9 @@ const columns: DataTableColumns<AdbCommandLogEntry> = [
 
     <p class="shrink-0 text-xs text-text-muted">
       Every ADB command this app has run this session, across all devices. Cleared on restart —
-      export first if you need to keep a copy for troubleshooting.
+      export first if you need to keep a copy for troubleshooting. A size-limited log file on this
+      computer (Open Log Folder) also keeps commands and errors from earlier sessions; attach it
+      when reporting a bug.
     </p>
 
     <div class="flex shrink-0 flex-wrap items-center gap-2">
