@@ -128,6 +128,9 @@ environment** — the other two are built by CI instead (see below), not
 locally, for reasons specific to this dev machine rather than the config.
 electron-builder publishing is disabled in config; release publication is
 handled separately by the workflow.
+Package builds generate `THIRD_PARTY_NOTICES.txt` from installed production
+dependencies, bundle it alongside the app's `LICENSE`, and expose it from
+the About dialog.
 
 - **Windows**: native modules aren't actually the blocker they first
   appear to be — `better-sqlite3` ships prebuilt binaries for every
@@ -155,7 +158,8 @@ product, version, copyright, company, and trademark metadata before upload;
 both Linux and Windows CI also smoke-test opening a database from the
 packaged Electron runtime;
 Linux CI verifies `app.asar` contains only the app output, package metadata,
-and production dependencies, with tests and app source maps excluded;
+and production dependencies, with tests and app source maps excluded, and
+checks the generated third-party notices resource;
 the macOS job builds an arm64 DMG and verifies the app's ad-hoc signature
 with `codesign`. Artifacts (the x64 AppImage, the x64 NSIS
 installer + portable `.exe`, and the arm64 DMG) are uploaded as workflow

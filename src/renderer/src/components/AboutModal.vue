@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { NButton, NIcon, NModal } from 'naive-ui'
+import { NAlert, NButton, NIcon, NModal } from 'naive-ui'
 import { LogoGithub } from '@vicons/ionicons5'
+import { ref } from 'vue'
 import { useAppInfo } from '@renderer/composables/useAppInfo'
 import { useSupportLink } from '@renderer/composables/useSupportLink'
 
@@ -14,6 +15,8 @@ const emit = defineEmits<{
 
 const { appInfo } = useAppInfo()
 const { opening, openSupportLink } = useSupportLink()
+const openingNotices = ref(false)
+const noticesError = ref('')
 
 function close(): void {
   emit('update:show', false)
@@ -21,6 +24,21 @@ function close(): void {
 
 async function handleSupportClick(): Promise<void> {
   await openSupportLink('github-sponsors')
+}
+
+async function handleOpenThirdPartyNotices(): Promise<void> {
+  if (openingNotices.value) return
+  openingNotices.value = true
+  noticesError.value = ''
+
+  try {
+    await window.droidor.openThirdPartyNotices()
+  } catch (error) {
+    noticesError.value =
+      error instanceof Error ? error.message : 'Failed to open third-party notices.'
+  } finally {
+    openingNotices.value = false
+  }
 }
 </script>
 
@@ -47,6 +65,23 @@ async function handleSupportClick(): Promise<void> {
             droid.or is free and open-source software licensed under the MIT License. See the
             included LICENSE file for details.
           </p>
+          <NButton
+            text
+            type="primary"
+            :loading="openingNotices"
+            :disabled="openingNotices"
+            class="self-start"
+            @click="handleOpenThirdPartyNotices"
+          >
+            View third-party notices
+          </NButton>
+          <NAlert v-if="noticesError" type="error" :show-icon="true">
+            <p>
+              Could not open third-party notices. Try again or open THIRD_PARTY_NOTICES.txt from the
+              app's installation folder.
+            </p>
+            <p class="mt-1 text-xs">{{ noticesError }}</p>
+          </NAlert>
         </div>
         <p class="text-xs leading-relaxed text-text-muted">
           Android, Google Play, and ADB are trademarks of Google LLC. droid.or is an independent

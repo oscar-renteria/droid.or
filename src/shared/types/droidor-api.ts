@@ -25,6 +25,7 @@ import type { DonationProviderId, OpenDonationLinkResult } from '../validation/s
 export interface DroidorApi {
   getAppInfo: () => Promise<AppInfo>
   openDonationLink: (provider: DonationProviderId) => Promise<OpenDonationLinkResult>
+  openThirdPartyNotices: () => Promise<void>
   getAdbAvailability: () => Promise<AdbAvailability>
   /** Full picture of where the effective adb command came from and what
    *  else is available (a managed download, a configured custom path). */

@@ -83,6 +83,10 @@ const droidorApi: DroidorApi = {
     return openDonationLinkResultSchema.parse(result)
   },
 
+  openThirdPartyNotices: async () => {
+    await ipcRenderer.invoke(IpcChannel.OpenThirdPartyNotices)
+  },
+
   getAdbAvailability: async () => {
     const result = await ipcRenderer.invoke(IpcChannel.GetAdbAvailability)
     return adbAvailabilitySchema.parse(result)

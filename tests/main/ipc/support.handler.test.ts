@@ -1,18 +1,32 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { IpcChannel } from '@shared/constants/ipc-channels'
+import { join } from 'node:path'
 import type { OpenDonationLinkResult } from '@shared/validation/support.schema'
 import { DONATION_URLS } from '@main/support/support-config'
 
-const mocks = vi.hoisted(() => ({ handle: vi.fn(), openExternal: vi.fn() }))
+const mocks = vi.hoisted(() => ({
+  handle: vi.fn(),
+  openExternal: vi.fn(),
+  openPath: vi.fn(),
+  getAppPath: vi.fn(),
+  isPackaged: false
+}))
 
 vi.mock('electron', () => ({
+  app: {
+    get isPackaged() {
+      return mocks.isPackaged
+    },
+    getAppPath: mocks.getAppPath
+  },
   ipcMain: { handle: mocks.handle },
-  shell: { openExternal: mocks.openExternal }
+  shell: { openExternal: mocks.openExternal, openPath: mocks.openPath }
 }))
 
 const { registerSupportHandlers } = await import('@main/ipc/handlers/support.handler')
 
 type SupportHandler = (_event: unknown, provider: unknown) => Promise<OpenDonationLinkResult>
+type OpenNoticesHandler = (_event: unknown) => Promise<void>
 
 function getHandler(): SupportHandler {
   const registration = mocks.handle.mock.calls.find(
@@ -22,10 +36,34 @@ function getHandler(): SupportHandler {
   return registration[1] as SupportHandler
 }
 
+function getOpenNoticesHandler(): OpenNoticesHandler {
+  const registration = mocks.handle.mock.calls.find(
+    ([channel]) => channel === IpcChannel.OpenThirdPartyNotices
+  )
+  if (!registration) throw new Error('Third-party notices handler was not registered.')
+  return registration[1] as OpenNoticesHandler
+}
+
 describe('registerSupportHandlers', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.isPackaged = false
+    mocks.getAppPath.mockReturnValue('/app')
+    mocks.openPath.mockResolvedValue('')
     registerSupportHandlers()
+  })
+
+  it('opens the generated notices file from the app directory', async () => {
+    await expect(getOpenNoticesHandler()(undefined)).resolves.toBeUndefined()
+    expect(mocks.openPath).toHaveBeenCalledWith(join('/app', 'THIRD_PARTY_NOTICES.txt'))
+  })
+
+  it('surfaces errors from the system viewer', async () => {
+    mocks.openPath.mockResolvedValue('No application is associated with this file type')
+
+    await expect(getOpenNoticesHandler()(undefined)).rejects.toThrow(
+      'No application is associated with this file type'
+    )
   })
 
   it('opens the configured URL for an approved provider', async () => {

@@ -3,6 +3,7 @@ out/
 dist/
 dist-electron/
 release/
+THIRD_PARTY_NOTICES.txt
 *.local
 
 # platform-tools fetched at build time, never committed

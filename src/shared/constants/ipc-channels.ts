@@ -44,7 +44,8 @@ export enum IpcChannel {
   GetAiSettings = 'ai:get-settings',
   SetAiSettings = 'ai:set-settings',
   AnalyzePackageWithAi = 'ai:analyze-package',
-  OpenDonationLink = 'support:open-donation-link'
+  OpenDonationLink = 'support:open-donation-link',
+  OpenThirdPartyNotices = 'support:open-third-party-notices'
 }
 
 /**

@@ -86,6 +86,13 @@ jobs:
             printf 'Unexpected tests or source maps in app.asar:\n%s\n' "$unexpected"
             exit 1
           fi
+          notices="release/linux-unpacked/resources/THIRD_PARTY_NOTICES.txt"
+          test -s "$notices"
+          grep -Fq 'Package: better-sqlite3@' "$notices"
+          if grep -Fq 'Package: vitest@' "$notices"; then
+            echo "Development dependencies must not appear in third-party notices."
+            exit 1
+          fi
 
       - name: Smoke-test packaged Windows database
         if: matrix.os == 'windows-latest'
@@ -96,6 +103,14 @@ jobs:
           $executable = "release/win-unpacked/droid-or.exe"
           if (-not (Test-Path $executable)) {
             throw "Missing unpacked Windows app executable: $executable"
+          }
+          $notices = "release/win-unpacked/resources/THIRD_PARTY_NOTICES.txt"
+          if (-not (Test-Path $notices)) {
+            throw "Missing packaged third-party notices: $notices"
+          }
+          $noticeText = Get-Content -Raw $notices
+          if ($noticeText -notmatch 'Package: better-sqlite3@' -or $noticeText -match 'Package: vitest@') {
+            throw "Third-party notices do not contain the expected production dependencies."
           }
           & $executable -e 'const Database = require(require("path").join(process.resourcesPath, "app.asar/node_modules/better-sqlite3")); const db = new Database(":memory:"); if (db.prepare("SELECT 1 AS ok").get().ok !== 1) process.exit(1); db.close()'
           if ($LASTEXITCODE -ne 0) {
