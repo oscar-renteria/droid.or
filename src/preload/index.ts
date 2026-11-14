@@ -1,5 +1,9 @@
 import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron'
-import { randomUUID } from 'node:crypto'
+
+// This preload runs sandboxed (see main/index.ts), where `require` only
+// resolves `electron` and a few polyfills — any `node:*` import makes the
+// whole script fail to load and leaves the renderer without `window.droidor`.
+// Use web platform APIs instead (e.g. `crypto.randomUUID()` below).
 import { IpcChannel, IpcEventChannel } from '@shared/constants/ipc-channels'
 import { appInfoSchema } from '@shared/validation/app-info.schema'
 import {
@@ -247,7 +251,7 @@ const droidorApi: DroidorApi = {
   },
 
   analyzeDeviceTransfer: async (sourceDeviceId, targetDeviceId, packageName, onProgress) => {
-    const transferId = randomUUID()
+    const transferId = crypto.randomUUID()
     const removeProgressListener = listenForTransferProgress(transferId, onProgress)
     try {
       const result = await ipcRenderer.invoke(IpcChannel.AnalyzeDeviceTransfer, {
@@ -269,7 +273,7 @@ const droidorApi: DroidorApi = {
     expectedVersionCode,
     onProgress
   ) => {
-    const transferId = randomUUID()
+    const transferId = crypto.randomUUID()
     const removeProgressListener = listenForTransferProgress(transferId, onProgress)
     try {
       const result = await ipcRenderer.invoke(IpcChannel.PerformDeviceTransfer, {
