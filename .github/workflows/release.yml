@@ -65,6 +65,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # Build provenance attestations (Sigstore via GitHub OIDC).
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
@@ -79,6 +82,12 @@ jobs:
         run: |
           sha256sum -- * > SHA256SUMS.txt
           cat SHA256SUMS.txt
+
+      # Signed SLSA provenance for every file listed in SHA256SUMS.txt;
+      # verifiable with `gh attestation verify <file> --repo <owner>/droid.or`.
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-checksums: dist/SHA256SUMS.txt
 
       # Always a draft: a maintainer reviews assets and notes, then
       # publishes. Tags with a SemVer prerelease suffix (v1.0.0-beta.1) are
