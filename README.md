@@ -1,7 +1,8 @@
 # droid.or
 
-A cross-platform desktop application for inspecting, analyzing, and debloating
-Android devices connected over USB — without requiring root.
+A cross-platform desktop application for installing APKs and copying apps
+between Android devices over USB, then inspecting and managing them — without
+requiring root.
 
 droid.or talks to a connected phone or tablet through the Android Debug Bridge
 (ADB) and Android's own package manager. It never assumes root access, and it
@@ -12,36 +13,41 @@ partition is not, and the app never claims otherwise.
 
 ## What it does
 
-- **Device detection & history** — auto-detects connected devices, remembers
-  every device that's ever been connected, and clearly distinguishes
-  connected / unauthorized / offline / recovery states.
-- **Device dashboard** — manufacturer, model, Android version, security patch
-  level, battery, storage, RAM, root heuristic, and more, gracefully falling
-  back to "Not available" for anything a specific device doesn't expose.
-- **Installed applications** — browse, search, and filter every package on
-  the device, with install source, disabled/enabled state, and version info.
-- **Debloat Analyzer** — reviews preinstalled system packages against a local
-  risk-classification database and produces reviewable, per-package
-  recommendations. Nothing is ever removed automatically.
-- **Debloat Profiles** — curated, reviewable bundles (Minimal, Recommended,
-  Aggressive, and more) that still require an explicit confirmation before
-  anything changes on the device.
-- **Favorites / Important Apps** — mark specific packages as important to get
-  a stronger, harder-to-miss confirmation before they're ever touched.
-- **Package operations** — disable, enable, uninstall-for-user, and clear
-  data, each with a tiered confirmation dialog (typed confirmation for the
-  riskiest combinations).
-- **Device Recovery** — a dedicated page showing everything this app has
-  changed on a device, with the ability to restore individual packages or
-  everything at once.
-- **APK installer** — install or update local `.apk` files via drag & drop or
-  a file picker, with pre-install inspection.
-- **APK backup** — copy APKs already on the device to a local folder before
-  making changes (this backs up the APK file itself, not app data/accounts).
-- **Security Review** — an honestly-scoped page surfacing a few real,
-  ADB-visible signals (Device Admin apps, Accessibility Service apps,
-  non-Play-Store installs, recently changed apps) for a human to review.
-  This is explicitly **not** malware detection.
+- **Install APKs** — install or update local `.apk` files via drag & drop or a
+  file picker, with pre-install inspection.
+- **Copy apps between devices** — from Apps, copy an app's base and split APK
+  files to another connected device. App data, accounts, and logins are not
+  copied; apps that enforce Play integrity may not run on the target.
+- **Device tools**
+  - **Device detection & history** — auto-detects connected devices, remembers
+    every device that's ever been connected, and distinguishes connected,
+    unauthorized, offline, and recovery states.
+  - **Device dashboard** — manufacturer, model, Android version, security
+    patch level, battery, storage, RAM, root heuristic, and more, gracefully
+    falling back to "Not available" for anything a specific device doesn't
+    expose.
+  - **Installed applications** — browse, search, and filter every package on
+    the device, with install source, disabled/enabled state, and version info.
+  - **Debloat Analyzer** — reviews preinstalled system packages against a
+    local risk-classification database and produces reviewable, per-package
+    recommendations. Nothing is ever removed automatically.
+  - **Debloat Profiles** — curated, reviewable bundles (Minimal, Recommended,
+    Aggressive, and more) that still require an explicit confirmation before
+    anything changes on the device.
+  - **Favorites / Important Apps** — mark specific packages as important to
+    get a stronger, harder-to-miss confirmation before they're ever touched.
+  - **Package operations** — disable, enable, uninstall-for-user, and clear
+    data, each with a tiered confirmation dialog (typed confirmation for the
+    riskiest combinations).
+  - **Device Recovery** — a dedicated page showing everything this app has
+    changed on a device, with the ability to restore individual packages or
+    everything at once.
+  - **APK backup** — copy APKs already on the device to a local folder before
+    making changes (this backs up the APK file itself, not app data/accounts).
+  - **Security Review** — an honestly-scoped page surfacing a few real,
+    ADB-visible signals (Device Admin apps, Accessibility Service apps,
+    non-Play-Store installs, recently changed apps) for a human to review.
+    This is explicitly **not** malware detection.
 - **Operation history & Logs** — a persisted record of every change this app
   has made, plus a live, in-session log of every ADB command it has run,
   exportable for troubleshooting.
