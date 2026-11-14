@@ -1,8 +1,9 @@
-import { app, BrowserWindow, shell } from 'electron'
+import { app, BrowserWindow, dialog, shell } from 'electron'
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { createAppContext } from './app-context'
+import { createAppContext, type AppContext } from './app-context'
+import { installCrashHandlers } from './crash-handlers'
 import { FileLogger } from './logging/file-logger'
 import { registerIpcHandlers } from './ipc/register-ipc-handlers'
 import { cleanupStaleSplitInstallTempDirs } from './android/split-install-temp-cleanup'
@@ -16,6 +17,21 @@ const smokeTest = isSmokeTest(process.argv)
 if (smokeTest) {
   app.setPath('userData', mkdtempSync(join(tmpdir(), 'droid-or-smoke-')))
 }
+
+const logger = new FileLogger(join(app.getPath('userData'), 'logs'))
+let context: AppContext | null = null
+
+const handleFatalError = installCrashHandlers(process, {
+  logger,
+  showError: smokeTest ? undefined : (title, content) => dialog.showErrorBox(title, content),
+  closeResources: () => {
+    context?.deviceRegistry.stop()
+    if (context?.db.open) {
+      context.db.close()
+    }
+  },
+  exit: (code) => app.exit(code)
+})
 
 // A second launch (e.g. double-clicking the app while it's already running)
 // should focus the existing window rather than spawn a second ADB-owning
@@ -107,53 +123,56 @@ app.on('second-instance', () => {
   }
 })
 
-app.whenReady().then(() => {
-  const logger = new FileLogger(join(app.getPath('userData'), 'logs'))
-  logger.info(
-    `droid.or ${app.getVersion()} starting (Electron ${process.versions.electron}, ${process.platform} ${process.arch})`
-  )
-  const context = createAppContext(logger)
-  registerIpcHandlers(context)
+app
+  .whenReady()
+  .then(() => {
+    logger.info(
+      `droid.or ${app.getVersion()} starting (Electron ${process.versions.electron}, ${process.platform} ${process.arch})`
+    )
+    const appContext = createAppContext(logger)
+    context = appContext
+    registerIpcHandlers(appContext)
 
-  if (smokeTest) {
-    // No device polling: the smoke test must not start an ADB server.
-    const window = createMainWindow()
-    void runSmokeTest({
-      checkDatabase: () => {
-        const row = context.db.prepare('SELECT 1 AS ok').get() as { ok: number } | undefined
-        if (row?.ok !== 1) {
-          throw new Error('database query returned an unexpected result')
+    if (smokeTest) {
+      // No device polling: the smoke test must not start an ADB server.
+      const window = createMainWindow()
+      void runSmokeTest({
+        checkDatabase: () => {
+          const row = appContext.db.prepare('SELECT 1 AS ok').get() as { ok: number } | undefined
+          if (row?.ok !== 1) {
+            throw new Error('database query returned an unexpected result')
+          }
+        },
+        waitForRenderer: () => waitForRendererReady(window),
+        log: (message) => console.log(message),
+        exit: (code) => {
+          appContext.db.close()
+          app.exit(code)
         }
-      },
-      waitForRenderer: () => waitForRendererReady(window),
-      log: (message) => console.log(message),
-      exit: (code) => {
-        context.db.close()
-        app.exit(code)
+      })
+      return
+    }
+
+    appContext.deviceRegistry.start()
+    createMainWindow()
+    // Fire-and-forget: sweeps up any split-install temp directory a prior
+    // run left behind after crashing before its own cleanup ran. Never
+    // awaited — this must not delay window creation, and a stale directory
+    // surviving one more session if this is slow is harmless.
+    void cleanupStaleSplitInstallTempDirs()
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createMainWindow()
       }
     })
-    return
-  }
 
-  context.deviceRegistry.start()
-  createMainWindow()
-  // Fire-and-forget: sweeps up any split-install temp directory a prior
-  // run left behind after crashing before its own cleanup ran. Never
-  // awaited — this must not delay window creation, and a stale directory
-  // surviving one more session if this is slow is harmless.
-  void cleanupStaleSplitInstallTempDirs()
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createMainWindow()
-    }
+    app.on('will-quit', () => {
+      appContext.deviceRegistry.stop()
+      appContext.db.close()
+    })
   })
-
-  app.on('will-quit', () => {
-    context.deviceRegistry.stop()
-    context.db.close()
-  })
-})
+  .catch(handleFatalError)
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
