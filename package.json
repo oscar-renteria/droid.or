@@ -1,6 +1,6 @@
 {
   "name": "droid-or",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "description": "Install APKs and transfer apps between Android devices over ADB.",
   "private": true,
   "type": "module",
