@@ -35,6 +35,11 @@ Google currently publishes exactly one build per OS: `windows`, `darwin`
 build, so the managed download isn't available on Linux ARM64; use a
 system-installed or custom-path `adb` there instead).
 
+Platform-tools are deliberately not bundled with droid.or. They are
+downloaded from Google only when requested and extracted to the app's
+per-user `managed-adb` directory, keeping Google's SDK files out of the
+distributable packages.
+
 ## Authorizing a device
 
 The first time you connect a device with USB debugging enabled, Android

@@ -158,7 +158,7 @@ backend (`analyzeDeviceTransfer` / `performDeviceTransfer`) — no new install l
 | **[DONE] PKG-06** | Verify electron-builder's default native rebuild and automatic `*.node` unpacking with packaged database smoke tests | `electron-builder.yml`, `.github/workflows/build.yml`, `DEVELOPMENT.md` | Linux and Windows CI open a database through their packaged Electron runtimes |
 | **[DONE] PKG-07** | Exclude dependency test folders/spec files from the app archive and verify only production content ships | `electron-builder.yml`, `.github/workflows/build.yml`, `DEVELOPMENT.md` | Linux CI verifies allowed archive roots and rejects tests and app source maps |
 | **[DONE] PKG-08** | Generate production-dependency notices at build time, bundle them as an extra resource, and expose them from About | `scripts/generate-third-party-notices.mjs`, `package.json`, `electron-builder.yml`, `AboutModal.vue` | Linux and Windows builds verify the resource and About opens it through the system viewer |
-| PKG-09 | Confirm Google platform-tools are **not** bundled (download at runtime stays — avoids redistributing Google's SDK licence)                                                                                                                               | `electron-builder.yml`, `ADB.md`                               | Documented decision                                                                             |
+| **[DONE] PKG-09** | Keep Google platform-tools out of distributables; download them at runtime to the per-user managed ADB directory | `electron-builder.yml`, `ADB.md` | Linux package and app archive contain no `adb` binary; runtime download behavior is documented |
 
 ## Phase 4 — CI and release pipeline
 
