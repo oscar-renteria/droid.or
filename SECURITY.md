@@ -1,5 +1,21 @@
 # Security
 
+## Reporting a vulnerability
+
+Please report security problems **privately**: on GitHub, open the
+repository's **Security** tab and click
+[**Report a vulnerability**](https://github.com/oscar-renteria/droid.or/security/advisories/new).
+Only the maintainers can see the report. Please don't open a public issue
+for a vulnerability.
+
+Include what's affected, how to reproduce it, and the droid.or version and
+operating system. Fixes go into a new release, and the advisory is
+published once that release is out.
+
+Only the latest release receives security fixes.
+
+## Overview
+
 droid.or interacts with a user's phone and holds ADB capabilities powerful
 enough to disable, uninstall, or reinstall applications on it. It's treated
 as security-sensitive software accordingly.
@@ -139,13 +155,18 @@ network request this app makes is one the user explicitly triggers.
   version tag is read from the response; the release page link shown to the
   user is built locally from that validated tag, and nothing is downloaded or
   installed automatically. When switched off, no request is made at all.
-- **Opening links** (release page, GitHub Sponsors, PayPal): only on click,
+- **Opening links** (release page, documentation, GitHub Sponsors and
+  PayPal donation links): only on click,
   in the system browser, and only for `https` URLs on an allow-list.
 - **Downloading `platform-tools`**: when the user clicks "Download
   platform-tools" in Settings, having found no usable `adb` otherwise, the
   official package is fetched directly from Google's own distribution
-  server (`dl.google.com`) and verified (the extracted binary is actually
-  run and its version output checked) before it's trusted.
+  server (`dl.google.com`) over HTTPS, and the extracted binary is run and
+  its version output checked before it's used. droid.or doesn't verify a
+  checksum or signature for this download: HTTPS and that version check are
+  the only integrity checks. This is an accepted risk for 1.0. Using an
+  `adb` you installed yourself (Settings → ADB Connection) avoids the
+  download entirely.
 - **AI-assisted package analysis** (optional, off by default): only when
   the user has configured a provider and API key in Settings, and only
   when they click "Ask AI" on one specific package, a single request goes
@@ -161,16 +182,6 @@ network request this app makes is one the user explicitly triggers.
   store) and is never sent back to the renderer once saved.
 
 No other package or device information is ever sent anywhere.
-
-## Local-first persistence
-
-All state (device history, operation history, favorites/ignore lists,
-settings) lives in a local SQLite database inside Electron's `userData`
-directory. Nothing is synced to any remote service.
-
-## Reporting a vulnerability
-
-If you find a security issue, please open an issue in this repository or contact the maintainers directly rather than making a public disclosure elsewhere.
 
 ## Trademarks & Legal Disclaimers
 
