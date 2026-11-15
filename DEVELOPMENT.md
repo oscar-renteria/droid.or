@@ -146,33 +146,45 @@ the About dialog.
   `dmg`) on macOS itself — a hard restriction of electron-builder,
   unrelated to the native-module point above.
 
-### CI builds
+## CI and releases
 
-`.github/workflows/ci.yml` runs on every pull request and push to
-`master`: actionlint checks the workflow files, Ubuntu runs type-checking
-and lint, and Ubuntu and Windows run the test suite.
+Three workflows live in `.github/workflows/`:
 
-`.github/workflows/build.yml` packages all three platforms on their own
-native GitHub-hosted runner (`ubuntu-latest`/`windows-latest`/`macos-latest`),
-so neither limitation above applies there — each OS uses its own prebuilt
-native binary and its own real toolchain, no Wine or cross-compilation
-involved. It does not run on push; it runs when started manually
-(Actions → Build → Run workflow) for a snapshot build, and as the build
-stage of the release workflow.
+- **`ci.yml`** runs on every pull request and every push to `master`:
+  actionlint (which also runs shellcheck on `run:` scripts), type-checking
+  and lint on Ubuntu, and the test suite on Ubuntu and Windows. `master` is
+  protected by a repository ruleset: these four checks must pass, and
+  force-pushes and deletion are blocked, so changes reach `master` through
+  pull requests.
+- **`build.yml`** packages all three platforms, each on its own native
+  GitHub-hosted runner (`ubuntu-latest`, `windows-latest`, `macos-latest`),
+  so the local limitations above don't apply: no Wine, no
+  cross-compilation. It doesn't run on push; start it from Actions → Build →
+  Run workflow for a snapshot build, or let `release.yml` call it.
+- **`release.yml`** runs when a `v*.*.*` tag is pushed. It checks that the
+  tag is a SemVer version equal to `package.json`'s, reruns the quality gate
+  (including `format:check`), builds through `build.yml`, then creates a
+  **draft** GitHub release with the binaries, `SHA256SUMS.txt` and a build
+  provenance attestation for every file. The release procedure is in
+  [`RELEASING.md`](RELEASING.md).
 
-The Linux job verifies the deterministic x64 AppImage name; the Windows job
-verifies the x64 NSIS and portable `.exe` names and their product, version,
-copyright, company, and trademark metadata. Every platform then launches
-its packaged app with `--smoke-test` (AppImage under Xvfb; Windows portable
-and silently installed NSIS app; macOS app from the mounted DMG), which
-opens the SQLite database, waits for the renderer and preload to load, and
-exits non-zero on any failure. Linux also verifies `app.asar`
-contains only the app output, package metadata, and production
-dependencies (no tests or app source maps) and checks the generated
-third-party notices resource. The macOS job builds an arm64 DMG and
-verifies the app's ad-hoc signature with `codesign`. Artifacts (the x64
-AppImage, the x64 NSIS installer + portable `.exe`, and the arm64 DMG) are
-uploaded as workflow artifacts on that run's Actions page.
+What `build.yml` checks on each platform:
+
+- **Linux**: the deterministic x64 AppImage name; that `app.asar` contains
+  only the app output, package metadata and production dependencies (no
+  tests or source maps); and the generated third-party notices.
+- **Windows**: the x64 NSIS and portable `.exe` names and their product,
+  version, copyright, company and trademark metadata.
+- **macOS**: the arm64 DMG and the app's ad-hoc signature (`codesign`). This
+  job may fail without failing the workflow, because macOS is experimental.
+- **Every platform** launches the packaged app with `--smoke-test` (AppImage
+  under Xvfb; the Windows portable and the silently installed NSIS app; the
+  macOS app from the mounted DMG). It opens the SQLite database, waits for
+  the renderer and preload to load, and exits non-zero on any failure.
+
+The artifacts are uploaded to the run's Actions page. Dependabot
+(`.github/dependabot.yml`) proposes weekly grouped updates for npm packages
+and for the pinned GitHub Actions.
 
 ### Code signing and notarization
 
@@ -209,14 +221,9 @@ decision to ship unsigned for now.
 
 ### App icon
 
-No custom icon exists yet (nothing under `build/`) — every target
-currently falls back to electron-builder's own default Electron icon
-(confirmed via a real build: `default Electron icon is used` in the log,
-not a failure). Add one real, high-resolution source image at
-`build/icon.png` (at least 1024×1024) and reference it as
-`icon: build/icon.png` under each platform section in
-`electron-builder.yml` — electron-builder derives the platform-specific
-`.ico`/`.icns` from that single file itself.
+The icon is one 1024×1024 source image, `build/icon.png`, referenced once
+as `icon:` in `electron-builder.yml`. electron-builder derives the Windows
+`.ico` and macOS `.icns` from it during the build on each platform.
 
 See `ADB.md` for platform-specific ADB/USB considerations independent of
 packaging.
