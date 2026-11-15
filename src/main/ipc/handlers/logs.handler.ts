@@ -1,9 +1,25 @@
-import { BrowserWindow, dialog, ipcMain, type SaveDialogOptions } from 'electron'
+import { BrowserWindow, dialog, ipcMain, shell, type SaveDialogOptions } from 'electron'
 import { writeFile } from 'node:fs/promises'
 import { IpcChannel } from '@shared/constants/ipc-channels'
+import { rendererErrorReportSchema } from '@shared/validation/renderer-error.schema'
+import type { FileLogger } from '../../logging/file-logger'
 import type { AdbCommandLog } from '../../adb/adb-command-log'
 
-export function registerLogsHandlers(log: AdbCommandLog): void {
+export function registerLogsHandlers(log: AdbCommandLog, logger: FileLogger): void {
+  ipcMain.handle(IpcChannel.OpenLogsFolder, async () => {
+    const error = await shell.openPath(logger.directory)
+    if (error) throw new Error(error)
+  })
+
+  ipcMain.handle(IpcChannel.LogRendererError, (_event, rawReport: unknown) => {
+    const report = rendererErrorReportSchema.parse(rawReport)
+    const where = report.info ? ` in ${report.info}` : ''
+    logger.error(
+      `Renderer error (${report.source})${where}: ${report.message}`,
+      report.stack ?? undefined
+    )
+  })
+
   ipcMain.handle(IpcChannel.GetLogs, () => log.getAll())
 
   ipcMain.handle(IpcChannel.ClearLogs, () => {

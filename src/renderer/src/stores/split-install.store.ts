@@ -87,10 +87,11 @@ export const useSplitInstallStore = defineStore('splitInstall', () => {
     installing.value = true
     installResult.value = null
     try {
+      // Plain copies: a reactive array is a Proxy, which IPC cannot clone.
       installResult.value = await window.droidor.installSplitApks(
         deviceId,
         sourceKind.value,
-        sourcePaths.value,
+        [...sourcePaths.value],
         [...selectedFileNames.value]
       )
     } catch (error) {

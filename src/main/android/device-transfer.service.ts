@@ -4,11 +4,37 @@ import { basename, join, posix } from 'node:path'
 import type Database from 'better-sqlite3'
 import type { OperationResult } from '@shared/validation/operation.schema'
 import type { SplitInstallAnalysis } from '@shared/validation/split-install.schema'
+import type { DeviceTransferPackage } from '@shared/types/device-transfer'
+import type { DeviceTransferProgressUpdate } from '@shared/validation/device-transfer.schema'
 import type { AdbClient } from '../adb/adb-client'
 import { isValidPackageName } from '../adb/android-package-name'
+import { parsePackageDump } from '../adb/parsers/package-dump-parser'
 import { parsePackagePaths } from '../adb/parsers/package-path-parser'
+import { parsePackageNameList } from '../adb/parsers/package-list-parser'
+import { KNOWN_PACKAGE_NAMES } from './known-package-names'
 import { SPLIT_INSTALL_TEMP_DIR_PREFIX, type ParseApkFn } from './split-apk-inspector'
 import { buildSplitInstallAnalysis, performSplitInstall } from './split-install.service'
+
+export async function getDeviceTransferPackages(
+  adbClient: AdbClient,
+  sourceSerial: string
+): Promise<DeviceTransferPackage[]> {
+  const [packageListOutput, packageDumpOutput] = await Promise.all([
+    adbClient.shellCommand(sourceSerial, ['pm', 'list', 'packages', '-3']),
+    adbClient.shellCommand(sourceSerial, ['dumpsys', 'package', 'packages'])
+  ])
+  const packageDetails = parsePackageDump(packageDumpOutput)
+
+  return parsePackageNameList(packageListOutput).map((packageName) => {
+    const details = packageDetails.get(packageName)
+    return {
+      packageName,
+      displayName: KNOWN_PACKAGE_NAMES.get(packageName) ?? null,
+      versionName: details?.versionName ?? null,
+      versionCode: details?.versionCode ?? null
+    }
+  })
+}
 
 /** Adopted storage (an SD card formatted as internal storage) moves user
  *  apps to /mnt/expand/<volume-uuid>/app/ instead of /data/app/. */
@@ -36,7 +62,8 @@ export function isUserStorageApkPath(remotePath: string): boolean {
 export async function stagePackageFromDevice(
   adbClient: AdbClient,
   sourceSerial: string,
-  packageName: string
+  packageName: string,
+  onProgress?: (progress: DeviceTransferProgressUpdate) => void
 ): Promise<string> {
   if (!isValidPackageName(packageName)) {
     throw new Error(`Refusing to copy an invalid package name: "${packageName}"`)
@@ -59,7 +86,13 @@ export async function stagePackageFromDevice(
 
   const stagingDir = await mkdtemp(join(tmpdir(), SPLIT_INSTALL_TEMP_DIR_PREFIX))
   try {
-    for (const remotePath of remotePaths) {
+    for (const [index, remotePath] of remotePaths.entries()) {
+      onProgress?.({
+        phase: 'pulling',
+        fileName: basename(remotePath),
+        fileNumber: index + 1,
+        totalFiles: remotePaths.length
+      })
       await adbClient.pullFile(sourceSerial, remotePath, join(stagingDir, basename(remotePath)))
     }
     return stagingDir
@@ -85,11 +118,13 @@ export async function analyzeDeviceTransfer(
   sourceSerial: string,
   targetSerial: string,
   packageName: string,
-  parseApk?: ParseApkFn
+  parseApk?: ParseApkFn,
+  onProgress?: (progress: DeviceTransferProgressUpdate) => void
 ): Promise<SplitInstallAnalysis> {
   assertDistinctDevices(sourceSerial, targetSerial)
-  const stagingDir = await stagePackageFromDevice(adbClient, sourceSerial, packageName)
+  const stagingDir = await stagePackageFromDevice(adbClient, sourceSerial, packageName, onProgress)
   try {
+    onProgress?.({ phase: 'checking' })
     return await buildSplitInstallAnalysis(
       adbClient,
       targetSerial,
@@ -120,11 +155,13 @@ export async function performDeviceTransfer(
   packageName: string,
   expectedVersionCode: number | null,
   historyNote: string,
-  parseApk?: ParseApkFn
+  parseApk?: ParseApkFn,
+  onProgress?: (progress: DeviceTransferProgressUpdate) => void
 ): Promise<OperationResult> {
   assertDistinctDevices(sourceSerial, targetSerial)
-  const stagingDir = await stagePackageFromDevice(adbClient, sourceSerial, packageName)
+  const stagingDir = await stagePackageFromDevice(adbClient, sourceSerial, packageName, onProgress)
   try {
+    onProgress?.({ phase: 'checking' })
     const analysis = await buildSplitInstallAnalysis(
       adbClient,
       targetSerial,
@@ -163,7 +200,9 @@ export async function performDeviceTransfer(
       [stagingDir],
       analysis.parts.map((part) => part.fileName),
       parseApk,
-      historyNote
+      historyNote,
+      () => onProgress?.({ phase: 'installing', fileCount: analysis.parts.length }),
+      sourceSerial
     )
   } finally {
     await rm(stagingDir, { recursive: true, force: true })

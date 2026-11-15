@@ -8,6 +8,7 @@ import {
   NRadioGroup,
   NSelect,
   NSpin,
+  NSwitch,
   NTag,
   useMessage
 } from 'naive-ui'
@@ -15,11 +16,16 @@ import { computed, onMounted, ref, watch } from 'vue'
 import PageHeader from '@renderer/components/ui/PageHeader.vue'
 import { useAdbSettingsStore } from '@renderer/stores/adb-settings.store'
 import { useAiSettingsStore } from '@renderer/stores/ai-settings.store'
+import { useOnboardingStore } from '@renderer/stores/onboarding.store'
 import { useSettingsStore, type ThemeMode } from '@renderer/stores/settings.store'
+import { useUpdateStore } from '@renderer/stores/update.store'
 
 const adbSettingsStore = useAdbSettingsStore()
 const aiSettingsStore = useAiSettingsStore()
 const settingsStore = useSettingsStore()
+const updateStore = useUpdateStore()
+const onboardingStore = useOnboardingStore()
+const updateToggleBusy = ref(false)
 const message = useMessage()
 
 const themeOptions: Array<{ label: string; value: ThemeMode }> = [
@@ -28,7 +34,40 @@ const themeOptions: Array<{ label: string; value: ThemeMode }> = [
   { label: 'Dark', value: 'dark' }
 ]
 
+async function setUpdateCheckEnabled(enabled: boolean): Promise<void> {
+  updateToggleBusy.value = true
+  try {
+    await updateStore.setCheckEnabled(enabled)
+  } catch (error) {
+    message.error(error instanceof Error ? error.message : 'Failed to save the update setting.')
+  } finally {
+    updateToggleBusy.value = false
+  }
+}
+
+const updateSummary = computed(() => {
+  const status = updateStore.status
+  if (!status) {
+    return null
+  }
+  if (!status.checkEnabled) {
+    return `You're running ${status.currentVersion}. Update checks are off.`
+  }
+  if (status.updateAvailable) {
+    return `You're running ${status.currentVersion}. Version ${status.latestVersion} is available.`
+  }
+  if (status.checkedAt === null) {
+    return `You're running ${status.currentVersion}. The last check didn't reach GitHub; it retries on the next start.`
+  }
+  const checked = new Date(status.checkedAt).toLocaleString()
+  if (status.latestVersion === null) {
+    return `You're running ${status.currentVersion}. No stable release has been published yet (checked ${checked}).`
+  }
+  return `You're running ${status.currentVersion}, the latest version (checked ${checked}).`
+})
+
 onMounted(() => {
+  void updateStore.load()
   void adbSettingsStore.load()
   void aiSettingsStore.load()
 })
@@ -158,7 +197,12 @@ async function downloadPlatformTools(): Promise<void> {
 
       <NSpin :show="adbSettingsStore.loading">
         <div class="flex flex-col gap-3 rounded-lg border border-border p-4">
-          <h2 class="text-sm font-semibold text-text">ADB Connection</h2>
+          <div class="flex items-center justify-between gap-2">
+            <h2 class="text-sm font-semibold text-text">ADB Connection</h2>
+            <NButton size="small" quaternary @click="onboardingStore.open()">
+              Show setup guide
+            </NButton>
+          </div>
 
           <NAlert v-if="adbSettingsStore.errorMessage" type="error" closable>
             {{ adbSettingsStore.errorMessage }}
@@ -268,6 +312,38 @@ async function downloadPlatformTools(): Promise<void> {
             </NRadioButton>
           </NRadioGroup>
         </div>
+      </div>
+
+      <div class="flex flex-col gap-3 rounded-lg border border-border p-4">
+        <h2 class="text-sm font-semibold text-text">Updates</h2>
+        <p class="text-xs text-text-muted">
+          Once a day, droid.or asks GitHub for the version number of the latest release. Nothing
+          about you or your devices is sent, and nothing is downloaded or installed automatically —
+          a newer version shows an "Update" button in the header that opens the release page.
+        </p>
+        <div class="flex items-center gap-2">
+          <NSwitch
+            aria-labelledby="settings-update-check-label"
+            :value="updateStore.status?.checkEnabled ?? true"
+            :loading="updateToggleBusy"
+            :disabled="!updateStore.status"
+            @update:value="setUpdateCheckEnabled"
+          />
+          <span id="settings-update-check-label" class="text-xs font-medium text-text-secondary">
+            Check for updates
+          </span>
+        </div>
+        <p v-if="updateSummary" class="text-xs text-text-muted" aria-live="polite">
+          {{ updateSummary }}
+        </p>
+        <NButton
+          v-if="updateStore.updateAvailable"
+          size="small"
+          class="self-start"
+          @click="updateStore.openReleasePage()"
+        >
+          Open release page
+        </NButton>
       </div>
 
       <NSpin :show="aiSettingsStore.loading">

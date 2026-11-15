@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Node.js (a current LTS release) and npm
+- Node.js 22 (the version CI uses is pinned in `.nvmrc`; `nvm use` picks it up) and npm
 - No Android device is required for most development — see
   [Developing without a device](#developing-without-a-device) below
 
@@ -116,16 +116,21 @@ tests/          # Mirrors src/
 
 ```bash
 npm run build         # type-check + bundle (out/)
-npm run build:linux   # + electron-builder --linux  (AppImage)
-npm run build:win     # + electron-builder --win    (NSIS installer + portable .exe)
-npm run build:mac     # + electron-builder --mac    (dmg + zip)
+npm run build:linux   # + electron-builder --linux  (x64 AppImage)
+npm run build:win     # + electron-builder --win    (x64 NSIS installer + portable .exe)
+npm run build:mac     # + electron-builder --mac    (arm64 dmg)
 ```
 
 All three platforms have real settings configured in `electron-builder.yml`
 (installer behavior, categories, entitlements). **Only the Linux target has
 actually been built and run from this project's own (Linux) dev
 environment** — the other two are built by CI instead (see below), not
-locally, for reasons specific to this dev machine rather than the config:
+locally, for reasons specific to this dev machine rather than the config.
+electron-builder publishing is disabled in config; release publication is
+handled separately by the workflow.
+Package builds generate `THIRD_PARTY_NOTICES.txt` from installed production
+dependencies, bundle it alongside the app's `LICENSE`, and expose it from
+the About dialog.
 
 - **Windows**: native modules aren't actually the blocker they first
   appear to be — `better-sqlite3` ships prebuilt binaries for every
@@ -138,30 +143,58 @@ locally, for reasons specific to this dev machine rather than the config:
   dev machine, and not worth installing just for this when CI already
   builds on a real Windows runner anyway.
 - **macOS**: electron-builder can only produce a macOS build (`.app`,
-  `dmg`, `zip`) on macOS itself — a hard restriction of electron-builder,
+  `dmg`) on macOS itself — a hard restriction of electron-builder,
   unrelated to the native-module point above.
 
-### CI builds (`.github/workflows/build.yml`)
+## CI and releases
 
-Every push to `master` builds all three platforms on their own native
-GitHub-hosted runner (`ubuntu-latest`/`windows-latest`/`macos-latest`), so
-neither limitation above applies there — each OS uses its own prebuilt
-native binary and its own real toolchain, no Wine or cross-compilation
-involved. Artifacts (the AppImage, the NSIS installer + portable `.exe`,
-the dmg + zip) are uploaded as workflow artifacts, downloadable from that
-run's Actions page. Can also be triggered manually (`workflow_dispatch`)
-without a push. This requires the repository to actually be on GitHub with
-Actions enabled — pushing to a purely local `master` does nothing.
+Three workflows live in `.github/workflows/`:
+
+- **`ci.yml`** runs on every pull request and every push to `master`:
+  actionlint (which also runs shellcheck on `run:` scripts), type-checking
+  and lint on Ubuntu, and the test suite on Ubuntu and Windows. `master` is
+  protected by a repository ruleset: these four checks must pass, and
+  force-pushes and deletion are blocked, so changes reach `master` through
+  pull requests.
+- **`build.yml`** packages all three platforms, each on its own native
+  GitHub-hosted runner (`ubuntu-latest`, `windows-latest`, `macos-latest`),
+  so the local limitations above don't apply: no Wine, no
+  cross-compilation. It doesn't run on push; start it from Actions → Build →
+  Run workflow for a snapshot build, or let `release.yml` call it.
+- **`release.yml`** runs when a `v*.*.*` tag is pushed. It checks that the
+  tag is a SemVer version equal to `package.json`'s, reruns the quality gate
+  (including `format:check`), builds through `build.yml`, then creates a
+  **draft** GitHub release with the binaries, `SHA256SUMS.txt` and a build
+  provenance attestation for every file. The release procedure is in
+  [`RELEASING.md`](RELEASING.md).
+
+What `build.yml` checks on each platform:
+
+- **Linux**: the deterministic x64 AppImage name; that `app.asar` contains
+  only the app output, package metadata and production dependencies (no
+  tests or source maps); and the generated third-party notices.
+- **Windows**: the x64 NSIS and portable `.exe` names and their product,
+  version, copyright, company and trademark metadata.
+- **macOS**: the arm64 DMG and the app's ad-hoc signature (`codesign`). This
+  job may fail without failing the workflow, because macOS is experimental.
+- **Every platform** launches the packaged app with `--smoke-test` (AppImage
+  under Xvfb; the Windows portable and the silently installed NSIS app; the
+  macOS app from the mounted DMG). It opens the SQLite database, waits for
+  the renderer and preload to load, and exits non-zero on any failure.
+
+The artifacts are uploaded to the run's Actions page. Dependabot
+(`.github/dependabot.yml`) proposes weekly grouped updates for npm packages
+and for the pinned GitHub Actions.
 
 ### Code signing and notarization
 
-Every artifact this project produces — locally or via CI — is deliberately
-**unsigned**. That's an accepted trade-off, not an oversight: an unsigned
-Windows installer/portable `.exe` triggers a Windows SmartScreen warning
-("Run anyway" bypasses it), and an unsigned/unnotarized macOS app is
-blocked by Gatekeeper (right-click → Open bypasses it) — packaging format
-doesn't change either of those, only real signing credentials do, and this
-project doesn't have any. If that changes:
+No Developer ID or Authenticode certificate is configured. Windows
+installers remain unsigned and trigger a SmartScreen warning. The macOS
+arm64 app is ad-hoc signed (`identity: '-'`) so its code signature can be
+verified, but an ad-hoc signature is not trusted by Gatekeeper and the app
+is not notarized. The macOS CI job verifies the signature; neither
+packaging format nor an ad-hoc signature removes the first-run warning.
+If real signing credentials become available:
 
 - **Windows**: a code-signing certificate (a paid Authenticode certificate
   from a CA). electron-builder picks it up automatically from the
@@ -188,14 +221,9 @@ decision to ship unsigned for now.
 
 ### App icon
 
-No custom icon exists yet (nothing under `build/`) — every target
-currently falls back to electron-builder's own default Electron icon
-(confirmed via a real build: `default Electron icon is used` in the log,
-not a failure). Add one real, high-resolution source image at
-`build/icon.png` (at least 1024×1024) and reference it as
-`icon: build/icon.png` under each platform section in
-`electron-builder.yml` — electron-builder derives the platform-specific
-`.ico`/`.icns` from that single file itself.
+The icon is one 1024×1024 source image, `build/icon.png`, referenced once
+as `icon:` in `electron-builder.yml`. electron-builder derives the Windows
+`.ico` and macOS `.icns` from it during the build on each platform.
 
 See `ADB.md` for platform-specific ADB/USB considerations independent of
 packaging.

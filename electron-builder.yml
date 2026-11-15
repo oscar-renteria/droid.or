@@ -6,6 +6,16 @@ directories:
 files:
   - out/**/*
   - package.json
+  - '!**/node_modules/**/test/**'
+  - '!**/node_modules/**/tests/**'
+  - '!**/node_modules/**/__tests__/**'
+  - '!**/node_modules/**/*.{test,spec}.*'
+extraResources:
+  - from: LICENSE
+    to: LICENSE
+  - from: THIRD_PARTY_NOTICES.txt
+    to: THIRD_PARTY_NOTICES.txt
+publish: null
 # A single 1024x1024 source (build/icon.png) — electron-builder derives
 # the platform-specific .ico/.icns from it itself for every target below.
 # Verified for Linux (the AppImage embeds and displays it correctly); the
@@ -14,7 +24,10 @@ files:
 icon: build/icon.png
 
 linux:
-  target: AppImage
+  target:
+    - target: AppImage
+      arch: x64
+  artifactName: ${productName}-${version}-x86_64.${ext}
   category: Utility
   # Makes the installed .desktop filename (and Electron's app_id/WM_CLASS)
   # derive from `desktopName` in package.json instead of a generic
@@ -41,9 +54,12 @@ linux:
 # machine it installs to, matching the rest of this app's
 # confirm-before-acting philosophy.
 win:
+  legalTrademarks: droid.or
   target:
     - target: nsis
+      arch: x64
     - target: portable
+      arch: x64
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
@@ -54,18 +70,14 @@ nsis:
 portable:
   artifactName: ${productName}-${version}-${arch}-portable.${ext}
 
-# Cannot be built or verified from this project's (Linux) dev environment —
-# electron-builder can only produce a macOS build on macOS itself. Config
-# below is correct per electron-builder's own docs but unverified in
-# practice; build and test on a real Mac before distributing. See
-# DEVELOPMENT.md for what code signing/notarization actually requires
-# beyond this file (a paid Apple Developer account - this config alone
-# does not provide either).
+# macOS is arm64-only and distributed as a DMG. `'-'` requests an ad-hoc
+# signature, not a Developer ID certificate; CI verifies the packaged app.
 mac:
+  identity: '-'
   category: public.app-category.utilities
   target:
     - target: dmg
-    - target: zip
+      arch: arm64
   hardenedRuntime: true
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist

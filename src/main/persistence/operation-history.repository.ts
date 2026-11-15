@@ -4,6 +4,7 @@ import type { OperationHistoryEntry, OperationType } from '@shared/validation/op
 interface HistoryRow {
   id: number
   device_id: string
+  source_device_id: string | null
   package_name: string
   operation: string
   previous_state: string | null
@@ -17,6 +18,7 @@ function toHistoryEntry(row: HistoryRow): OperationHistoryEntry {
   return {
     id: row.id,
     deviceId: row.device_id,
+    sourceDeviceId: row.source_device_id,
     packageName: row.package_name,
     operation: row.operation as OperationType,
     previousState: row.previous_state,
@@ -29,6 +31,7 @@ function toHistoryEntry(row: HistoryRow): OperationHistoryEntry {
 
 export interface RecordOperationInput {
   deviceId: string
+  sourceDeviceId?: string | null
   packageName: string
   operation: OperationType
   previousState: string | null
@@ -41,11 +44,12 @@ export function recordOperation(db: Database.Database, input: RecordOperationInp
   db.prepare(
     `
     INSERT INTO operation_history
-      (device_id, package_name, operation, previous_state, new_state, success, raw_output, performed_at)
-    VALUES (@deviceId, @packageName, @operation, @previousState, @newState, @success, @rawOutput, @performedAt)
+      (device_id, source_device_id, package_name, operation, previous_state, new_state, success, raw_output, performed_at)
+    VALUES (@deviceId, @sourceDeviceId, @packageName, @operation, @previousState, @newState, @success, @rawOutput, @performedAt)
     `
   ).run({
     deviceId: input.deviceId,
+    sourceDeviceId: input.sourceDeviceId ?? null,
     packageName: input.packageName,
     operation: input.operation,
     previousState: input.previousState,

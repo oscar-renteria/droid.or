@@ -4,19 +4,24 @@ import EmptyState from '@renderer/components/ui/EmptyState.vue'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { getDeviceStateMeta } from '@renderer/utils/device-state-meta'
 
-const props = defineProps<{
-  /** Fallback guidance for a selected device whose state has none of its own. */
-  requirement: string
-  /** Shown when no device is selected at all. */
-  noDeviceText: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    /** Fallback guidance for a selected device whose state has none of its own. */
+    requirement: string
+    /** Title shown when no device is selected. */
+    noDeviceTitle?: string
+    /** Guidance shown when no device is selected at all. */
+    noDeviceText: string
+  }>(),
+  { noDeviceTitle: 'No device selected' }
+)
 
 const devicesStore = useDevicesStore()
 const device = computed(() => devicesStore.selectedDevice)
 const canProceed = computed(() => device.value?.connectionState === 'device')
 
 const title = computed(() =>
-  device.value ? getDeviceStateMeta(device.value.connectionState).label : 'No device selected'
+  device.value ? getDeviceStateMeta(device.value.connectionState).label : props.noDeviceTitle
 )
 const body = computed(() =>
   device.value

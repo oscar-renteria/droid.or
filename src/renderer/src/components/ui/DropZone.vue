@@ -60,7 +60,7 @@ function handleActivate(): void {
     @dragleave="handleDragLeave"
     @drop="handleDrop"
   >
-    <NIcon :component="FolderOpenOutline" :size="28" class="text-text-muted" />
+    <NIcon :component="FolderOpenOutline" :size="28" class="text-text-muted" aria-hidden="true" />
     <p class="max-w-md text-sm font-medium text-text-secondary">{{ title }}</p>
     <p class="max-w-md text-xs text-text-muted">{{ hint }}</p>
   </div>

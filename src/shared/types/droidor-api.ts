@@ -8,12 +8,16 @@ import type { MutatingOperationType, OperationHistoryEntry, OperationResult } fr
 import type { DeviceChanges } from './recovery'
 import type { ApkInspectionResult } from './apk-install'
 import type { SplitInstallAnalysis, SplitSourceKind } from './split-install'
+import type { DeviceTransferPackage } from './device-transfer'
+import type { DeviceTransferProgressUpdate } from '../validation/device-transfer.schema'
 import type { PackageBackupResult } from './apk-backup'
 import type { SecurityReviewResult } from './security-review'
 import type { AdbCommandLogEntry } from './logs'
 import type { SafetyDisclaimerStatus } from './safety-disclaimer'
 import type { AiAnalysisResult, AiProviderId, AiSettings } from './ai-settings'
 import type { DonationProviderId, OpenDonationLinkResult } from '../validation/support.schema'
+import type { UpdateStatus } from '../validation/update.schema'
+import type { RendererErrorReport } from '../validation/renderer-error.schema'
 
 /**
  * Contract for the API the preload script exposes on window.droidor.
@@ -23,6 +27,15 @@ import type { DonationProviderId, OpenDonationLinkResult } from '../validation/s
 export interface DroidorApi {
   getAppInfo: () => Promise<AppInfo>
   openDonationLink: (provider: DonationProviderId) => Promise<OpenDonationLinkResult>
+  openThirdPartyNotices: () => Promise<void>
+  /** Cached at most daily in the main process; never rejects on network
+   *  failure (returns the last known result instead). */
+  getUpdateStatus: () => Promise<UpdateStatus>
+  /** Persists the "Check for updates" setting and returns the new status. */
+  setUpdateCheckEnabled: (enabled: boolean) => Promise<UpdateStatus>
+  /** Opens the newest release's page in the system browser. The URL is
+   *  resolved in the main process — the renderer can't choose it. */
+  openReleasePage: () => Promise<void>
   getAdbAvailability: () => Promise<AdbAvailability>
   /** Full picture of where the effective adb command came from and what
    *  else is available (a managed download, a configured custom path). */
@@ -140,6 +153,9 @@ export interface DroidorApi {
     packageNames: string[],
     destDir: string
   ) => Promise<PackageBackupResult[]>
+  /** Lists user-installed packages and versions from a connected source
+   *  device, without changing the currently selected target device. */
+  getDeviceTransferPackages: (sourceDeviceId: string) => Promise<DeviceTransferPackage[]>
   /** Pulls every APK file of an app from the source device and reports
    *  what installing that exact set would do on the target device.
    *  Changes neither device. Rejects if either device isn't connected and
@@ -148,7 +164,8 @@ export interface DroidorApi {
   analyzeDeviceTransfer: (
     sourceDeviceId: string,
     targetDeviceId: string,
-    packageName: string
+    packageName: string,
+    onProgress?: (progress: DeviceTransferProgressUpdate) => void
   ) => Promise<SplitInstallAnalysis>
   /** Pulls the app from the source again and installs every one of its
    *  APK files on the target via `adb install-multiple`. Refuses (rejects)
@@ -158,7 +175,8 @@ export interface DroidorApi {
     sourceDeviceId: string,
     targetDeviceId: string,
     packageName: string,
-    expectedVersionCode: number | null
+    expectedVersionCode: number | null,
+    onProgress?: (progress: DeviceTransferProgressUpdate) => void
   ) => Promise<OperationResult>
   /** Two read-only signals for a human to review — which apps hold Device
    *  Admin, and which hold an enabled Accessibility Service. This is
@@ -177,6 +195,10 @@ export interface DroidorApi {
   /** Opens a native save-file dialog and writes the current log as JSON.
    *  Resolves to the chosen path, or null if the user cancels. */
   exportLogs: () => Promise<string | null>
+  /** Opens the folder holding the persistent log files (userData/logs). */
+  openLogsFolder: () => Promise<void>
+  /** Writes a renderer-side error to the persistent log file. */
+  logRendererError: (report: RendererErrorReport) => Promise<void>
   /** Whether the user has ever clicked through the first-launch safety
    *  disclaimer, and when. Persists across restarts. */
   getSafetyDisclaimerStatus: () => Promise<SafetyDisclaimerStatus>

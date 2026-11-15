@@ -4,6 +4,7 @@ import Database from 'better-sqlite3'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { MutationCommandResult } from '@main/adb/adb-client'
 import type { RawApkInfo } from '@main/android/apk-parser-loader'
+import type { DeviceTransferProgressUpdate } from '@shared/validation/device-transfer.schema'
 import {
   analyzeDeviceTransfer,
   isUserStorageApkPath,
@@ -119,6 +120,31 @@ describe('analyzeDeviceTransfer', () => {
     expect(existsSync(stagingDirOf(adb))).toBe(false)
   })
 
+  it('reports each pulled file while analyzing', async () => {
+    const progress: DeviceTransferProgressUpdate[] = []
+
+    await analyzeDeviceTransfer(adb, SOURCE, TARGET, PKG, DEFAULT_PARSER, (update) => {
+      progress.push(update)
+    })
+
+    expect(progress).toEqual([
+      { phase: 'pulling', fileName: 'base.apk', fileNumber: 1, totalFiles: 3 },
+      {
+        phase: 'pulling',
+        fileName: 'split_config.arm64_v8a.apk',
+        fileNumber: 2,
+        totalFiles: 3
+      },
+      {
+        phase: 'pulling',
+        fileName: 'split_config.xxhdpi.apk',
+        fileNumber: 3,
+        totalFiles: 3
+      },
+      { phase: 'checking' }
+    ])
+  })
+
   it('reports an ABI mismatch with the target as a blocking issue', async () => {
     adb.deviceProperties.set(
       TARGET,
@@ -225,7 +251,11 @@ describe('performDeviceTransfer', () => {
     db.close()
   })
 
-  function perform(expectedVersionCode: number | null = 184, parser = DEFAULT_PARSER) {
+  function perform(
+    expectedVersionCode: number | null = 184,
+    parser = DEFAULT_PARSER,
+    onProgress?: (progress: DeviceTransferProgressUpdate) => void
+  ) {
     return performDeviceTransfer(
       db,
       adb,
@@ -234,7 +264,8 @@ describe('performDeviceTransfer', () => {
       PKG,
       expectedVersionCode,
       'Copied from samsung SM-F766B (SOURCE01).',
-      parser
+      parser,
+      onProgress
     )
   }
 
@@ -250,11 +281,13 @@ describe('performDeviceTransfer', () => {
 
     const history = db.prepare('SELECT * FROM operation_history').all() as Array<{
       device_id: string
+      source_device_id: string | null
       operation: string
       raw_output: string
     }>
     expect(history).toHaveLength(1)
     expect(history[0]?.device_id).toBe(TARGET)
+    expect(history[0]?.source_device_id).toBe(SOURCE)
     expect(history[0]?.operation).toBe('split-install')
     expect(history[0]?.raw_output).toMatch(/^Copied from samsung SM-F766B \(SOURCE01\)\./)
   })
@@ -265,6 +298,30 @@ describe('performDeviceTransfer', () => {
     await perform()
 
     expect(installCalls[0]?.apkPaths.map((p) => basename(p))).toContain('split_config.xxhdpi.apk')
+  })
+
+  it('reports per-file pulls, validation, and installation progress', async () => {
+    const progress: DeviceTransferProgressUpdate[] = []
+
+    await perform(184, DEFAULT_PARSER, (update) => progress.push(update))
+
+    expect(progress).toEqual([
+      { phase: 'pulling', fileName: 'base.apk', fileNumber: 1, totalFiles: 3 },
+      {
+        phase: 'pulling',
+        fileName: 'split_config.arm64_v8a.apk',
+        fileNumber: 2,
+        totalFiles: 3
+      },
+      {
+        phase: 'pulling',
+        fileName: 'split_config.xxhdpi.apk',
+        fileNumber: 3,
+        totalFiles: 3
+      },
+      { phase: 'checking' },
+      { phase: 'installing', fileCount: 3 }
+    ])
   })
 
   it('refuses when the source app changed since the analysis', async () => {

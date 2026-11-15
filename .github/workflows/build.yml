@@ -1,26 +1,33 @@
 name: Build
 
-# Builds and packages droid.or for all three platforms on every push to
-# master. Each OS builds on its own native GitHub-hosted runner, so the
-# problems that make cross-building Windows/macOS from this project's own
-# (Linux) dev machine impractical don't apply here: better-sqlite3's
-# prebuilt native binary for that exact platform is used directly, and
-# electron-builder never needs Wine to touch a Windows/macOS artifact it's
-# building on that same OS.
+# Builds, verifies and uploads the distributables for all three platforms.
+# Not triggered by pushes: `ci.yml` covers every push/PR, and this workflow
+# runs either on demand (snapshot builds via workflow_dispatch) or as the
+# build stage of `release.yml` (workflow_call), so the release ships exactly
+# what these verification steps checked.
 #
-# Every artifact here is unsigned by design (see DEVELOPMENT.md) - no
-# code-signing certificate exists for this project. Windows SmartScreen and
-# macOS Gatekeeper will warn on first run; that's an accepted trade-off,
-# not a bug in this workflow. Signing later needs no workflow change: add
-# CSC_LINK/CSC_KEY_PASSWORD (and, for macOS notarization,
-# APPLE_ID/APPLE_APP_SPECIFIC_PASSWORD/APPLE_TEAM_ID) as repository
-# secrets, then reference them via `env:` on the build step below -
-# electron-builder picks them up automatically.
+# Each OS builds on its own native GitHub-hosted runner, so the problems
+# that make cross-building Windows/macOS from a Linux machine impractical
+# don't apply: better-sqlite3's prebuilt native binary for that exact
+# platform is used directly, and electron-builder never needs Wine.
+#
+# No platform has a Developer ID/Authenticode certificate. Windows remains
+# unsigned; macOS uses an ad-hoc signature required by Apple Silicon and
+# verifies it below. Neither is trusted by Gatekeeper/SmartScreen.
 
 on:
-  push:
-    branches: [master]
   workflow_dispatch: {}
+  workflow_call: {}
+
+permissions:
+  contents: read
+
+# Fixed prefix instead of github.workflow: when called from release.yml,
+# github.workflow is the caller's name, and sharing the caller's group would
+# make this workflow cancel the very run that called it.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -31,36 +38,199 @@ jobs:
           - os: ubuntu-latest
             build_script: build:linux
             artifact_name: linux-appimage
-            artifact_path: release/*.AppImage
+            artifact_path: release/droid.or-*-x86_64.AppImage
           - os: windows-latest
             build_script: build:win
             artifact_name: windows
+            # Exact names: electron-builder also leaves a
+            # `*-setup.__uninstaller.exe` in release/ that must not ship.
             artifact_path: |
-              release/*.exe
+              release/droid.or-*-x64-setup.exe
+              release/droid.or-*-x64-portable.exe
           - os: macos-latest
             build_script: build:mac
             artifact_name: macos
-            artifact_path: |
-              release/*.dmg
-              release/*.zip
+            artifact_path: release/*.dmg
+            # Experimental (D1): unsigned, untested by the maintainer. A
+            # failure is reported but never blocks Windows/Linux releases.
+            experimental: true
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental == true }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
 
       - run: npm ci
 
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm run test
-
+      # Type-checking is part of every build:<os> script; lint and tests run
+      # in ci.yml and in release.yml's verify job before this is called.
       - run: npm run ${{ matrix.build_script }}
 
-      - uses: actions/upload-artifact@v4
+      - name: Verify Linux artifact
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          version=$(node -p 'require("./package.json").version')
+          test -f "release/droid.or-${version}-x86_64.AppImage"
+
+      - name: Smoke-test packaged Linux database
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          ELECTRON_RUN_AS_NODE: '1'
+        run: |
+          cd release/linux-unpacked
+          ./droid-or -e 'const Database = require(require("path").join(process.resourcesPath, "app.asar/node_modules/better-sqlite3")); const db = new Database(":memory:"); if (db.prepare("SELECT 1 AS ok").get().ok !== 1) process.exit(1); db.close()'
+
+      - name: Verify packaged archive contents
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          entries="$(npx asar list release/linux-unpacked/resources/app.asar)"
+          top_level="$(printf '%s\n' "$entries" | awk -F/ 'NF > 1 { print "/" $2 }' | sort -u)"
+          expected_top_level="$(printf '%s\n' /node_modules /out /package.json)"
+          if [ "$top_level" != "$expected_top_level" ]; then
+            printf 'Unexpected app.asar top-level content:\n%s\n' "$top_level"
+            exit 1
+          fi
+          unexpected="$(printf '%s\n' "$entries" | grep -E '^/out/.*\.map$|(^|/)(test|tests|__tests__)(/|$)|\.(test|spec)\.[^/]+$' || true)"
+          if [ -n "$unexpected" ]; then
+            printf 'Unexpected tests or source maps in app.asar:\n%s\n' "$unexpected"
+            exit 1
+          fi
+          notices="release/linux-unpacked/resources/THIRD_PARTY_NOTICES.txt"
+          test -s "$notices"
+          grep -Fq 'Package: better-sqlite3@' "$notices"
+          if grep -Fq 'Package: vitest@' "$notices"; then
+            echo "Development dependencies must not appear in third-party notices."
+            exit 1
+          fi
+
+      # The native SQLite module is exercised on Windows by the launch smoke
+      # test below, which opens the database in the portable and installed app.
+      - name: Verify Windows third-party notices
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $notices = "release/win-unpacked/resources/THIRD_PARTY_NOTICES.txt"
+          if (-not (Test-Path $notices)) {
+            throw "Missing packaged third-party notices: $notices"
+          }
+          $noticeText = Get-Content -Raw $notices
+          if ($noticeText -notmatch 'Package: better-sqlite3@' -or $noticeText -match 'Package: vitest@') {
+            throw "Third-party notices do not contain the expected production dependencies."
+          }
+
+      - name: Verify Windows artifacts
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $version = node -p "require('./package.json').version"
+          $expectedFiles = @(
+            "release/droid.or-$version-x64-portable.exe",
+            "release/droid.or-$version-x64-setup.exe"
+          )
+          $author = node -p "require('./package.json').author.name"
+          $expectedCopyright = "Copyright © $((Get-Date).Year) $author"
+          foreach ($path in $expectedFiles) {
+            if (-not (Test-Path $path)) {
+              throw "Missing expected Windows artifact: $path"
+            }
+            $versionInfo = (Get-Item $path).VersionInfo
+            if ($versionInfo.ProductName -ne "droid.or") {
+              throw "Unexpected product name in $path`: $($versionInfo.ProductName)"
+            }
+            if ($versionInfo.ProductVersion -notlike "$version*") {
+              throw "Unexpected product version in $path`: $($versionInfo.ProductVersion)"
+            }
+            if ($versionInfo.LegalCopyright -ne $expectedCopyright) {
+              throw "Unexpected copyright in $path`: $($versionInfo.LegalCopyright)"
+            }
+            if ($versionInfo.CompanyName -ne $author) {
+              throw "Unexpected company name in $path`: $($versionInfo.CompanyName)"
+            }
+            if ($versionInfo.LegalTrademarks -ne "droid.or") {
+              throw "Unexpected legal trademarks in $path`: $($versionInfo.LegalTrademarks)"
+            }
+          }
+
+      - name: Verify macOS ad-hoc signature
+        if: matrix.os == 'macos-latest'
+        run: |
+          app_path="$(find release -type d -name '*.app' -print -quit)"
+          if [ -z "$app_path" ]; then
+            echo "No packaged macOS app found under release/."
+            exit 1
+          fi
+          codesign --verify --deep --strict --verbose=2 "$app_path"
+          codesign --display --verbose=2 "$app_path" 2>&1 | grep -Fx "Signature=adhoc"
+
+      # Launch smoke tests: each distributable starts with `--smoke-test`
+      # (src/main/smoke-test.ts), which opens the database, waits for the
+      # renderer and preload to come up, and exits 0 — or 1 on failure.
+      - name: Smoke-test Linux AppImage
+        if: matrix.os == 'ubuntu-latest'
+        timeout-minutes: 5
+        env:
+          # The runner has no libfuse2; extracting avoids the FUSE mount.
+          APPIMAGE_EXTRACT_AND_RUN: '1'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -yq xvfb
+          version="$(node -p 'require("./package.json").version')"
+          appimage="release/droid.or-${version}-x86_64.AppImage"
+          chmod +x "$appimage"
+          # --no-sandbox: Ubuntu 24.04 runners restrict unprivileged user
+          # namespaces, which Chromium's sandbox needs. Whether end users on
+          # 24.04 hit the same restriction is checked manually (QA-03).
+          xvfb-run -a "$appimage" --smoke-test --no-sandbox
+
+      - name: Smoke-test Windows portable and installed app
+        if: matrix.os == 'windows-latest'
+        timeout-minutes: 10
+        shell: pwsh
+        run: |
+          $version = node -p "require('./package.json').version"
+          function Invoke-SmokeTest([string]$Path) {
+            $process = Start-Process -FilePath $Path -ArgumentList '--smoke-test' -PassThru
+            if (-not $process.WaitForExit(180000)) {
+              Stop-Process -Id $process.Id -Force
+              throw "Smoke test timed out: $Path"
+            }
+            if ($process.ExitCode -ne 0) {
+              throw "Smoke test failed with exit code $($process.ExitCode): $Path"
+            }
+            Write-Host "Smoke test passed: $Path"
+          }
+
+          Invoke-SmokeTest (Resolve-Path "release/droid.or-$version-x64-portable.exe")
+
+          $installer = Resolve-Path "release/droid.or-$version-x64-setup.exe"
+          $install = Start-Process -FilePath $installer -ArgumentList '/S' -Wait -PassThru
+          if ($install.ExitCode -ne 0) {
+            throw "Silent install failed with exit code $($install.ExitCode)"
+          }
+          $installed = Get-ChildItem -Path "$env:LOCALAPPDATA\Programs" -Recurse -Filter 'droid.or.exe' |
+            Select-Object -First 1
+          if (-not $installed) {
+            throw "Installed droid.or.exe not found under $env:LOCALAPPDATA\Programs"
+          }
+          Invoke-SmokeTest $installed.FullName
+
+      - name: Smoke-test macOS app from DMG
+        if: matrix.os == 'macos-latest'
+        timeout-minutes: 5
+        run: |
+          dmg="$(find release -maxdepth 1 -name '*.dmg' -print -quit)"
+          mount_point="$(mktemp -d)"
+          hdiutil attach -nobrowse -readonly -mountpoint "$mount_point" "$dmg"
+          trap 'hdiutil detach "$mount_point"' EXIT
+          app_path="$(find "$mount_point" -maxdepth 1 -name '*.app' -print -quit)"
+          executable="$(find "$app_path/Contents/MacOS" -maxdepth 1 -type f -perm -u+x -print -quit)"
+          "$executable" --smoke-test
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: droid-or-${{ matrix.artifact_name }}
           path: ${{ matrix.artifact_path }}

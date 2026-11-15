@@ -1,0 +1,215 @@
+// @vitest-environment jsdom
+import type { KnownDevice } from '@shared/types/device'
+import type { DroidorApi } from '@shared/types/droidor-api'
+import type { DeviceTransferPackage } from '@shared/types/device-transfer'
+import type { SplitInstallAnalysis } from '@shared/types/split-install'
+import type { OperationResult } from '@shared/types/operation'
+import type { DeviceTransferProgressUpdate } from '@shared/validation/device-transfer.schema'
+import { NInput, NSelect } from 'naive-ui'
+import { flushPromises, mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import DeviceTransferPanel from '@renderer/components/install/DeviceTransferPanel.vue'
+import { useDevicesStore } from '@renderer/stores/devices.store'
+
+const TARGET: KnownDevice = {
+  id: 'target',
+  nickname: null,
+  manufacturer: 'Google',
+  model: 'Pixel 9',
+  androidVersion: '15',
+  sdkVersion: 35,
+  connectionState: 'device',
+  firstSeenAt: '2026-10-10T10:00:00.000Z',
+  lastConnectedAt: '2026-10-10T10:00:00.000Z'
+}
+
+const SOURCE: KnownDevice = {
+  ...TARGET,
+  id: 'source',
+  manufacturer: 'Samsung',
+  model: 'Galaxy S24'
+}
+
+const DISCONNECTED: KnownDevice = {
+  ...TARGET,
+  id: 'disconnected',
+  manufacturer: 'Google',
+  model: 'Pixel 8',
+  connectionState: 'disconnected'
+}
+
+const SOURCE_PACKAGES: DeviceTransferPackage[] = [
+  {
+    packageName: 'com.example.reader',
+    displayName: 'Example Reader',
+    versionName: '1.2.0',
+    versionCode: 12
+  },
+  {
+    packageName: 'com.example.chat',
+    displayName: 'Example Chat',
+    versionName: '2.4.0',
+    versionCode: 24
+  }
+]
+
+const ANALYSIS: SplitInstallAnalysis = {
+  sourceKind: 'directory',
+  sourcePaths: ['/tmp/source-app'],
+  packageName: 'com.example.reader',
+  versionName: '1.2.0',
+  versionCode: 12,
+  label: 'Example Reader',
+  iconDataUrl: null,
+  devicePrimaryAbi: 'arm64-v8a',
+  deviceDensityBucket: null,
+  parts: [],
+  issues: [],
+  canInstall: true,
+  plan: { operation: 'fresh-install', currentVersionCode: null }
+}
+
+describe('DeviceTransferPanel', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('asks for a second device when only the target is connected', () => {
+    const devicesStore = useDevicesStore()
+    devicesStore.$patch({ devices: [TARGET], selectedDeviceId: TARGET.id })
+
+    const wrapper = mount(DeviceTransferPanel)
+
+    expect(wrapper.text()).toContain('Connect a second device')
+    expect(wrapper.findComponent(NSelect).exists()).toBe(false)
+  })
+
+  it('offers connected devices other than the target and explains transfer limits', () => {
+    const devicesStore = useDevicesStore()
+    devicesStore.$patch({
+      devices: [TARGET, SOURCE, DISCONNECTED],
+      selectedDeviceId: TARGET.id
+    })
+
+    const wrapper = mount(DeviceTransferPanel)
+    const sourceSelect = wrapper.getComponent(NSelect)
+
+    expect(sourceSelect.props('options')).toEqual([
+      { label: 'Samsung Galaxy S24', value: SOURCE.id }
+    ])
+    expect(wrapper.text()).toContain('to Google Pixel 9')
+    expect(wrapper.text()).toContain('Only user-installed apps are listed.')
+    expect(wrapper.text()).toContain('Google Play licensing or integrity checks')
+  })
+
+  it('loads apps for the chosen source and filters by name, package, or version', async () => {
+    const getDeviceTransferPackages = vi.fn().mockResolvedValue(SOURCE_PACKAGES)
+    vi.stubGlobal('window', {
+      ...window,
+      droidor: { getDeviceTransferPackages } as unknown as DroidorApi
+    })
+    const devicesStore = useDevicesStore()
+    devicesStore.$patch({
+      devices: [TARGET, SOURCE],
+      selectedDeviceId: TARGET.id
+    })
+
+    const wrapper = mount(DeviceTransferPanel)
+    wrapper.getComponent(NSelect).vm.$emit('update:value', SOURCE.id)
+    await flushPromises()
+
+    expect(getDeviceTransferPackages).toHaveBeenCalledWith(SOURCE.id)
+    expect(wrapper.text()).toContain('Example Reader')
+    expect(wrapper.text()).toContain('1.2.0')
+
+    for (const query of ['example reader', 'com.example.reader', '1.2.0']) {
+      wrapper.getComponent(NInput).vm.$emit('update:value', query)
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.text()).toContain('Example Reader')
+      expect(wrapper.text()).not.toContain('Example Chat')
+    }
+
+    wrapper.getComponent(NInput).vm.$emit('update:value', '2.4.0')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.text()).toContain('Example Chat')
+    expect(wrapper.text()).not.toContain('Example Reader')
+  })
+
+  it('opens the shared review workflow for a selected source app', async () => {
+    const getDeviceTransferPackages = vi.fn().mockResolvedValue(SOURCE_PACKAGES)
+    const analyzeDeviceTransfer = vi.fn().mockResolvedValue(ANALYSIS)
+    let resolveTransfer: ((result: OperationResult) => void) | undefined
+    const performDeviceTransfer = vi.fn(
+      (
+        _sourceDeviceId: string,
+        _targetDeviceId: string,
+        _packageName: string,
+        _expectedVersionCode: number | null,
+        _onProgress?: (progress: DeviceTransferProgressUpdate) => void
+      ) =>
+        new Promise<OperationResult>((resolve) => {
+          resolveTransfer = resolve
+        })
+    )
+    vi.stubGlobal(
+      'window',
+      Object.assign(Object.create(window), {
+        droidor: {
+          getDeviceTransferPackages,
+          analyzeDeviceTransfer,
+          performDeviceTransfer
+        } as unknown as DroidorApi
+      })
+    )
+    const devicesStore = useDevicesStore()
+    devicesStore.$patch({
+      devices: [TARGET, SOURCE],
+      selectedDeviceId: TARGET.id
+    })
+
+    const wrapper = mount(DeviceTransferPanel)
+    wrapper.getComponent(NSelect).vm.$emit('update:value', SOURCE.id)
+    await flushPromises()
+    const appButton = wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('Example Reader'))
+    expect(appButton).toBeDefined()
+    await appButton?.trigger('click')
+    await wrapper.vm.$nextTick()
+
+    const compatibilityButton = wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('Check compatibility'))
+    expect(compatibilityButton).toBeDefined()
+    await compatibilityButton?.trigger('click')
+    await flushPromises()
+
+    expect(analyzeDeviceTransfer.mock.calls[0]?.slice(0, 3)).toEqual([
+      SOURCE.id,
+      TARGET.id,
+      'com.example.reader'
+    ])
+    expect(wrapper.text()).toContain('New install')
+
+    const installButton = wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('Copy & install'))
+    await installButton?.trigger('click')
+    await wrapper.vm.$nextTick()
+    const chooseAnotherButton = wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('Choose another app'))
+
+    expect(chooseAnotherButton?.attributes('disabled')).toBeDefined()
+
+    resolveTransfer?.({ success: true, message: 'Installed', rawOutput: 'Success' })
+    await flushPromises()
+  })
+})

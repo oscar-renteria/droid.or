@@ -10,6 +10,7 @@ import PageHeader from '@renderer/components/ui/PageHeader.vue'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { useOperationsStore } from '@renderer/stores/operations.store'
 import { usePackagesStore } from '@renderer/stores/packages.store'
+import { deviceDisplayName } from '@renderer/utils/device-display-name'
 
 const devicesStore = useDevicesStore()
 const operationsStore = useOperationsStore()
@@ -63,6 +64,11 @@ function displayName(packageName: string): string {
   return cached && cached !== 'loading' && cached.label ? cached.label : packageName
 }
 
+function displayDeviceName(deviceId: string): string {
+  const device = devicesStore.devices.find((candidate) => candidate.id === deviceId)
+  return device ? deviceDisplayName(device) : deviceId
+}
+
 const columns: DataTableColumns<OperationHistoryEntry> = [
   {
     title: 'Time',
@@ -94,6 +100,15 @@ const columns: DataTableColumns<OperationHistoryEntry> = [
     key: 'operation',
     width: 150,
     render: (row) => OPERATION_LABELS[row.operation] ?? row.operation
+  },
+  {
+    title: 'Device route',
+    key: 'sourceDeviceId',
+    width: 260,
+    render: (row) =>
+      row.sourceDeviceId
+        ? `${displayDeviceName(row.sourceDeviceId)} → ${displayDeviceName(row.deviceId)}`
+        : '—'
   },
   {
     title: 'State change',

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/oscar-renteria/droid.or/security/advisories/new
+    about: Report security problems privately, not as a public issue.
+  - name: Troubleshooting guide
+    url: https://github.com/oscar-renteria/droid.or/blob/master/docs/TROUBLESHOOTING.md
+    about: First-start warnings, phones that don't show up, and common install errors.

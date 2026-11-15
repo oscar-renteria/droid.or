@@ -288,6 +288,9 @@ async function toggleFavorite(pkg: AppPackageInfo, event: MouseEvent): Promise<v
   await packagesStore.setFavorite(pkg.packageName, !pkg.isFavorite)
 }
 
+/** Sum of the column widths below (selection ≈ 40 px, App at its minimum). */
+const APPS_TABLE_MIN_WIDTH = 40 + 44 + 220 + 170 + 90 + 100 + 170 + 120
+
 const columns: DataTableColumns<AppPackageInfo> = [
   {
     type: 'selection'
@@ -321,6 +324,9 @@ const columns: DataTableColumns<AppPackageInfo> = [
   {
     title: 'App',
     key: 'packageName',
+    // Without a minimum the fixed-width columns squeeze this one to zero
+    // at the minimum window size (960 px); the table scrolls instead.
+    minWidth: 220,
     sorter: (a, b) =>
       (a.displayName ?? a.packageName).localeCompare(b.displayName ?? b.packageName),
     render: renderAppCell
@@ -442,6 +448,7 @@ function rowProps(row: AppPackageInfo): Record<string, unknown> {
         :data="filteredPackages"
         :row-props="rowProps"
         :row-key="(row: AppPackageInfo) => row.packageName"
+        :scroll-x="APPS_TABLE_MIN_WIDTH"
         virtual-scroll
         size="small"
         striped

@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export type QueueItemStatus = 'inspecting' | 'ready' | 'installing' | 'success' | 'failed' | 'error'
+export type InstallSourceTab = 'single' | 'split' | 'device'
 
 export interface ApkQueueItem {
   filePath: string
@@ -18,6 +19,7 @@ export interface ApkQueueItem {
 export const useApkInstallStore = defineStore('apkInstall', () => {
   const queue = ref<ApkQueueItem[]>([])
   const installingAll = ref(false)
+  const activeSourceTab = ref<InstallSourceTab>('single')
 
   /** Looks the item up fresh through the reactive array every time, rather
    *  than closing over the object reference from before it was pushed —
@@ -120,5 +122,14 @@ export const useApkInstallStore = defineStore('apkInstall', () => {
     queue.value = []
   }
 
-  return { queue, installingAll, addFiles, installItem, installAll, removeItem, reset }
+  return {
+    queue,
+    installingAll,
+    activeSourceTab,
+    addFiles,
+    installItem,
+    installAll,
+    removeItem,
+    reset
+  }
 })

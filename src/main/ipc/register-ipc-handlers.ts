@@ -18,6 +18,7 @@ import { registerSafetyDisclaimerHandlers } from './handlers/safety-disclaimer.h
 import { registerSecurityReviewHandlers } from './handlers/security-review.handler'
 import { registerSplitInstallHandlers } from './handlers/split-install.handler'
 import { registerSupportHandlers } from './handlers/support.handler'
+import { registerUpdateHandlers } from './handlers/update.handler'
 
 /**
  * Wires every supported IPC channel to its handler. This is the only place
@@ -27,6 +28,7 @@ import { registerSupportHandlers } from './handlers/support.handler'
 export function registerIpcHandlers(context: AppContext): void {
   ipcMain.handle(IpcChannel.GetAppInfo, () => getAppInfo())
   registerSupportHandlers()
+  registerUpdateHandlers(context.updateCheckService)
 
   registerAdbHandlers(context.adbClient, context.adbSettingsService)
   registerDeviceHandlers(context.deviceRegistry)
@@ -45,7 +47,7 @@ export function registerIpcHandlers(context: AppContext): void {
   registerApkBackupHandlers(context.adbClient, context.deviceRegistry)
   registerDeviceTransferHandlers(context.db, context.adbClient, context.deviceRegistry)
   registerSecurityReviewHandlers(context.adbClient, context.deviceRegistry)
-  registerLogsHandlers(context.adbCommandLog)
+  registerLogsHandlers(context.adbCommandLog, context.logger)
   registerSafetyDisclaimerHandlers(context.db)
   registerAiHandlers(context.db, context.adbClient, context.deviceRegistry)
 

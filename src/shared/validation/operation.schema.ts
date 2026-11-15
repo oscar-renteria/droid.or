@@ -56,6 +56,7 @@ export type OperationResult = z.infer<typeof operationResultSchema>
 export const operationHistoryEntrySchema = z.object({
   id: z.number().int().positive(),
   deviceId: z.string().min(1),
+  sourceDeviceId: z.string().min(1).nullable(),
   packageName: z.string().min(1),
   operation: operationTypeSchema,
   previousState: z.string().nullable(),

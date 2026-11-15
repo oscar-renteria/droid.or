@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { AdbCommandLog } from '@main/adb/adb-command-log'
 
 describe('AdbCommandLog', () => {
@@ -57,5 +57,21 @@ describe('AdbCommandLog', () => {
     })
     log.clear()
     expect(log.getAll()).toEqual([])
+  })
+
+  it('forwards every recorded entry to the sink', () => {
+    const sink = vi.fn()
+    const log = new AdbCommandLog(sink)
+    log.record({
+      deviceId: null,
+      category: 'list-devices',
+      command: 'devices -l',
+      durationMs: 3,
+      success: false,
+      errorMessage: 'adb not found'
+    })
+    expect(sink).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ id: 1, command: 'devices -l', success: false })
+    )
   })
 })

@@ -521,6 +521,42 @@ describe('performSplitInstall', () => {
     })
   })
 
+  it('removes the extracted archive when the install itself fails (e.g. adb timeout)', async () => {
+    const { createWriteStream, existsSync } = await import('node:fs')
+    const { dirname } = await import('node:path')
+    const { ZipFile } = await import('yazl')
+    const archivePath = join(workDir, 'bundle.apks')
+    await new Promise<void>((resolvePromise, reject) => {
+      const zipfile = new ZipFile()
+      zipfile.addBuffer(Buffer.from('base content'), 'base.apk')
+      zipfile.outputStream
+        .pipe(createWriteStream(archivePath))
+        .on('close', () => resolvePromise())
+        .on('error', reject)
+      zipfile.end()
+    })
+    adb.shellResponses.set(`${SERIAL}\n${VERSIONCODE_ARGS}`, '')
+    // No mutation response configured: the fake rejects install-multiple,
+    // the same way a timed-out or crashed adb process does.
+
+    await expect(
+      performSplitInstall(
+        db,
+        adb,
+        SERIAL,
+        'archive',
+        [archivePath],
+        ['base.apk'],
+        fakeParser({ 'base.apk': baseApk() })
+      )
+    ).rejects.toThrow()
+
+    const installCall = adb.mutationCalls.find((call) => call.args[0] === 'install-multiple')
+    const extractedBase = installCall?.args[2]
+    expect(extractedBase).toBeDefined()
+    expect(existsSync(dirname(extractedBase as string))).toBe(false)
+  })
+
   it('reports a plain-language explanation alongside a known failure code', async () => {
     const paths = await writeParts(['base.apk'])
     const basePath = paths[0] as string

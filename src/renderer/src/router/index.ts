@@ -17,7 +17,7 @@ import SettingsView from '@renderer/views/SettingsView.vue'
 export const router = createRouter({
   history: createWebHashHistory(),
   routes: [
-    { path: '/', redirect: '/overview' },
+    { path: '/', redirect: '/install' },
     {
       path: '/overview',
       name: 'overview',

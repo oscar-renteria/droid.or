@@ -28,5 +28,9 @@ export const useLogsStore = defineStore('logs', () => {
     return (await window.droidor?.exportLogs()) ?? null
   }
 
-  return { entries, loading, errorMessage, load, clear, exportLogs }
+  async function openLogsFolder(): Promise<void> {
+    await window.droidor?.openLogsFolder()
+  }
+
+  return { entries, loading, errorMessage, load, clear, exportLogs, openLogsFolder }
 })

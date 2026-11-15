@@ -217,6 +217,8 @@ describe('useSplitInstallStore', () => {
       [BASE_PATH, ABI_PATH],
       ['split_config.arm64_v8a.apk']
     )
+    // IPC uses structured clone, which rejects Vue's reactive proxies.
+    expect(() => structuredClone(installSplitApks.mock.calls[0])).not.toThrow()
     expect(store.installResult?.success).toBe(true)
   })
 

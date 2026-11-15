@@ -1,4 +1,5 @@
 import { execFile, spawn } from 'node:child_process'
+import { statSync } from 'node:fs'
 import type { AdbAvailability } from '@shared/validation/device.schema'
 import { verifyAdb } from './adb-path'
 import { parseDeviceListBody, type RawAdbDevice } from './device-list-parser'
@@ -7,8 +8,33 @@ import { createTrackDevicesFrameSplitter } from './track-devices-frame-reader'
 
 const EXEC_TIMEOUT_MS = 10_000
 const SHELL_COMMAND_TIMEOUT_MS = 30_000
-const PULL_TIMEOUT_MS = 120_000
-const INSTALL_TIMEOUT_MS = 180_000
+/** A pull's size isn't known up front (device-to-device copy pulls each
+ *  APK of an app, which can be well over 1 GB), so this only guards
+ *  against a hung adb, not a slow one — e.g. wireless debugging. */
+const PULL_TIMEOUT_MS = 30 * 60_000
+
+/** Install time = push over USB/Wi-Fi + on-device verification and
+ *  optimisation. A fixed limit would kill a healthy multi-GB install. */
+const INSTALL_TIMEOUT_BASE_MS = 180_000
+/** Pessimistic throughput (slow USB 2.0 or wireless debugging). */
+const INSTALL_ASSUMED_BYTES_PER_SECOND = 2 * 1024 * 1024
+const INSTALL_TIMEOUT_MAX_MS = 60 * 60_000
+
+export function installTimeoutMs(totalBytes: number): number {
+  const transferMs = (Math.max(0, totalBytes) / INSTALL_ASSUMED_BYTES_PER_SECOND) * 1000
+  return Math.min(INSTALL_TIMEOUT_MAX_MS, Math.round(INSTALL_TIMEOUT_BASE_MS + transferMs))
+}
+
+/** Missing/unreadable files count as 0: adb itself reports those. */
+function totalFileSize(paths: string[]): number {
+  return paths.reduce((sum, path) => {
+    try {
+      return sum + statSync(path).size
+    } catch {
+      return sum
+    }
+  }, 0)
+}
 
 export interface MutationCommandResult {
   exitCode: number
@@ -184,7 +210,7 @@ export class RealAdbClient implements AdbClient {
       execFile(
         this.adbCommand,
         ['-s', serial, 'install', '-r', localApkPath],
-        { timeout: INSTALL_TIMEOUT_MS, maxBuffer: 4 * 1024 * 1024 },
+        { timeout: installTimeoutMs(totalFileSize([localApkPath])), maxBuffer: 4 * 1024 * 1024 },
         (error, stdout, stderr) => {
           if (error && typeof error.code !== 'number') {
             reject(error)
@@ -201,7 +227,7 @@ export class RealAdbClient implements AdbClient {
       execFile(
         this.adbCommand,
         ['-s', serial, 'install-multiple', '-r', ...apkPaths],
-        { timeout: INSTALL_TIMEOUT_MS, maxBuffer: 4 * 1024 * 1024 },
+        { timeout: installTimeoutMs(totalFileSize(apkPaths)), maxBuffer: 4 * 1024 * 1024 },
         (error, stdout, stderr) => {
           if (error && typeof error.code !== 'number') {
             reject(error)

@@ -1,5 +1,8 @@
 # ADB Setup
 
+For a symptom-by-symptom guide, see
+[`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md).
+
 droid.or talks to Android devices exclusively through the Android Debug
 Bridge (ADB). This page covers how the app finds/obtains an `adb`
 executable, and platform-specific USB setup.
@@ -34,6 +37,11 @@ Google currently publishes exactly one build per OS: `windows`, `darwin`
 (macOS), and `linux` (64-bit x86 only — there is no separate Linux ARM64
 build, so the managed download isn't available on Linux ARM64; use a
 system-installed or custom-path `adb` there instead).
+
+Platform-tools are deliberately not bundled with droid.or. They are
+downloaded from Google only when requested and extracted to the app's
+per-user `managed-adb` directory, keeping Google's SDK files out of the
+distributable packages.
 
 ## Authorizing a device
 
@@ -104,10 +112,9 @@ Defender's app-specific exclusions as a first step.
 
 ## macOS
 
-No additional USB driver is normally required. Code signing/notarization
-for a packaged, distributable build is a separate concern from ADB
-connectivity itself and is not yet configured in this project (see
-`DEVELOPMENT.md`).
+No additional USB driver is normally required. For problems starting the
+experimental macOS build itself, see
+[`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md#macos-experimental).
 
 ## Common connection states
 

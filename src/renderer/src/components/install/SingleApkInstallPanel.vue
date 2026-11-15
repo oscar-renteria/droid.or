@@ -3,7 +3,6 @@ import { NButton, NIcon, NModal, NSpin, NTag, useMessage } from 'naive-ui'
 import { WarningOutline } from '@vicons/ionicons5'
 import { computed, ref } from 'vue'
 import AppIdentity from '@renderer/components/ui/AppIdentity.vue'
-import DropZone from '@renderer/components/ui/DropZone.vue'
 import { useApkInstallStore } from '@renderer/stores/apk-install.store'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { formatBytes } from '@renderer/utils/format-bytes'
@@ -13,8 +12,6 @@ const devicesStore = useDevicesStore()
 const apkInstallStore = useApkInstallStore()
 const message = useMessage()
 
-const selectedDevice = computed(() => devicesStore.selectedDevice)
-
 /** Fallback label when the APK's metadata hasn't been read yet — mirrors
  *  what the queue row would have hand-rolled before AppIdentity. */
 function rowLabel(filePath: string): string {
@@ -22,31 +19,8 @@ function rowLabel(filePath: string): string {
   return item?.info?.label ?? item?.info?.packageName ?? filePath.split(/[\\/]/).pop() ?? filePath
 }
 
-function handleDrop(files: File[]): void {
-  const device = selectedDevice.value
-  if (!device || !window.droidor) {
-    return
-  }
-  const paths = files.map((file) => window.droidor!.getPathForFile(file))
-  if (paths.length === 0) {
-    return
-  }
-  void apkInstallStore.addFiles(device.id, paths)
-}
-
-async function browseFiles(): Promise<void> {
-  const device = selectedDevice.value
-  if (!device || !window.droidor) {
-    return
-  }
-  const paths = await window.droidor.browseForApkFiles()
-  if (paths.length > 0) {
-    void apkInstallStore.addFiles(device.id, paths)
-  }
-}
-
 async function installOne(filePath: string): Promise<void> {
-  const device = selectedDevice.value
+  const device = devicesStore.selectedDevice
   const item = apkInstallStore.queue.find((entry) => entry.filePath === filePath)
   if (!device || !item) {
     return
@@ -70,7 +44,7 @@ function openBulkConfirm(): void {
 }
 
 async function confirmInstallAll(): Promise<void> {
-  const device = selectedDevice.value
+  const device = devicesStore.selectedDevice
   bulkConfirmVisible.value = false
   if (!device) {
     return
@@ -101,15 +75,6 @@ async function confirmInstallAll(): Promise<void> {
       </NButton>
     </div>
 
-    <DropZone
-      clickable
-      title="Drag & drop .apk files here, or click to browse"
-      hint="Only single .apk files are supported here — for a split APK set, an app bundle, or a .apks/.xapk/.apkm archive, use the Split / Bundle tab instead."
-      class="shrink-0"
-      @drop="handleDrop"
-      @activate="browseFiles"
-    />
-
     <div class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
       <div
         v-for="item in apkInstallStore.queue"
@@ -126,14 +91,19 @@ async function confirmInstallAll(): Promise<void> {
         />
 
         <div class="min-w-0 flex-1">
-          <template v-if="item.status === 'error'">
+          <p v-if="item.status === 'inspecting'" class="mt-1 text-sm text-text-secondary">
+            Reading {{ rowLabel(item.filePath) }}…
+          </p>
+          <template v-else-if="item.status === 'error'">
+            <NTag size="small" type="error">Can't read file</NTag>
             <div class="truncate font-medium text-text">
               {{ item.filePath }}
             </div>
             <p class="mt-1 text-sm text-danger">{{ item.message }}</p>
           </template>
           <template v-else-if="item.info">
-            <div class="flex flex-wrap items-center gap-2">
+            <!-- Polite live region: "Installed"/"Failed" is announced when it appears. -->
+            <div class="flex flex-wrap items-center gap-2" aria-live="polite">
               <NTag v-if="item.plan" size="small" :type="PLAN_META[item.plan.operation].tagType">
                 {{ PLAN_META[item.plan.operation].label }}
               </NTag>
@@ -148,7 +118,12 @@ async function confirmInstallAll(): Promise<void> {
               v-if="item.plan?.operation === 'downgrade-attempt'"
               class="mt-1 flex items-start gap-1 text-xs text-warning"
             >
-              <NIcon :component="WarningOutline" :size="14" class="mt-0.5 shrink-0" />
+              <NIcon
+                :component="WarningOutline"
+                :size="14"
+                class="mt-0.5 shrink-0"
+                aria-hidden="true"
+              />
               <span>
                 The installed version (code {{ item.plan.currentVersionCode }}) is newer than this
                 file. Android will likely refuse this install.
@@ -165,7 +140,12 @@ async function confirmInstallAll(): Promise<void> {
         </div>
 
         <div class="flex shrink-0 items-center gap-2">
-          <NButton v-if="item.status === 'ready'" size="small" @click="installOne(item.filePath)">
+          <NButton
+            v-if="item.status === 'ready'"
+            size="small"
+            :aria-label="`Install ${rowLabel(item.filePath)}`"
+            @click="installOne(item.filePath)"
+          >
             Install
           </NButton>
           <NButton v-if="item.status === 'installing'" size="small" :loading="true" disabled>
@@ -175,6 +155,7 @@ async function confirmInstallAll(): Promise<void> {
             v-if="item.status !== 'installing'"
             size="small"
             quaternary
+            :aria-label="`Remove ${rowLabel(item.filePath)} from the list`"
             @click="apkInstallStore.removeItem(item.filePath)"
           >
             Remove

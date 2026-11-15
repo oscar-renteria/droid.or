@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import type { SplitApkPart, SplitInstallIssue } from '@shared/types/split-install'
-import { NAlert, NButton, NModal, NSelect, NSpin, NTag } from 'naive-ui'
+import { NAlert, NButton, NModal, NSelect } from 'naive-ui'
 import { computed, ref, watch } from 'vue'
-import AppIdentity from '@renderer/components/ui/AppIdentity.vue'
+import DeviceTransferReview from '@renderer/components/install/DeviceTransferReview.vue'
 import { useDeviceTransferStore } from '@renderer/stores/device-transfer.store'
 import { useDevicesStore } from '@renderer/stores/devices.store'
 import { deviceDisplayName } from '@renderer/utils/device-display-name'
-import { formatBytes } from '@renderer/utils/format-bytes'
-import { PLAN_META } from '@renderer/utils/install-plan-meta'
 
 const props = defineProps<{
   show: boolean
@@ -26,14 +23,6 @@ const emit = defineEmits<{
 const devicesStore = useDevicesStore()
 const transferStore = useDeviceTransferStore()
 const targetDeviceId = ref<string | null>(null)
-
-const ROLE_LABELS: Record<SplitApkPart['role'], string> = {
-  base: 'Base',
-  abi: 'Architecture',
-  density: 'Screen density',
-  language: 'Language',
-  unknown: 'Other'
-}
 
 const sourceDevice = computed(
   () => devicesStore.devices.find((device) => device.id === props.sourceDeviceId) ?? null
@@ -77,42 +66,6 @@ watch(targetOptions, (options) => {
     targetDeviceId.value = null
   }
 })
-
-const analysisMatchesSelection = computed(
-  () =>
-    transferStore.analysis !== null &&
-    transferStore.analyzedSourceId === props.sourceDeviceId &&
-    transferStore.analyzedTargetId === targetDeviceId.value &&
-    transferStore.analyzedPackageName === props.packageName
-)
-
-const totalSizeBytes = computed(
-  () => transferStore.analysis?.parts.reduce((sum, part) => sum + part.fileSizeBytes, 0) ?? 0
-)
-
-function issueTitle(issue: SplitInstallIssue): string {
-  if (issue.severity === 'error') return 'This will likely fail'
-  if (issue.severity === 'warning') return 'Heads up'
-  return 'For your information'
-}
-
-function partQualifier(part: SplitApkPart): string {
-  return part.abi ?? part.density ?? part.language ?? part.rawSplitAttribute ?? ''
-}
-
-function checkCompatibility(): void {
-  if (!targetDeviceId.value) {
-    return
-  }
-  void transferStore.analyze(props.sourceDeviceId, targetDeviceId.value, props.packageName)
-}
-
-function confirmCopy(): void {
-  if (!analysisMatchesSelection.value) {
-    return
-  }
-  void transferStore.confirm()
-}
 
 function close(): void {
   if (transferStore.busy) {
@@ -164,105 +117,19 @@ function close(): void {
         Connect and authorize a second device to copy this app.
       </p>
 
-      <NSpin v-if="transferStore.loading" :show="true">
-        <div class="flex h-24 items-center justify-center text-sm text-text-muted">
-          Copying files from the source device… this can take a minute for large apps.
-        </div>
-      </NSpin>
-
-      <NAlert v-else-if="transferStore.errorMessage" type="error" title="Couldn't check this app">
-        {{ transferStore.errorMessage }}
-      </NAlert>
-
-      <template v-else-if="analysisMatchesSelection && transferStore.analysis">
-        <div class="flex items-start gap-3 rounded border border-border p-3">
-          <AppIdentity
-            :label="transferStore.analysis.label ?? displayName ?? packageName"
-            :package-name="packageName"
-            :icon-data-url="transferStore.analysis.iconDataUrl"
-            size="lg"
-          />
-          <div class="min-w-0 flex-1">
-            <NTag
-              v-if="transferStore.analysis.plan"
-              size="small"
-              :type="PLAN_META[transferStore.analysis.plan.operation].tagType"
-            >
-              {{ PLAN_META[transferStore.analysis.plan.operation].label }}
-            </NTag>
-            <div class="text-xs text-text-muted">
-              {{ transferStore.analysis.versionName ?? 'unknown version' }} (code
-              {{ transferStore.analysis.versionCode ?? '?' }}) ·
-              {{ transferStore.analysis.parts.length }} file(s) · {{ formatBytes(totalSizeBytes) }}
-            </div>
-          </div>
-        </div>
-
-        <NAlert
-          v-for="(issue, index) in transferStore.analysis.issues"
-          :key="index"
-          :type="issue.severity"
-          :title="issueTitle(issue)"
-        >
-          {{ issue.message }}
-        </NAlert>
-
-        <ul class="flex flex-col divide-y divide-border rounded border border-border text-sm">
-          <li
-            v-for="part in transferStore.analysis.parts"
-            :key="part.fileName"
-            class="flex items-center gap-2 px-3 py-1.5"
-          >
-            <span class="min-w-0 flex-1 truncate">{{ part.fileName }}</span>
-            <span class="text-xs text-text-muted">
-              {{ ROLE_LABELS[part.role]
-              }}{{ partQualifier(part) ? ` · ${partQualifier(part)}` : '' }}
-            </span>
-            <NTag v-if="!part.deviceCompatible" size="small" type="error">Not compatible</NTag>
-            <span class="w-16 text-right text-xs tabular-nums text-text-muted">
-              {{ formatBytes(part.fileSizeBytes) }}
-            </span>
-          </li>
-        </ul>
-
-        <NSpin v-if="transferStore.installing" :show="true">
-          <div class="flex h-16 items-center justify-center text-sm text-text-muted">
-            Copying from the source and installing on the target…
-          </div>
-        </NSpin>
-
-        <NAlert
-          v-else-if="transferStore.result"
-          :type="transferStore.result.success ? 'success' : 'error'"
-          :title="transferStore.result.success ? 'Copied' : 'Copy failed'"
-        >
-          {{ transferStore.result.message }}
-        </NAlert>
-      </template>
+      <DeviceTransferReview
+        v-if="targetDeviceId"
+        :source-device-id="sourceDeviceId"
+        :target-device-id="targetDeviceId"
+        :package-name="packageName"
+        :display-name="displayName"
+      />
     </div>
 
     <template #footer>
       <div class="flex justify-end gap-2">
         <NButton :disabled="transferStore.busy" @click="close">
           {{ transferStore.result?.success ? 'Close' : 'Cancel' }}
-        </NButton>
-        <NButton
-          v-if="!analysisMatchesSelection"
-          type="primary"
-          :disabled="!targetDeviceId"
-          :loading="transferStore.loading"
-          @click="checkCompatibility"
-        >
-          Check compatibility
-        </NButton>
-        <NButton
-          v-else-if="!transferStore.result?.success"
-          type="primary"
-          :disabled="!transferStore.analysis?.canInstall"
-          :loading="transferStore.installing"
-          @click="confirmCopy"
-        >
-          Copy &amp; install {{ transferStore.analysis?.parts.length ?? 0 }} file(s)
         </NButton>
       </div>
     </template>

@@ -32,6 +32,7 @@ export enum IpcChannel {
   InstallSplitApks = 'split-install:install',
   BrowseForBackupDirectory = 'backup:browse-for-directory',
   BackupPackages = 'backup:backup-packages',
+  GetDeviceTransferPackages = 'transfer:get-packages',
   AnalyzeDeviceTransfer = 'transfer:analyze',
   PerformDeviceTransfer = 'transfer:perform',
   GetSecurityReview = 'security:get-review',
@@ -43,7 +44,13 @@ export enum IpcChannel {
   GetAiSettings = 'ai:get-settings',
   SetAiSettings = 'ai:set-settings',
   AnalyzePackageWithAi = 'ai:analyze-package',
-  OpenDonationLink = 'support:open-donation-link'
+  OpenDonationLink = 'support:open-donation-link',
+  OpenThirdPartyNotices = 'support:open-third-party-notices',
+  GetUpdateStatus = 'update:get-status',
+  OpenReleasePage = 'update:open-release-page',
+  SetUpdateCheckEnabled = 'update:set-check-enabled',
+  OpenLogsFolder = 'logs:open-folder',
+  LogRendererError = 'logs:renderer-error'
 }
 
 /**
@@ -51,5 +58,6 @@ export enum IpcChannel {
  * rather than in response to a renderer-initiated invoke() call.
  */
 export enum IpcEventChannel {
-  DevicesChanged = 'device:list-changed'
+  DevicesChanged = 'device:list-changed',
+  DeviceTransferProgress = 'transfer:progress'
 }

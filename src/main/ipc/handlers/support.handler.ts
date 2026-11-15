@@ -1,4 +1,5 @@
-import { ipcMain, shell } from 'electron'
+import { app, ipcMain, shell } from 'electron'
+import { join } from 'node:path'
 import { IpcChannel } from '@shared/constants/ipc-channels'
 import {
   donationProviderIdSchema,
@@ -7,6 +8,14 @@ import {
 import { DONATION_URLS, validateSafeExternalUrl } from '../../support/support-config'
 
 export function registerSupportHandlers(): void {
+  ipcMain.handle(IpcChannel.OpenThirdPartyNotices, async () => {
+    const noticesPath = app.isPackaged
+      ? join(process.resourcesPath, 'THIRD_PARTY_NOTICES.txt')
+      : join(app.getAppPath(), 'THIRD_PARTY_NOTICES.txt')
+    const error = await shell.openPath(noticesPath)
+    if (error) throw new Error(error)
+  })
+
   ipcMain.handle(
     IpcChannel.OpenDonationLink,
     async (_event, rawProvider: unknown): Promise<OpenDonationLinkResult> => {
