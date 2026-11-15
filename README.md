@@ -94,8 +94,6 @@ in `electron-builder.yml` — see [`ADB.md`](ADB.md) and
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for what's actually been verified versus
 what's still outstanding.
 
-## Documentation
-
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — process architecture, IPC design,
   and how the codebase is organized
 - [`DEVELOPMENT.md`](DEVELOPMENT.md) — day-to-day development workflow
@@ -105,6 +103,24 @@ what's still outstanding.
 - [`ANDROID_COMPATIBILITY.md`](ANDROID_COMPATIBILITY.md) — what's been
   verified against real hardware, and known limitations
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to contribute
+
+## Download
+
+[![Latest Release](https://img.shields.io/github/v/release/oscar-renteria/droid.or?include_prereleases&label=latest%20release)](https://github.com/oscar-renteria/droid.or/releases/latest)
+
+Screenshots of the install flows:
+
+| Flow | Screenshot |
+| ---- | ---------- |
+| ![Single APK install](/docs/images/install-single.png) | Single APK install |
+| ![Split APK install](/docs/images/install-split.png) | Split APK install |
+| ![Device transfer](/docs/images/transfer.png) | Device transfer |
+
+System requirements:
+
+- Node.js (a current LTS release) and npm
+- A working ADB setup, or let droid.or download one for you on first run — see [`ADB.md`](ADB.md) for platform-specific details
+- USB debugging enabled on the Android device you want to manage
 
 ## Contributing
 
