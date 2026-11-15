@@ -183,7 +183,13 @@ const columns: DataTableColumns<AdbCommandLogEntry> = [
     render: (row) =>
       h(
         NButton,
-        { size: 'small', quaternary: true, onClick: () => (detailEntry.value = row) },
+        {
+          size: 'small',
+          quaternary: true,
+          // Every row has a "Details" button; the label says which command.
+          'aria-label': `Details for ${row.command}`,
+          onClick: () => (detailEntry.value = row)
+        },
         { default: () => 'Details' }
       )
   }
