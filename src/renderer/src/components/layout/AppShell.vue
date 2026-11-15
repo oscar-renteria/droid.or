@@ -177,7 +177,7 @@ const navGroups = [
       <main class="flex min-w-0 flex-1 flex-col">
         <nav
           aria-label="Device views"
-          class="flex shrink-0 items-end gap-1 overflow-x-auto overflow-y-hidden border-b border-border px-4 pt-2"
+          class="flex shrink-0 items-end gap-1 overflow-x-auto overflow-y-hidden border-b border-border px-3 pt-2 xl:px-4"
         >
           <div
             v-for="(group, gi) in navGroups"
@@ -185,24 +185,24 @@ const navGroups = [
             role="group"
             :aria-label="group.label"
             class="flex items-end gap-1"
-            :class="gi === 0 ? 'mr-3' : ''"
+            :class="gi === 0 ? 'mr-1 xl:mr-3' : ''"
           >
             <RouterLink
               v-for="tab in group.tabs"
               :key="tab.name"
               :to="{ name: tab.name }"
               :aria-current="isActive(tab.name) ? 'page' : undefined"
-              class="relative inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2"
+              class="relative inline-flex items-center gap-0.5 px-2 py-1.5 text-xs font-medium whitespace-nowrap xl:gap-1 xl:px-3 transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2"
               :class="
                 tab.name === 'install'
                   ? `rounded-md focus-visible:outline-on-primary ${
                       isActive(tab.name)
-                        ? 'bg-primary-pressed text-on-primary after:absolute after:inset-x-3 after:bottom-0.5 after:h-0.5 after:bg-on-primary after:content-[\'\']'
+                        ? 'bg-primary-pressed text-on-primary after:absolute after:inset-x-2 after:bottom-0.5 after:h-0.5 after:bg-on-primary xl:after:inset-x-3 after:content-[\'\']'
                         : 'bg-primary text-on-primary hover:bg-primary-hover'
                     }`
                   : `rounded-t-md focus-visible:outline-primary ${
                       isActive(tab.name)
-                        ? 'text-primary after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-primary after:content-[\'\']'
+                        ? 'text-primary after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:bg-primary xl:after:inset-x-3 after:content-[\'\']'
                         : 'text-text-secondary hover:bg-surface hover:text-text'
                     }`
               "
@@ -212,7 +212,7 @@ const navGroups = [
             </RouterLink>
             <div
               v-if="gi < navGroups.length - 1"
-              class="mx-1 mb-2 h-5 w-px bg-border"
+              class="mx-0.5 mb-2 h-5 w-px bg-border xl:mx-1"
               aria-hidden="true"
             />
           </div>
