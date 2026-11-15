@@ -30,6 +30,35 @@ build. Those are expected to work, since droid.or only uses standard AOSP
 `pm`/`dumpsys` commands with no manufacturer-specific code paths — but
 "expected to work" is not the same claim as "verified."
 
+## Install and copy between devices
+
+| Feature                                         | Real hardware               | Otherwise covered by                                                                             |
+| ----------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------ |
+| Single APK install (`adb install -r`)           | Galaxy Z Flip7 (Android 16) | Unit tests                                                                                       |
+| Split / bundle install (`adb install-multiple`) | Not yet                     | Unit tests; end-to-end run of the packaged app against a simulated `adb` with a real APK (UX-02) |
+| Copy from another device                        | Not yet                     | Unit tests; end-to-end run against two simulated phones (UX-02)                                  |
+| Bundles larger than 1 GB                        | Not yet                     | Timeout scaling covered by unit tests                                                            |
+
+Real-device testing of these (at least three phones, Android 10, 13 and
+15 or newer, two manufacturers) is planned before 1.0 (QA-04 in
+`features/ROADMAP_TO_PRODUCTION.md`); results will be added to the table
+above.
+
+Limits by design:
+
+- **Copy from another device** only offers apps the user installed
+  (`pm list packages -3`), and only copies APK files from the app storage
+  area (`/data/app/…`, or adopted storage on an SD card). Preinstalled apps
+  can't be copied. App data, accounts and logins are not copied, and apps
+  that check Google Play licensing or Play Integrity may refuse to run on
+  the target.
+- **Split bundles** must include a base APK and the parts the target phone
+  needs. droid.or preselects the matching CPU architecture, screen density
+  and language parts; installing an incomplete set fails on the phone.
+- Some phones block installs over USB unless a setting is turned on (for
+  example **Install via USB** in Developer options on Xiaomi, Redmi and
+  POCO phones). Android then reports `INSTALL_FAILED_USER_RESTRICTED`.
+
 ## Known version/OEM differences found in practice
 
 ### `pm list packages -d` / `-3` needs `-u` on some devices
