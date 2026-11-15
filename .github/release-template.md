@@ -56,3 +56,5 @@ the maintainer has no Mac to test it — feedback is welcome in the issues.
 macOS will block the first start. Open the app once, then go to **System
 Settings → Privacy & Security**, scroll to the message about droid.or and
 click **Open Anyway**.
+
+More help: [Troubleshooting](https://github.com/{{REPO}}/blob/v{{VERSION}}/docs/TROUBLESHOOTING.md).

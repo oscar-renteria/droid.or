@@ -23,7 +23,8 @@ Get the latest version from the
 
 The builds are not code-signed yet, so Windows and macOS warn you on the first
 start. The release notes explain how to get past that and how to verify your
-download with `SHA256SUMS.txt` and GitHub's build provenance.
+download with `SHA256SUMS.txt` and GitHub's build provenance. If something
+doesn't work, see [Troubleshooting](docs/TROUBLESHOOTING.md).
 
 ## System requirements
 
@@ -105,6 +106,8 @@ covers scripts, tests and the CI pipeline.
 
 ## Documentation
 
+- [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) — first-start
+  warnings, phones that don't show up, install errors
 - [`ADB.md`](ADB.md) — ADB setup per platform
 - [`ANDROID_COMPATIBILITY.md`](ANDROID_COMPATIBILITY.md) — tested devices and
   known differences
