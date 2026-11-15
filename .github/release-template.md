@@ -1,3 +1,5 @@
+What changed in this version: see [`CHANGELOG.md`](https://github.com/{{REPO}}/blob/v{{VERSION}}/CHANGELOG.md).
+
 ## Downloads
 
 | Platform                                | File                                    | Notes                                                    |
