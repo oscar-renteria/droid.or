@@ -110,11 +110,11 @@ what's still outstanding.
 
 Screenshots of the install flows:
 
-| Flow | Screenshot |
-| ---- | ---------- |
+| Flow                                                   | Screenshot         |
+| ------------------------------------------------------ | ------------------ |
 | ![Single APK install](/docs/images/install-single.png) | Single APK install |
-| ![Split APK install](/docs/images/install-split.png) | Split APK install |
-| ![Device transfer](/docs/images/transfer.png) | Device transfer |
+| ![Split APK install](/docs/images/install-split.png)   | Split APK install  |
+| ![Device transfer](/docs/images/transfer.png)          | Device transfer    |
 
 System requirements:
 
