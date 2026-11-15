@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { SplitApkPart, SplitInstallIssue } from '@shared/types/split-install'
 import { NAlert, NButton, NSpin, NTag } from 'naive-ui'
-import { computed } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import AppIdentity from '@renderer/components/ui/AppIdentity.vue'
 import { useDeviceTransferStore } from '@renderer/stores/device-transfer.store'
 import { formatBytes } from '@renderer/utils/format-bytes'
@@ -60,19 +60,40 @@ function partQualifier(part: SplitApkPart): string {
   return part.abi ?? part.density ?? part.language ?? part.rawSplitAttribute ?? ''
 }
 
-function checkCompatibility(): void {
-  void transferStore.analyze(props.sourceDeviceId, props.targetDeviceId, props.packageName)
+const rootRef = ref<HTMLElement | null>(null)
+const copyButtonRef = ref<{ $el: unknown } | null>(null)
+
+/** Each step swaps out the button that had focus. If focus was lost that
+ *  way (not moved by the user meanwhile), put it on the next step: the copy
+ *  button when it's usable, otherwise this review, which explains why not. */
+async function restoreFocus(preferCopyButton: boolean): Promise<void> {
+  await nextTick()
+  if (document.activeElement && document.activeElement !== document.body) {
+    return
+  }
+  const button = copyButtonRef.value?.$el
+  if (preferCopyButton && button instanceof HTMLButtonElement && !button.disabled) {
+    button.focus()
+  } else {
+    rootRef.value?.focus()
+  }
 }
 
-function confirmCopy(): void {
+async function checkCompatibility(): Promise<void> {
+  await transferStore.analyze(props.sourceDeviceId, props.targetDeviceId, props.packageName)
+  await restoreFocus(true)
+}
+
+async function confirmCopy(): Promise<void> {
   if (analysisMatchesSelection.value) {
-    void transferStore.confirm()
+    await transferStore.confirm()
+    await restoreFocus(false)
   }
 }
 </script>
 
 <template>
-  <div class="flex flex-col gap-3">
+  <div ref="rootRef" tabindex="-1" class="flex flex-col gap-3 outline-none">
     <NSpin v-if="transferStore.loading" :show="true">
       <div
         class="flex h-24 items-center justify-center text-sm text-text-muted"
@@ -156,22 +177,28 @@ function confirmCopy(): void {
       </NAlert>
     </template>
 
+    <!-- Before the check: still show which app was picked. -->
+    <div v-else class="flex items-start gap-3 rounded border border-border p-3">
+      <AppIdentity :label="displayName ?? packageName" :package-name="packageName" size="lg" />
+    </div>
+
     <div class="flex justify-end">
       <NButton
         v-if="!analysisMatchesSelection"
         type="primary"
         :loading="transferStore.loading"
         :disabled="transferStore.busy"
-        @click="checkCompatibility"
+        @click="void checkCompatibility()"
       >
         Check compatibility
       </NButton>
       <NButton
         v-else-if="!transferStore.result?.success"
+        ref="copyButtonRef"
         type="primary"
         :disabled="!transferStore.analysis?.canInstall || transferStore.busy"
         :loading="transferStore.installing"
-        @click="confirmCopy"
+        @click="void confirmCopy()"
       >
         Copy &amp; install {{ transferStore.analysis?.parts.length ?? 0 }} file(s)
       </NButton>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { NAlert, NButton, NInput, NSelect } from 'naive-ui'
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import AppIdentity from '@renderer/components/ui/AppIdentity.vue'
 import EmptyState from '@renderer/components/ui/EmptyState.vue'
 import DeviceTransferReview from '@renderer/components/install/DeviceTransferReview.vue'
@@ -14,6 +14,8 @@ const transferStore = useDeviceTransferStore()
 const sourceDeviceId = ref<string | null>(null)
 const selectedPackageName = ref<string | null>(null)
 const searchText = ref('')
+const reviewRef = ref<HTMLElement | null>(null)
+const searchInputRef = ref<InstanceType<typeof NInput> | null>(null)
 const targetDeviceId = computed(() => devicesStore.selectedDevice?.id ?? null)
 
 const connectedDevices = computed(() =>
@@ -81,14 +83,18 @@ watch(
   { flush: 'sync' }
 )
 
+// Each step replaces the element that had focus, so move focus to the new
+// content; otherwise a keyboard user is dropped back at the top of the page.
 function selectPackage(pkg: DeviceTransferPackage): void {
   transferStore.reset()
   selectedPackageName.value = pkg.packageName
+  void nextTick(() => reviewRef.value?.focus())
 }
 
 function chooseAnotherApp(): void {
   transferStore.reset()
   selectedPackageName.value = null
+  void nextTick(() => searchInputRef.value?.focus())
 }
 </script>
 
@@ -122,7 +128,11 @@ function chooseAnotherApp(): void {
     </NAlert>
     <div
       v-if="selectedPackage && sourceDeviceId && targetDeviceId"
-      class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto"
+      ref="reviewRef"
+      tabindex="-1"
+      role="region"
+      aria-label="Selected app"
+      class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto outline-none"
     >
       <NButton
         class="self-start"
@@ -142,6 +152,7 @@ function chooseAnotherApp(): void {
     </div>
     <section v-else class="flex min-h-0 flex-1 flex-col gap-3" aria-label="Apps from source device">
       <NInput
+        ref="searchInputRef"
         v-model:value="searchText"
         clearable
         :disabled="!sourceDeviceId || transferStore.loadingSourcePackages"
