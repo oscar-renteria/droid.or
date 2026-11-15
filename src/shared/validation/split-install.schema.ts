@@ -114,6 +114,6 @@ export const installSplitApksRequestSchema = z.object({
    *  directory on every call, so paths from a prior analysis wouldn't
    *  resolve) of the parts to actually install, as toggled in the Confirm
    *  step. The base part is always installed regardless of whether it's
-   *  listed here. */
-  selectedFileNames: z.array(z.string().min(1)).min(1)
+   *  listed here, so the list is empty for a base-only bundle. */
+  selectedFileNames: z.array(z.string().min(1))
 })
