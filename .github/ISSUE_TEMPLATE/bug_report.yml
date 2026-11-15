@@ -1,0 +1,67 @@
+name: Bug report
+description: Something doesn't work as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please check the [troubleshooting guide](https://github.com/oscar-renteria/droid.or/blob/master/docs/TROUBLESHOOTING.md) first; many first-start and connection problems are covered there.
+
+        **Security problems:** please don't report them here. Use [Report a vulnerability](https://github.com/oscar-renteria/droid.or/security/advisories/new) instead.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+      placeholder: |
+        1. Selected my phone and opened Install → Split / Bundle
+        2. Dropped an .apks file
+        3. Expected: the parts list. Instead: "Couldn't read this file"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: droid.or version
+      description: Shown at the bottom of the window and in About.
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: dropdown
+    id: package
+    attributes:
+      label: Which download do you use?
+      options:
+        - Windows installer (-setup.exe)
+        - Windows portable (-portable.exe)
+        - Linux AppImage
+        - macOS DMG (experimental)
+        - Built from source
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Computer operating system
+      placeholder: Windows 11 23H2 / Ubuntu 24.04 / macOS 15.1
+    validations:
+      required: true
+  - type: input
+    id: phone
+    attributes:
+      label: Phone or tablet and Android version
+      description: Leave empty if no device is involved.
+      placeholder: Samsung Galaxy S23, Android 14
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log file
+      description: |
+        In droid.or, go to **Logs → Open Log Folder** and drag `droid-or.log` into this box. It lists the ADB commands droid.or ran, including device serial numbers and package names, but nothing from inside your apps.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched the existing issues and this hasn't been reported yet.
+          required: true

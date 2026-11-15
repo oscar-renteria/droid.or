@@ -21,6 +21,13 @@ npm run test
 All four should pass. `npm run build` runs `typecheck` again as part of
 bundling, so a type error never silently ships.
 
+Changes reach `master` through pull requests; the four CI checks must pass
+before merging. The pull request template asks how you tested the change.
+List user-visible changes under **Unreleased** in `CHANGELOG.md`.
+
+Bugs and feature ideas go through the issue forms. Security problems go
+through private vulnerability reporting (see `SECURITY.md`), not issues.
+
 ## Code style
 
 - Strict TypeScript; avoid `any` wherever reasonably possible.
