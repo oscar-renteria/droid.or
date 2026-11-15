@@ -84,6 +84,17 @@ describe('UpdateCheckService', () => {
     expect(fetchJson).toHaveBeenCalledTimes(2)
   })
 
+  it('counts "no stable release yet" (404) as a completed check', async () => {
+    fetchJson.mockResolvedValue({ statusCode: 404, body: '{"message":"Not Found"}' })
+    await expect(service('1.0.0-beta.4').getStatus()).resolves.toMatchObject({
+      latestVersion: null,
+      updateAvailable: false,
+      checkedAt: now
+    })
+    await service('1.0.0-beta.4').getStatus()
+    expect(fetchJson).toHaveBeenCalledTimes(1)
+  })
+
   it('keeps the last known result when rate-limited', async () => {
     fetchJson.mockResolvedValue(release('v1.1.0'))
     await service().getStatus()

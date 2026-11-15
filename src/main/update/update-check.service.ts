@@ -61,6 +61,12 @@ export class UpdateCheckService {
   private async refresh(): Promise<void> {
     try {
       const response = await this.fetchJson(LATEST_RELEASE_API_URL)
+      if (response.statusCode === 404) {
+        // No stable release published yet (prereleases don't count as
+        // "latest"): a successful check that found nothing newer.
+        setSetting(this.db, CHECKED_AT_KEY, String(this.now()))
+        return
+      }
       if (response.statusCode !== 200) {
         return
       }

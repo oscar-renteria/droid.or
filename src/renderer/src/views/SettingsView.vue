@@ -59,7 +59,11 @@ const updateSummary = computed(() => {
   if (status.checkedAt === null) {
     return `You're running ${status.currentVersion}. The last check didn't reach GitHub; it retries on the next start.`
   }
-  return `You're running ${status.currentVersion}, the latest version (checked ${new Date(status.checkedAt).toLocaleString()}).`
+  const checked = new Date(status.checkedAt).toLocaleString()
+  if (status.latestVersion === null) {
+    return `You're running ${status.currentVersion}. No stable release has been published yet (checked ${checked}).`
+  }
+  return `You're running ${status.currentVersion}, the latest version (checked ${checked}).`
 })
 
 onMounted(() => {
