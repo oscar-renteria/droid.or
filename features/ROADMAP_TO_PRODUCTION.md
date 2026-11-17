@@ -226,7 +226,7 @@ backend (`analyzeDeviceTransfer` / `performDeviceTransfer`) — no new install l
 | QA-04 | Device matrix (min. 3 devices, Android 10 / 13 / 15+, ≥ 2 OEMs): single APK, split bundle, transfer between two physical phones, update over existing app, downgrade rejection                                                                            | Results added to `ANDROID_COMPATIBILITY.md`            |
 | QA-05 | Regression pass on secondary features (Apps, Analyzer, Profiles, Recovery, Security, History, Logs, Settings)                                                                                                                                             | No blocker bugs                                        |
 | QA-06 | Fix blockers found → `rc.2` … until a candidate passes QA-02..05 unchanged                                                                                                                                                                                | Clean RC                                               |
-| QA-07 | macOS (no maintainer hardware): rely on CI smoke test (REL-04); open a pinned "macOS testers wanted" issue linking the RC. macOS issues never block the release (D1)                                                                                      | Issue open; feedback triaged                           |
+| **[DONE] QA-07** | macOS (no maintainer hardware): rely on CI smoke test (REL-04); open a pinned "macOS testers wanted" issue linking the RC. macOS issues never block the release (D1)                                                                                      | Issue open (#9); feedback triaged as testers respond                             |
 
 ## Phase 8 — v1.0.0 release
 
