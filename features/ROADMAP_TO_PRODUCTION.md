@@ -233,9 +233,9 @@ backend (`analyzeDeviceTransfer` / `performDeviceTransfer`) — no new install l
 | ID     | Task                                                                                  | Done when                       |
 | ------ | ------------------------------------------------------------------------------------- | ------------------------------- |
 | **[DONE] REL-10** | Bump `package.json` to `1.0.0`, finalise `CHANGELOG.md`, tag `v1.0.0`                 | `package.json` at `1.0.0` (dependencies identical to `v1.0.0-rc.1`), `CHANGELOG.md` finalised; tag `v1.0.0` pushed |
-| REL-11 | Review draft (assets, checksums, notes), publish                                      | Release public, marked "Latest" |
+| **[DONE] REL-11** | Review draft (assets, checksums, notes), publish | Published 2026-11-19 as Latest (run `44622660600`, all jobs incl. macOS green). Draft had all 5 files and was not a prerelease; AppImage checksum OK and its downloaded copy passes `--smoke-test`; all 4 binaries have SLSA v1 provenance from `release.yml` at `refs/tags/v1.0.0`. Notes got a summary and a note that the Electron 45 PR listed in the generated changes was reverted |
 | REL-12 | Download from the public release page on one Windows and one Linux machine and launch | Both start                      |
-| REL-13 | Delete obsolete prerelease drafts; pin release in README                              | Release page clean              |
+| REL-13 | Delete obsolete prerelease drafts; pin release in README | README badge and download link point to the latest stable release. **Open:** the `v1.0.0-rc.1` draft still exists (the tag stays, it is protected) |
 
 ## Phase 9 — Post-release (backlog)
 

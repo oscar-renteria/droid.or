@@ -3,7 +3,7 @@
 Install APKs on your Android phone from your computer — single APKs, split
 bundles, or apps copied straight from another phone — over USB, without root.
 
-[![Latest release](https://img.shields.io/github/v/release/oscar-renteria/droid.or?include_prereleases&label=latest%20release)](https://github.com/oscar-renteria/droid.or/releases)
+[![Latest release](https://img.shields.io/github/v/release/oscar-renteria/droid.or?label=latest%20release)](https://github.com/oscar-renteria/droid.or/releases/latest)
 [![CI](https://github.com/oscar-renteria/droid.or/actions/workflows/ci.yml/badge.svg)](https://github.com/oscar-renteria/droid.or/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -11,8 +11,9 @@ bundles, or apps copied straight from another phone — over USB, without root.
 
 ## Download
 
-Get the latest version from the
-[**Releases page**](https://github.com/oscar-renteria/droid.or/releases).
+Get the [**latest release**](https://github.com/oscar-renteria/droid.or/releases/latest)
+(older versions are on the
+[Releases page](https://github.com/oscar-renteria/droid.or/releases)).
 
 | Your computer               | File to download                              |
 | --------------------------- | --------------------------------------------- |
