@@ -8,10 +8,9 @@ they lead up to.
 
 ## [Unreleased]
 
-## [1.0.0-rc.1] - 2026-11-17
+## [1.0.0] - 2026-11-19
 
-The first public release, 1.0.0, is in preparation. Everything below is
-planned to ship with it.
+The first public release.
 
 ### Added
 
@@ -52,5 +51,5 @@ planned to ship with it.
 - Crashes and unexpected errors are logged and reported instead of leaving
   the app in an unknown state.
 
-[Unreleased]: https://github.com/oscar-renteria/droid.or/compare/v1.0.0-rc.1...master
-[1.0.0-rc.1]: https://github.com/oscar-renteria/droid.or/compare/v1.0.0-beta.3...v1.0.0-rc.1
+[Unreleased]: https://github.com/oscar-renteria/droid.or/compare/v1.0.0...master
+[1.0.0]: https://github.com/oscar-renteria/droid.or/releases/tag/v1.0.0
