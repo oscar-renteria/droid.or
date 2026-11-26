@@ -1,0 +1,25 @@
+pkgbase = droid-or-bin
+	pkgdesc = Install APKs, split bundles (.apks/.xapk/.apkm) and apps copied from another phone onto Android devices over USB, no root
+	pkgver = 1.0.0
+	pkgrel = 1
+	url = https://oscar-renteria.github.io/droid.or/
+	arch = x86_64
+	license = MIT
+	depends = alsa-lib
+	depends = gtk3
+	depends = libcups
+	depends = libnotify
+	depends = libxss
+	depends = libxtst
+	depends = mesa
+	depends = nss
+	optdepends = android-tools: use the system adb instead of the platform-tools droid.or downloads
+	provides = droid-or
+	conflicts = droid-or
+	noextract = droid.or-1.0.0-x86_64.AppImage
+	options = !strip
+	options = !debug
+	source = https://github.com/oscar-renteria/droid.or/releases/download/v1.0.0/droid.or-1.0.0-x86_64.AppImage
+	sha256sums = 3d4e5565c81575d39b66c0547f0cc7164cb654a1a54cffb2c77985bfd148b849
+
+pkgname = droid-or-bin

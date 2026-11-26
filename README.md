@@ -27,6 +27,13 @@ start. The release notes explain how to get past that and how to verify your
 download with `SHA256SUMS.txt` and GitHub's build provenance. If something
 doesn't work, see [Troubleshooting](docs/TROUBLESHOOTING.md).
 
+**Windows with [Scoop](https://scoop.sh):**
+
+```powershell
+scoop bucket add droid-or https://github.com/oscar-renteria/droid.or
+scoop install droid-or/droid-or
+```
+
 ## System requirements
 
 **Computer**

@@ -1,0 +1,29 @@
+{
+  "version": "1.0.0",
+  "description": "Install APKs, split bundles (.apks/.xapk/.apkm) and apps copied from another phone onto Android devices over USB, no root.",
+  "homepage": "https://oscar-renteria.github.io/droid.or/",
+  "license": "MIT",
+  "notes": "Turn on USB debugging on the phone. droid.or can use an existing adb or download Google's platform-tools on first start.",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/oscar-renteria/droid.or/releases/download/v1.0.0/droid.or-1.0.0-x64-portable.exe#/droid-or.exe",
+      "hash": "dd0a61b41bc00b8e37ce3071e2698f225d9ba410b04475d170442ff9cfe10d19"
+    }
+  },
+  "bin": "droid-or.exe",
+  "shortcuts": [["droid-or.exe", "droid.or"]],
+  "checkver": {
+    "github": "https://github.com/oscar-renteria/droid.or"
+  },
+  "autoupdate": {
+    "architecture": {
+      "64bit": {
+        "url": "https://github.com/oscar-renteria/droid.or/releases/download/v$version/droid.or-$version-x64-portable.exe#/droid-or.exe"
+      }
+    },
+    "hash": {
+      "url": "https://github.com/oscar-renteria/droid.or/releases/download/v$version/SHA256SUMS.txt",
+      "regex": "$sha256\\s+droid\\.or-$version-x64-portable\\.exe"
+    }
+  }
+}
