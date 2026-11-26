@@ -148,7 +148,7 @@ the About dialog.
 
 ## CI and releases
 
-Three workflows live in `.github/workflows/`:
+Four workflows live in `.github/workflows/`:
 
 - **`ci.yml`** runs on every pull request and every push to `master`:
   actionlint (which also runs shellcheck on `run:` scripts), type-checking
@@ -167,6 +167,11 @@ Three workflows live in `.github/workflows/`:
   **draft** GitHub release with the binaries, `SHA256SUMS.txt` and a build
   provenance attestation for every file. The release procedure is in
   [`RELEASING.md`](RELEASING.md).
+- **`pages.yml`** publishes the landing page in `site/` to GitHub Pages
+  on every push to `master` that touches it, its screenshots
+  (`docs/images/`) or the icon. The images are copied in at deploy time, so
+  README and site never drift apart. One-time setup: Settings → Pages →
+  Source: "GitHub Actions".
 
 What `build.yml` checks on each platform:
 

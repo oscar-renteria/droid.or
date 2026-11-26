@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>droid.or — install split APKs and copy apps between Android phones</title>
+    <meta
+      name="description"
+      content="Free, open-source desktop app for Windows, Linux and macOS: install APKs and split bundles (.apks, .xapk, .apkm) and copy apps from one Android phone to another over USB. No root, no telemetry."
+    />
+    <link rel="canonical" href="https://oscar-renteria.github.io/droid.or/" />
+    <link rel="icon" type="image/png" href="images/icon.png" />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:title"
+      content="droid.or — install split APKs and copy apps between phones"
+    />
+    <meta
+      property="og:description"
+      content="Install .apk, .apks, .xapk and .apkm from your computer and copy apps between Android phones over USB. No root, no telemetry, MIT licensed."
+    />
+    <meta property="og:url" content="https://oscar-renteria.github.io/droid.or/" />
+    <meta
+      property="og:image"
+      content="https://oscar-renteria.github.io/droid.or/images/social-preview.png"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "droid.or",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Windows 10, Windows 11, Linux, macOS",
+        "license": "https://opensource.org/licenses/MIT",
+        "url": "https://oscar-renteria.github.io/droid.or/",
+        "downloadUrl": "https://github.com/oscar-renteria/droid.or/releases/latest",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --surface: #f9fafb;
+        --border: #e5e7eb;
+        --text: #030712;
+        --muted: #4a5565;
+        --primary: #007a55;
+        --primary-hover: #006045;
+        --on-primary: #ffffff;
+        --warning-bg: #fffbeb;
+        --warning-border: #fcd34d;
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #030712;
+          --surface: #101828;
+          --border: #1e2939;
+          --text: #f3f4f6;
+          --muted: #99a1af;
+          --primary: #10b981;
+          --primary-hover: #00d492;
+          --on-primary: #030712;
+          --warning-bg: #2a1f05;
+          --warning-border: #7c5a00;
+          color-scheme: dark;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          16px/1.6 system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+      a {
+        color: var(--primary);
+        text-underline-offset: 2px;
+      }
+      a:hover {
+        color: var(--primary-hover);
+      }
+      a:focus-visible,
+      .button:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+      }
+      code {
+        font-family: ui-monospace, 'Cascadia Mono', Menlo, monospace;
+        font-size: 0.9em;
+      }
+      .wrap {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 0 16px;
+      }
+      header.top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 20px 0;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--text);
+        text-decoration: none;
+      }
+      .brand img {
+        width: 32px;
+        height: 32px;
+      }
+      nav a {
+        margin-left: 20px;
+        color: var(--muted);
+        text-decoration: none;
+      }
+      nav a:hover {
+        color: var(--text);
+      }
+      .hero {
+        padding: 40px 0 24px;
+        text-align: center;
+      }
+      .hero h1 {
+        font-size: clamp(1.9rem, 4.5vw, 3rem);
+        line-height: 1.15;
+        margin: 0 auto 16px;
+        max-width: 20ch;
+        letter-spacing: -0.02em;
+      }
+      .hero p.lead {
+        font-size: 1.15rem;
+        color: var(--muted);
+        max-width: 60ch;
+        margin: 0 auto 28px;
+      }
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        margin: 20px 0 0;
+        padding: 0;
+        list-style: none;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .tags li {
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 2px 12px;
+      }
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 22px;
+        border-radius: 8px;
+        background: var(--primary);
+        color: var(--on-primary);
+        font-weight: 600;
+        text-decoration: none;
+        border: 1px solid var(--primary);
+      }
+      .button:hover {
+        background: var(--primary-hover);
+        border-color: var(--primary-hover);
+        color: var(--on-primary);
+      }
+      .button.secondary {
+        background: transparent;
+        color: var(--text);
+        border-color: var(--border);
+      }
+      .button.secondary:hover {
+        border-color: var(--primary);
+        color: var(--text);
+      }
+      .cta {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+      }
+      .version {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-top: 12px;
+      }
+      figure {
+        margin: 32px 0 0;
+      }
+      figure img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+      }
+      figcaption {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-top: 8px;
+        text-align: center;
+      }
+      section {
+        padding: 56px 0 0;
+      }
+      section h2 {
+        font-size: 1.6rem;
+        margin: 0 0 8px;
+        letter-spacing: -0.01em;
+      }
+      section > .wrap > p.intro {
+        color: var(--muted);
+        margin: 0 0 24px;
+        max-width: 70ch;
+      }
+      .grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 20px;
+      }
+      .card h3 {
+        margin: 0 0 6px;
+        font-size: 1.05rem;
+      }
+      .card p {
+        margin: 0;
+        color: var(--muted);
+      }
+      .shots {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      }
+      .downloads .card.recommended {
+        border-color: var(--primary);
+      }
+      .downloads .card .button {
+        margin-top: 14px;
+        width: 100%;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--primary);
+        margin-left: 6px;
+      }
+      .badge[hidden] {
+        display: none;
+      }
+      .note {
+        background: var(--warning-bg);
+        border: 1px solid var(--warning-border);
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin-top: 20px;
+      }
+      .note p {
+        margin: 0 0 8px;
+      }
+      .note p:last-child {
+        margin-bottom: 0;
+      }
+      ul.plain {
+        margin: 0;
+        padding-left: 20px;
+      }
+      ul.plain li {
+        margin-bottom: 6px;
+      }
+      footer {
+        margin-top: 72px;
+        padding: 28px 0 40px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      footer p {
+        margin: 0 0 8px;
+      }
+      @media (max-width: 560px) {
+        nav a:not(.gh) {
+          display: none;
+        }
+        .cta .button {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="top">
+        <a class="brand" href="./"><img src="images/icon.png" alt="" />droid.or</a>
+        <nav aria-label="Main">
+          <a href="#download">Download</a>
+          <a href="#safety">Is it safe?</a>
+          <a class="gh" href="https://github.com/oscar-renteria/droid.or">GitHub</a>
+        </nav>
+      </header>
+    </div>
+
+    <main>
+      <div class="wrap hero">
+        <h1>Install split APKs and copy apps between Android phones</h1>
+        <p class="lead">
+          A free desktop app for Windows, Linux and macOS. Drop an <code>.apk</code>,
+          <code>.apks</code>, <code>.xapk</code> or <code>.apkm</code> file and droid.or installs
+          the right parts on your phone over USB, or copy an installed app straight from one phone
+          to another. No root, no ads, no telemetry.
+        </p>
+        <div class="cta">
+          <a class="button" id="primary-download" href="#download">Download</a>
+          <a class="button secondary" href="https://github.com/oscar-renteria/droid.or"
+            >Source on GitHub</a
+          >
+        </div>
+        <p class="version" id="latest-version" hidden></p>
+        <ul class="tags" aria-label="Key facts">
+          <li>Open source (MIT)</li>
+          <li>No root needed</li>
+          <li>No telemetry</li>
+          <li>Tested on Android 10–16</li>
+        </ul>
+        <figure>
+          <img
+            src="images/install-single.png"
+            width="1360"
+            height="800"
+            alt="droid.or Install screen: the target phone at the top and a dropped APK inspected as a new install"
+          />
+        </figure>
+      </div>
+
+      <section id="features">
+        <div class="wrap">
+          <h2>What it does</h2>
+          <p class="intro">
+            droid.or opens on Install. Pick the phone, then drop a file or choose where the app
+            comes from.
+          </p>
+          <div class="grid">
+            <div class="card">
+              <h3>Split bundles, done right</h3>
+              <p>
+                <code>.apks</code>, <code>.xapk</code>, <code>.apkm</code>, a folder or a set of
+                split APKs. droid.or picks the parts that match the phone's CPU, screen density and
+                language and installs them together.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Copy apps phone to phone</h3>
+              <p>
+                Connect two phones and copy an installed app, including its split parts, from one to
+                the other. Useful for apps that are no longer on Google Play or not available in
+                your region.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Know before you install</h3>
+              <p>
+                Every APK is inspected first, so you see whether it is a new install, an update, a
+                reinstall or a downgrade before anything happens on the phone.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Device tools with an undo</h3>
+              <p>
+                Review and disable preinstalled apps, back up APKs, and see every ADB command in the
+                log. Every change is recorded and can be restored from Recovery.
+              </p>
+            </div>
+          </div>
+          <div class="shots" style="margin-top: 16px">
+            <figure>
+              <img
+                src="images/install-split.png"
+                width="1360"
+                height="800"
+                loading="lazy"
+                alt="A split APK bundle analysed part by part before installing"
+              />
+              <figcaption>A bundle, analysed part by part before installing.</figcaption>
+            </figure>
+            <figure>
+              <img
+                src="images/transfer.png"
+                width="1360"
+                height="960"
+                loading="lazy"
+                alt="An app on one phone checked for compatibility before copying it to another phone"
+              />
+              <figcaption>Copying an app from one phone to another.</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section id="download" class="downloads">
+        <div class="wrap">
+          <h2>Download</h2>
+          <p class="intro">
+            Free and open source. The buttons download the latest release from GitHub.
+          </p>
+          <div class="grid">
+            <div class="card" data-os="windows">
+              <h3>Windows 10/11<span class="badge" hidden>Your system</span></h3>
+              <p>64-bit installer. A portable version without installation is also available.</p>
+              <a
+                class="button"
+                data-asset="-x64-setup.exe"
+                href="https://github.com/oscar-renteria/droid.or/releases/latest"
+                >Download installer</a
+              >
+              <p style="margin-top: 10px">
+                <a
+                  data-asset="-x64-portable.exe"
+                  href="https://github.com/oscar-renteria/droid.or/releases/latest"
+                  >Portable .exe</a
+                >
+              </p>
+            </div>
+            <div class="card" data-os="linux">
+              <h3>Linux<span class="badge" hidden>Your system</span></h3>
+              <p>64-bit AppImage. Runs on most distributions without installing.</p>
+              <a
+                class="button"
+                data-asset="-x86_64.AppImage"
+                href="https://github.com/oscar-renteria/droid.or/releases/latest"
+                >Download AppImage</a
+              >
+            </div>
+            <div class="card" data-os="mac">
+              <h3>macOS (Apple silicon)<span class="badge" hidden>Your system</span></h3>
+              <p>Experimental: not tested by the maintainer yet. Feedback welcome.</p>
+              <a
+                class="button"
+                data-asset="-arm64.dmg"
+                href="https://github.com/oscar-renteria/droid.or/releases/latest"
+                >Download DMG</a
+              >
+            </div>
+          </div>
+
+          <div class="note">
+            <p>
+              <strong>First start:</strong> the downloads are not code-signed yet, so your system
+              warns you once.
+            </p>
+            <p>
+              <strong>Windows:</strong> SmartScreen shows "Windows protected your PC". Click
+              <em>More info → Run anyway</em>. <strong>Linux:</strong> make the AppImage executable
+              (<code>chmod +x droid.or-*.AppImage</code>). <strong>macOS:</strong> see the
+              <a
+                href="https://github.com/oscar-renteria/droid.or/blob/master/docs/TROUBLESHOOTING.md#macos-experimental"
+                >macOS steps</a
+              >.
+            </p>
+            <p>
+              More help:
+              <a
+                href="https://github.com/oscar-renteria/droid.or/blob/master/docs/TROUBLESHOOTING.md"
+                >troubleshooting guide</a
+              >.
+            </p>
+          </div>
+
+          <h3 style="margin: 32px 0 8px">What you need</h3>
+          <ul class="plain">
+            <li>A USB cable that carries data, not just power.</li>
+            <li>
+              <strong>USB debugging</strong> turned on in the phone's developer options. The app
+              walks you through it on first start.
+            </li>
+            <li>
+              ADB: droid.or uses the one already on your computer or downloads Google's official
+              platform-tools for you.
+            </li>
+            <li>Windows only: your phone manufacturer's USB driver.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="safety">
+        <div class="wrap">
+          <h2>Is it safe?</h2>
+          <p class="intro">Every claim here can be checked in the source code.</p>
+          <div class="grid">
+            <div class="card">
+              <h3>No telemetry</h3>
+              <p>
+                The only automatic network request is a daily check for a new release on GitHub,
+                which you can switch off. Everything else happens only when you click it, including
+                the optional, off-by-default "Ask AI" package analysis.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Verifiable downloads</h3>
+              <p>
+                Every release lists SHA-256 checksums and has a signed build provenance attestation
+                proving it was built by the project's own release workflow.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Nothing changes without you</h3>
+              <p>
+                Every change asks for confirmation, the riskiest ones ask you to type it, and
+                everything droid.or changed on a phone can be restored from Recovery.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Honest limits</h3>
+              <p>
+                Copying an app copies the app, not its data, accounts or logins. Apps that check
+                Google Play licensing may refuse to run after copying.
+              </p>
+            </div>
+          </div>
+          <p style="margin-top: 20px">
+            Details:
+            <a href="https://github.com/oscar-renteria/droid.or/blob/master/SECURITY.md"
+              >security model and network use</a
+            >
+            ·
+            <a
+              href="https://github.com/oscar-renteria/droid.or/blob/master/ANDROID_COMPATIBILITY.md"
+              >tested devices</a
+            >
+          </p>
+        </div>
+      </section>
+
+      <section id="community">
+        <div class="wrap">
+          <h2>Help make it better</h2>
+          <p class="intro">
+            Tried droid.or on your phone? A short device report helps others know what works. Found
+            a bug or have an idea? Tell us on GitHub.
+          </p>
+          <div class="cta" style="justify-content: flex-start">
+            <a
+              class="button secondary"
+              href="https://github.com/oscar-renteria/droid.or/issues/new/choose"
+              >Report an issue</a
+            >
+            <a class="button secondary" href="https://github.com/oscar-renteria/droid.or"
+              >Star on GitHub</a
+            >
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <p>
+          droid.or is free software under the
+          <a href="https://github.com/oscar-renteria/droid.or/blob/master/LICENSE">MIT License</a>.
+        </p>
+        <p>
+          Android, Google Play, and ADB are trademarks of Google LLC. droid.or is an independent
+          open-source project and is not affiliated with, sponsored by, or endorsed by Google LLC or
+          the Android Open Source Project.
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      // Progressive enhancement only: without JavaScript or if the GitHub API
+      // is unreachable/rate-limited, every button still leads to the latest
+      // release page.
+      ;(function () {
+        var ua = navigator.userAgent
+        var os = /Windows/i.test(ua)
+          ? 'windows'
+          : /Mac OS X|Macintosh/i.test(ua)
+            ? 'mac'
+            : /Linux|X11/i.test(ua) && !/Android/i.test(ua)
+              ? 'linux'
+              : null
+        if (os) {
+          var card = document.querySelector('[data-os="' + os + '"]')
+          if (card) {
+            card.classList.add('recommended')
+            card.querySelector('.badge').hidden = false
+          }
+        }
+
+        fetch('https://api.github.com/repos/oscar-renteria/droid.or/releases/latest', {
+          headers: { Accept: 'application/vnd.github+json' }
+        })
+          .then(function (response) {
+            if (!response.ok) throw new Error('HTTP ' + response.status)
+            return response.json()
+          })
+          .then(function (release) {
+            var assets = release.assets || []
+            document.querySelectorAll('[data-asset]').forEach(function (link) {
+              var suffix = link.getAttribute('data-asset')
+              var asset = assets.find(function (item) {
+                return item.name.slice(-suffix.length) === suffix
+              })
+              if (asset) link.href = asset.browser_download_url
+            })
+            var version = document.getElementById('latest-version')
+            version.textContent = 'Latest version: ' + release.tag_name
+            version.hidden = false
+            if (os) {
+              var primary = document.querySelector('[data-os="' + os + '"] .button')
+              var hero = document.getElementById('primary-download')
+              if (primary && primary.href.indexOf('/download/') !== -1) {
+                hero.href = primary.href
+                var names = { windows: 'Windows', mac: 'macOS', linux: 'Linux' }
+                hero.textContent = 'Download for ' + names[os]
+              }
+            }
+          })
+          .catch(function () {})
+      })()
+    </script>
+  </body>
+</html>

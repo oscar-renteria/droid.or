@@ -1,0 +1,59 @@
+name: Pages
+
+# Publishes the landing page (site/) to GitHub Pages. Screenshots and the
+# icon are copied in from docs/images and build/ at deploy time, so the
+# README and the site always show the same images.
+#
+# One-time setup (maintainer): Settings → Pages → Source: "GitHub Actions".
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'site/**'
+      - 'docs/images/**'
+      - 'build/icon.png'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never cancel a running deployment midway; queue the next one instead.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site/images
+          cp -R site/. _site/
+          cp docs/images/*.png _site/images/
+          cp build/icon.png _site/images/icon.png
+
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: _site
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
