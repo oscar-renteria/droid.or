@@ -1,0 +1,45 @@
+# Maintainer: Óscar Rentería Quevedo <rakzox at gmail dot com>
+
+pkgname=droid-or-bin
+_pkgname=droid-or
+pkgver=1.0.0
+pkgrel=1
+_appimage="droid.or-$pkgver-x86_64.AppImage"
+pkgdesc='Install APKs, split bundles (.apks/.xapk/.apkm) and apps copied from another phone onto Android devices over USB, no root'
+arch=('x86_64')
+url='https://oscar-renteria.github.io/droid.or/'
+license=('MIT')
+depends=('alsa-lib' 'gtk3' 'libcups' 'libnotify' 'libxss' 'libxtst' 'mesa' 'nss')
+optdepends=('android-tools: use the system adb instead of the platform-tools droid.or downloads')
+provides=("$_pkgname")
+conflicts=("$_pkgname")
+options=('!strip' '!debug')
+source=("https://github.com/oscar-renteria/droid.or/releases/download/v$pkgver/$_appimage")
+noextract=("$_appimage")
+sha256sums=('3d4e5565c81575d39b66c0547f0cc7164cb654a1a54cffb2c77985bfd148b849')
+
+prepare() {
+  chmod +x "$_appimage"
+  rm -rf squashfs-root
+  ./"$_appimage" --appimage-extract >/dev/null
+  # The AppImage launches through AppRun with --no-sandbox; installed
+  # system-wide, the binary runs directly with the setuid sandbox.
+  sed -i 's|^Exec=.*|Exec=droid-or %U|' squashfs-root/droid.or.desktop
+  sed -i '/^X-AppImage-/d' squashfs-root/droid.or.desktop
+}
+
+package() {
+  install -d "$pkgdir/opt/$_pkgname"
+  cp -a squashfs-root/. "$pkgdir/opt/$_pkgname/"
+  # AppImage-only files, and libraries the dependencies above provide.
+  rm -rf "$pkgdir/opt/$_pkgname/"{AppRun,.DirIcon,droid-or.png,droid.or.desktop,usr}
+  find "$pkgdir/opt/$_pkgname" -type d -exec chmod 755 {} +
+  chmod 4755 "$pkgdir/opt/$_pkgname/chrome-sandbox"
+
+  install -d "$pkgdir/usr/bin"
+  ln -s "/opt/$_pkgname/droid-or" "$pkgdir/usr/bin/droid-or"
+  install -Dm644 squashfs-root/droid.or.desktop "$pkgdir/usr/share/applications/droid.or.desktop"
+  install -Dm644 squashfs-root/usr/share/icons/hicolor/1024x1024/apps/droid-or.png \
+    "$pkgdir/usr/share/icons/hicolor/1024x1024/apps/droid-or.png"
+  install -Dm644 squashfs-root/resources/LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
