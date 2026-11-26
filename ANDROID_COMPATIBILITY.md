@@ -17,7 +17,7 @@ The following devices have been used during development to verify real
 | Device                              | Android     | Manufacturer/chipset | Verified                                                                                                                                                                              |
 | ----------------------------------- | ----------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Galaxy Z Flip7 (SM-F766B)           | 16 (SDK 36) | Samsung              | Device dashboard, package listing, disable/enable/uninstall-for-user/clear-data, APK install & backup, Debloat Profiles, split/bundle install, copy between devices (with Galaxy A32) |
-| Galaxy A32                          | —           | Samsung              | Split/bundle install, copy between devices (with Galaxy Z Flip7)                                                                                                                      |
+| Galaxy A32 (SM-A325F)               | 13 (SDK 33) | Samsung              | Split/bundle install, copy between devices (with Galaxy Z Flip7)                                                                                                                      |
 | Lenovo Tab M10 FHD Plus (TB-X606XA) | 10 (SDK 29) | Lenovo               | Package listing (including a real disabled-package detection bug — see below), Security Review                                                                                        |
 | FOSSiBOT DT1                        | 13          | MediaTek             | Package listing, system-app enumeration, Device Admin/Accessibility Service detection, disabling a system app                                                                         |
 | Unihertz Jelly 2E                   | 12          | —                    | Package listing, Favorites/Important-app marking                                                                                                                                      |
@@ -33,12 +33,12 @@ build. Those are expected to work, since droid.or only uses standard AOSP
 
 ## Install and copy between devices
 
-| Feature                                         | Real hardware                                      | Otherwise covered by                                                                             |
-| ----------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Single APK install (`adb install -r`)           | Galaxy Z Flip7 (Android 16)                        | Unit tests                                                                                       |
-| Split / bundle install (`adb install-multiple`) | Galaxy Z Flip7 (Android 16), Galaxy A32            | Unit tests; end-to-end run of the packaged app against a simulated `adb` with a real APK (UX-02) |
-| Copy from another device                        | Between Galaxy Z Flip7 (Android 16) and Galaxy A32 | Unit tests; end-to-end run against two simulated phones (UX-02)                                  |
-| Bundles larger than 1 GB                        | Not yet                                            | Timeout scaling covered by unit tests                                                            |
+| Feature                                         | Real hardware                                                   | Otherwise covered by                                                                             |
+| ----------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Single APK install (`adb install -r`)           | Galaxy Z Flip7 (Android 16)                                     | Unit tests                                                                                       |
+| Split / bundle install (`adb install-multiple`) | Galaxy Z Flip7 (Android 16), Galaxy A32 (Android 13)            | Unit tests; end-to-end run of the packaged app against a simulated `adb` with a real APK (UX-02) |
+| Copy from another device                        | Between Galaxy Z Flip7 (Android 16) and Galaxy A32 (Android 13) | Unit tests; end-to-end run against two simulated phones (UX-02)                                  |
+| Bundles larger than 1 GB                        | Not yet                                                         | Timeout scaling covered by unit tests                                                            |
 
 Real-device testing of these (at least three phones, Android 10, 13 and
 15 or newer, two manufacturers) is planned before 1.0 (QA-04 in

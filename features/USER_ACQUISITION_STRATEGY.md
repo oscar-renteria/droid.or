@@ -71,7 +71,7 @@ referrer list covers the rest.
 ### 3.0 Hero features verified on real hardware
 
 Split/bundle install and copy-between-devices are verified on a Galaxy Z
-Flip7 (Android 16) and a Galaxy A32 (see `ANDROID_COMPATIBILITY.md`). Both
+Flip7 (Android 16) and a Galaxy A32 (Android 13; see `ANDROID_COMPATIBILITY.md`). Both
 phones are Samsung; device reports from other manufacturers (§7) are the
 main way to widen that.
 
