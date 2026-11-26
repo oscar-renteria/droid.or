@@ -11,6 +11,8 @@ they lead up to.
 ### Added
 
 - About: links to star the project on GitHub and to report an issue.
+- Install on Windows with Scoop: this repository is a Scoop bucket
+  (`scoop bucket add droid-or https://github.com/oscar-renteria/droid.or`).
 
 ## [1.0.0] - 2026-11-19
 
