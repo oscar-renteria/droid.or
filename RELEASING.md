@@ -100,3 +100,9 @@ release** ticked: from then on, installed copies of droid.or show an
 After a release candidate, the QA steps in
 [`features/ROADMAP_TO_PRODUCTION.md`](features/ROADMAP_TO_PRODUCTION.md)
 (Phase 7) decide whether it becomes the stable release.
+
+## 6. Update the package managers
+
+For a stable release only. Scoop updates itself; winget and the AUR need a
+new manifest each time. The steps are in
+[`packaging/README.md`](packaging/README.md).
