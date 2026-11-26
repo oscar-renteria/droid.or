@@ -24,3 +24,6 @@ Thumbs.db
 
 coverage/
 .impeccable/
+
+# local adoption snapshots (scripts/acquisition-metrics.mjs)
+.metrics/

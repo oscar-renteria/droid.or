@@ -6,3 +6,6 @@ contact_links:
   - name: Troubleshooting guide
     url: https://github.com/oscar-renteria/droid.or/blob/master/docs/TROUBLESHOOTING.md
     about: First-start warnings, phones that don't show up, and common install errors.
+  - name: Ask a question
+    url: https://github.com/oscar-renteria/droid.or/discussions/categories/q-a
+    about: Questions about using droid.or that aren't bugs.

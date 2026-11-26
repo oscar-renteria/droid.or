@@ -148,7 +148,7 @@ the About dialog.
 
 ## CI and releases
 
-Three workflows live in `.github/workflows/`:
+Four workflows live in `.github/workflows/`:
 
 - **`ci.yml`** runs on every pull request and every push to `master`:
   actionlint (which also runs shellcheck on `run:` scripts), type-checking
@@ -167,6 +167,11 @@ Three workflows live in `.github/workflows/`:
   **draft** GitHub release with the binaries, `SHA256SUMS.txt` and a build
   provenance attestation for every file. The release procedure is in
   [`RELEASING.md`](RELEASING.md).
+- **`pages.yml`** publishes the landing page in `site/` to GitHub Pages
+  on every push to `master` that touches it, its screenshots
+  (`docs/images/`) or the icon. The images are copied in at deploy time, so
+  README and site never drift apart. One-time setup: Settings → Pages →
+  Source: "GitHub Actions".
 
 What `build.yml` checks on each platform:
 
@@ -185,6 +190,16 @@ What `build.yml` checks on each platform:
 The artifacts are uploaded to the run's Actions page. Dependabot
 (`.github/dependabot.yml`) proposes weekly grouped updates for npm packages
 and for the pinned GitHub Actions.
+
+### Adoption metrics
+
+droid.or has no telemetry, so GitHub's numbers are the only adoption
+signal. `npm run metrics` (needs an authenticated `gh`) saves a snapshot of
+release downloads, stars, forks, watchers and repository traffic to
+`.metrics/<date>.json` (git-ignored; `--out <dir>` to keep them elsewhere)
+and prints a summary. GitHub keeps traffic for 14 days only, so run it at
+least every two weeks. Traffic needs push access; without it the snapshot
+records the error and keeps the rest.
 
 ### Code signing and notarization
 

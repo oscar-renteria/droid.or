@@ -17,6 +17,7 @@
     "build": "npm run typecheck && electron-vite build",
     "prebuild": "npm run generate:third-party-notices",
     "generate:third-party-notices": "node scripts/generate-third-party-notices.mjs",
+    "metrics": "node scripts/acquisition-metrics.mjs",
     "build:linux": "npm run build && electron-builder --linux --publish never",
     "build:win": "npm run build && electron-builder --win --publish never",
     "build:mac": "npm run build && electron-builder --mac --publish never",

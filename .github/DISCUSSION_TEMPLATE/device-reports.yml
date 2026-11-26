@@ -1,0 +1,62 @@
+title: '[Device] '
+labels: [device-report]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing droid.or on your phone. Reports like this one decide which devices are listed as verified in [ANDROID_COMPATIBILITY.md](https://github.com/oscar-renteria/droid.or/blob/master/ANDROID_COMPATIBILITY.md).
+
+        **Something broke?** Please open a [bug report](https://github.com/oscar-renteria/droid.or/issues/new/choose) instead, so it can be tracked and fixed.
+  - type: input
+    id: device
+    attributes:
+      label: Phone or tablet
+      description: Manufacturer, model and, if you know it, the model number (Settings → About phone).
+      placeholder: Google Pixel 8 (GKWS6)
+    validations:
+      required: true
+  - type: input
+    id: android
+    attributes:
+      label: Android version and system
+      placeholder: Android 15, stock / One UI 7 / HyperOS 2
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: droid.or version
+      description: Shown at the bottom of the window and in About.
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: dropdown
+    id: computer
+    attributes:
+      label: Computer
+      options:
+        - Windows installer (-setup.exe)
+        - Windows portable (-portable.exe)
+        - Linux AppImage
+        - macOS DMG (experimental)
+        - Built from source
+    validations:
+      required: true
+  - type: checkboxes
+    id: worked
+    attributes:
+      label: What did you try, and it worked?
+      description: Tick only what you actually did on this device.
+      options:
+        - label: Install a single APK
+        - label: Install a split bundle (.apks / .xapk / .apkm)
+        - label: Copy an app from another phone (name the other phone below)
+        - label: Apps list (disable, enable, uninstall for user, clear data)
+        - label: APK backup to the computer
+        - label: Analyzer / debloat profile
+        - label: Recovery (restoring something droid.or changed)
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Anything that behaved differently than expected, workarounds you needed, or the second phone used for copying.

@@ -1,0 +1,20 @@
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ask anything about using droid.or. Many first-start and connection questions are answered in the [troubleshooting guide](https://github.com/oscar-renteria/droid.or/blob/master/docs/TROUBLESHOOTING.md) and the [ADB setup guide](https://github.com/oscar-renteria/droid.or/blob/master/ADB.md).
+
+        **Found a bug?** Please open a [bug report](https://github.com/oscar-renteria/droid.or/issues/new/choose) instead.
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: What are you trying to do, and what have you tried so far?
+    validations:
+      required: true
+  - type: input
+    id: setup
+    attributes:
+      label: Setup (optional)
+      description: droid.or version, computer OS, and phone with Android version, if relevant.
+      placeholder: 1.0.0 · Windows 11 · Samsung Galaxy S23, Android 14
