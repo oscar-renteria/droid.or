@@ -8,6 +8,10 @@ they lead up to.
 
 ## [Unreleased]
 
+### Added
+
+- About: links to star the project on GitHub and to report an issue.
+
 ## [1.0.0] - 2026-11-19
 
 The first public release.
