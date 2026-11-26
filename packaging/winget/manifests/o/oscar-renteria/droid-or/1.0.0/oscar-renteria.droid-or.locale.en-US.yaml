@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.10.0.schema.json
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.28.0.schema.json
 
 PackageIdentifier: oscar-renteria.droid-or
 PackageVersion: 1.0.0
@@ -29,4 +29,4 @@ Tags:
   - xapk
 ReleaseNotesUrl: https://github.com/oscar-renteria/droid.or/releases/tag/v1.0.0
 ManifestType: defaultLocale
-ManifestVersion: 1.10.0
+ManifestVersion: 1.28.0
