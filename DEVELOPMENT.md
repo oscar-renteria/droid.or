@@ -191,6 +191,16 @@ The artifacts are uploaded to the run's Actions page. Dependabot
 (`.github/dependabot.yml`) proposes weekly grouped updates for npm packages
 and for the pinned GitHub Actions.
 
+### Adoption metrics
+
+droid.or has no telemetry, so GitHub's numbers are the only adoption
+signal. `npm run metrics` (needs an authenticated `gh`) saves a snapshot of
+release downloads, stars, forks, watchers and repository traffic to
+`.metrics/<date>.json` (git-ignored; `--out <dir>` to keep them elsewhere)
+and prints a summary. GitHub keeps traffic for 14 days only, so run it at
+least every two weeks. Traffic needs push access; without it the snapshot
+records the error and keeps the rest.
+
 ### Code signing and notarization
 
 No Developer ID or Authenticode certificate is configured. Windows
