@@ -68,12 +68,12 @@ referrer list covers the rest.
 
 ## 3. Pillar 1 — Launch readiness (prerequisites)
 
-### 3.0 Document the hero-feature tests
-Split/bundle install and copy-between-devices have been tested on real
-phones by the maintainer. `ANDROID_COMPATIBILITY.md` still lists both as
-"Not yet" verified on real hardware. Update it with the tested devices
-before launch: the landing page and launch posts link to it, and readers
-will take the outdated "Not yet" at face value.
+### 3.0 Hero features verified on real hardware
+
+Split/bundle install and copy-between-devices are verified on a Galaxy Z
+Flip7 (Android 16) and a Galaxy A32 (see `ANDROID_COMPATIBILITY.md`). Both
+phones are Samsung; device reports from other manufacturers (§7) are the
+main way to widen that.
 
 ### 3.1 Landing page (GitHub Pages)
 - Single page: one-sentence pitch, demo GIF, download buttons per OS,
@@ -192,7 +192,7 @@ Week 1 — Readiness
 ├── [x] R  Discussion templates (device report, Q&A)
 ├── [x] R  About dialog: "Star on GitHub / Report an issue" links
 ├── [x] R  Metrics snapshot script (npm run metrics)
-├── [ ] M  Record split install + phone-to-phone copy test devices in
+├── [x] M  Record split install + phone-to-phone copy test devices in
 │          ANDROID_COMPATIBILITY.md (§3.0)
 └── [ ] M  Record demo GIFs (bundle install, phone transfer)
 
